@@ -69,6 +69,10 @@
   font-size: 32rpx;
   font-weight: 500;
   margin-bottom: 12rpx;
+  max-width: 420rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .user-info .user-left .user-detail .phone.data-v-0be17cc6 {
   font-size: 24rpx;
@@ -111,8 +115,10 @@
   z-index: 1;
   display: flex;
   justify-content: space-around;
+  align-items: center;
   padding: 30rpx 0;
-  margin-top: 2rpx;
+  margin: 2rpx 20rpx 0;
+  border-radius: 16rpx;
 }
 .menu-grid .menu-item.data-v-0be17cc6 {
   display: flex;
@@ -122,13 +128,18 @@
 .menu-grid .menu-item .menu-icon.data-v-0be17cc6 {
   width: 44rpx;
   height: 44rpx;
-  margin-bottom: 8rpx;
+  margin-bottom: 20rpx;
   vertical-align: middle;
 }
 .menu-grid .menu-item text.data-v-0be17cc6 {
   font-size: 26rpx;
   color: #333;
   line-height: 1;
+}
+.menu-grid .divider.data-v-0be17cc6 {
+  width: 2rpx;
+  height: 40rpx;
+  margin: 0 4rpx;
 }
 .commission-card.data-v-0be17cc6 {
   position: relative;
@@ -264,5 +275,16 @@
 }
 .login-btn .user-detail.data-v-0be17cc6 {
   text-align: left;
+}
+.contact-btn.data-v-0be17cc6 {
+  background: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+  border: none;
+  outline: none;
+}
+.contact-btn.data-v-0be17cc6::after {
+  border: none;
 }
 

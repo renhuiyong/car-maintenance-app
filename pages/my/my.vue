@@ -4,7 +4,7 @@
 		<!-- 用户信息区域 -->
 		<view class="user-info">
 			<view class="user-left">
-				<image class="avatar" :src="userInfo.avatar || '/static/my/default-avatar.png'"></image>
+				<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
 				<button 
 					v-if="!isLogin"
 					class="login-btn"
@@ -35,18 +35,21 @@
 				<image class="menu-icon" src="/static/images/wddd.png"></image>
 				<text>我的订单</text>
 			</view>
+			<image class="divider" src="/static/images/shuxian.png"></image>
 			<view class="menu-item">
 				<image class="menu-icon" src="/static/images/sc.png"></image>
 				<text>我的收藏</text>
 			</view>
+			<image class="divider" src="/static/images/shuxian.png"></image>
 			<view class="menu-item">
 				<image class="menu-icon" src="/static/images/yhq.png"></image>
 				<text>优惠券</text>
 			</view>
-			<view class="menu-item">
+			<image class="divider" src="/static/images/shuxian.png"></image>
+			<button class="menu-item contact-btn" open-type="contact">
 				<image class="menu-icon" src="/static/images/kf.png"></image>
 				<text>联系客服</text>
-			</view>
+			</button>
 		</view>
 		
 		<!-- 佣金卡片 -->
@@ -96,6 +99,7 @@
 
 <script>
 import api from '../../api/index.js'
+import request from '../../utils/request.js'
 
 export default {
 	data() {
@@ -105,7 +109,8 @@ export default {
 				name: '',
 				phone: '',
 				avatar: ''
-			}
+			},
+			request
 		}
 	},
 	onShow() {
@@ -155,11 +160,10 @@ export default {
 				})
 				
 				if (res.code === 200) {
-					console.log('res:', res)
 					const userData = {
-						name: userInfo.nickName,
+						name: res.data.nickname,
 						phone: res.data.phone || '',
-						avatar: userInfo.avatarUrl,
+						avatar: res.data.avatar,
 						token: res.data.token
 					}
 					
@@ -238,6 +242,10 @@ export default {
 				font-size: 32rpx;
 				font-weight: 500;
 				margin-bottom: 12rpx;
+				max-width: 420rpx;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
 			}
 			.phone {
 				font-size: 24rpx;
@@ -286,8 +294,10 @@ export default {
 	z-index: 1;
 	display: flex;
 	justify-content: space-around;
+	align-items: center;
 	padding: 30rpx 0;
-	margin-top: 2rpx;
+	margin: 2rpx 20rpx 0;
+	border-radius: 16rpx;
 	
 	.menu-item {
 		display: flex;
@@ -297,7 +307,7 @@ export default {
 		.menu-icon {
 			width: 44rpx;
 			height: 44rpx;
-			margin-bottom: 8rpx;
+			margin-bottom: 20rpx;
 			vertical-align: middle;
 		}
 		
@@ -306,6 +316,12 @@ export default {
 			color: #333;
 			line-height: 1;
 		}
+	}
+
+	.divider {
+		width: 2rpx;
+		height: 40rpx;
+		margin: 0 4rpx;
 	}
 }
 
@@ -466,6 +482,19 @@ export default {
 	
 	.user-detail {
 		text-align: left;
+	}
+}
+
+.contact-btn {
+	background: none;
+	padding: 0;
+	margin: 0;
+	line-height: 1;
+	border: none;
+	outline: none;
+	
+	&::after {
+		border: none;
 	}
 }
 </style> 

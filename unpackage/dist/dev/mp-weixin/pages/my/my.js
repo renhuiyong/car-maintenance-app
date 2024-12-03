@@ -145,6 +145,10 @@ exports.default = void 0;
 var _regenerator = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/regenerator */ 56));
 var _asyncToGenerator2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/asyncToGenerator */ 58));
 var _index = _interopRequireDefault(__webpack_require__(/*! ../../api/index.js */ 59));
+var _request = _interopRequireDefault(__webpack_require__(/*! ../../utils/request.js */ 60));
+//
+//
+//
 //
 //
 //
@@ -249,7 +253,8 @@ var _default = {
         name: '',
         phone: '',
         avatar: ''
-      }
+      },
+      request: _request.default
     };
   },
   onShow: function onShow() {
@@ -312,14 +317,13 @@ var _default = {
               case 6:
                 res = _context.sent;
                 if (!(res.code === 200)) {
-                  _context.next = 17;
+                  _context.next = 16;
                   break;
                 }
-                console.log('res:', res);
                 userData = {
-                  name: userInfo.nickName,
+                  name: res.data.nickname,
                   phone: res.data.phone || '',
-                  avatar: userInfo.avatarUrl,
+                  avatar: res.data.avatar,
                   token: res.data.token
                 };
                 uni.setStorageSync('userInfo', JSON.stringify(userData));
@@ -330,27 +334,27 @@ var _default = {
                   title: '登录成功',
                   icon: 'success'
                 });
-                _context.next = 18;
+                _context.next = 17;
                 break;
-              case 17:
+              case 16:
                 throw new Error(res.message || '登录失败');
-              case 18:
-                _context.next = 24;
+              case 17:
+                _context.next = 23;
                 break;
-              case 20:
-                _context.prev = 20;
+              case 19:
+                _context.prev = 19;
                 _context.t0 = _context["catch"](0);
                 console.error('Login error:', _context.t0);
                 uni.showToast({
                   title: JSON.stringify(_context.t0),
                   icon: 'none'
                 });
-              case 24:
+              case 23:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 20]]);
+        }, _callee, null, [[0, 19]]);
       }))();
     },
     goToEditProfile: function goToEditProfile() {

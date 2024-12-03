@@ -191,6 +191,21 @@ var _request = _interopRequireDefault(__webpack_require__(/*! ../../utils/reques
 //
 //
 //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 var _default = {
   data: function data() {
     return {
@@ -198,7 +213,8 @@ var _default = {
         name: '',
         phone: '',
         avatar: ''
-      }
+      },
+      request: _request.default
     };
   },
   onLoad: function onLoad() {
@@ -211,20 +227,21 @@ var _default = {
     onChooseAvatar: function onChooseAvatar(e) {
       var _this = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var uploadRes;
+        var uploadUrl, uploadRes;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.prev = 0;
-                _context.next = 3;
+                uploadUrl = _request.default.BASE_URL + '/web/user/upload'; // 先上传图片
+                _context.next = 4;
                 return new Promise(function (resolve, reject) {
                   uni.uploadFile({
-                    url: _request.default.baseUrl + '/api/upload/file',
+                    url: uploadUrl.startsWith('http') ? uploadUrl : 'http://' + uploadUrl,
                     filePath: e.detail.avatarUrl,
                     name: 'file',
                     header: {
-                      'token': uni.getStorageSync('token')
+                      'WaAuthorization': uni.getStorageSync('token')
                     },
                     success: function success(uploadFileRes) {
                       try {
@@ -239,43 +256,39 @@ var _default = {
                     }
                   });
                 });
-              case 3:
+              case 4:
                 uploadRes = _context.sent;
                 if (!(uploadRes.code !== 200)) {
-                  _context.next = 6;
+                  _context.next = 7;
                   break;
                 }
-                throw new Error(uploadRes.message || '上传失败');
-              case 6:
-                _this.userInfo.avatar = uploadRes.data.url;
-                _context.next = 12;
-                break;
+                throw new Error(uploadRes.msg || '上传失败');
+              case 7:
+                if (uploadRes.fileName) {
+                  _context.next = 9;
+                  break;
+                }
+                throw new Error('上传成功但未返回图片地址');
               case 9:
-                _context.prev = 9;
+                _this.userInfo.avatar = uploadRes.fileName;
+                _context.next = 15;
+                break;
+              case 12:
+                _context.prev = 12;
                 _context.t0 = _context["catch"](0);
                 uni.showToast({
-                  title: JSON.stringify(_context.t0),
+                  title: typeof _context.t0 === 'string' ? _context.t0 : _context.t0.errMsg || _context.t0.message || '更新头像失败',
                   icon: 'none'
                 });
-                // uni.showToast({
-                // 	title: err.message || '更新头像失败',
-                // 	icon: 'none'
-                // })
-              case 12:
+              case 15:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 9]]);
+        }, _callee, null, [[0, 12]]);
       }))();
     },
-    bindPhone: function bindPhone() {
-      // 跳转到手机号绑定页面
-      uni.navigateTo({
-        url: '/pages/bindPhone/bindPhone'
-      });
-    },
-    saveProfile: function saveProfile() {
+    getPhoneNumber: function getPhoneNumber(e) {
       var _this2 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee2() {
         var res;
@@ -284,49 +297,134 @@ var _default = {
             switch (_context2.prev = _context2.next) {
               case 0:
                 _context2.prev = 0;
-                console.log(_index.default.user.updateProfile);
-                _context2.next = 4;
-                return _index.default.user.updateProfile(_this2.userInfo);
-              case 4:
-                res = _context2.sent;
-                if (!(res.code === 200)) {
-                  _context2.next = 11;
+                // 打印返回数据，方便调试
+                console.log('getPhoneNumber response:', e.detail);
+
+                // 用户拒绝授权的情况
+                if (!(e.detail.errMsg && e.detail.errMsg.includes('deny'))) {
+                  _context2.next = 4;
                   break;
                 }
-                // 更新本地存储
+                throw new Error('用户拒绝授权');
+              case 4:
+                if (e.detail.code) {
+                  _context2.next = 6;
+                  break;
+                }
+                throw new Error('获取手机号失败');
+              case 6:
+                _context2.next = 8;
+                return _index.default.user.bindPhone({
+                  phoneCode: e.detail.code
+                });
+              case 8:
+                res = _context2.sent;
+                if (!(res.code === 200)) {
+                  _context2.next = 15;
+                  break;
+                }
+                // 更新本地用户信息
+                _this2.userInfo.phone = res.data.phone;
                 uni.setStorageSync('userInfo', JSON.stringify(_this2.userInfo));
                 uni.showToast({
-                  title: '保存成功',
+                  title: '手机号绑定成功',
                   icon: 'success'
                 });
-
-                // 返回上一页并刷新
-                setTimeout(function () {
-                  var pages = getCurrentPages();
-                  var prevPage = pages[pages.length - 2];
-                  prevPage.checkLoginStatus();
-                  uni.navigateBack();
-                }, 1500);
-                _context2.next = 12;
+                _context2.next = 16;
                 break;
-              case 11:
-                throw new Error(res.message || '保存失败');
-              case 12:
-                _context2.next = 17;
+              case 15:
+                throw new Error(res.msg || '绑定失败');
+              case 16:
+                _context2.next = 21;
                 break;
-              case 14:
-                _context2.prev = 14;
+              case 18:
+                _context2.prev = 18;
                 _context2.t0 = _context2["catch"](0);
                 uni.showToast({
-                  title: _context2.t0.message || '保存失败',
+                  title: _context2.t0.message || '绑定失败',
                   icon: 'none'
                 });
-              case 17:
+              case 21:
               case "end":
                 return _context2.stop();
             }
           }
-        }, _callee2, null, [[0, 14]]);
+        }, _callee2, null, [[0, 18]]);
+      }))();
+    },
+    handleNameInput: function handleNameInput(e) {
+      var value = e.detail.value;
+      if (value && value.length > 32) {
+        uni.showToast({
+          title: '昵称最多32个字符',
+          icon: 'none'
+        });
+        this.userInfo.name = value.slice(0, 32);
+      }
+    },
+    saveProfile: function saveProfile() {
+      var _this3 = this;
+      return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee3() {
+        var updateData, res;
+        return _regenerator.default.wrap(function _callee3$(_context3) {
+          while (1) {
+            switch (_context3.prev = _context3.next) {
+              case 0:
+                _context3.prev = 0;
+                if (!(_this3.userInfo.name && _this3.userInfo.name.length > 32)) {
+                  _context3.next = 3;
+                  break;
+                }
+                throw new Error('昵称最多32个字符');
+              case 3:
+                // 构造要提交的数据，使用正确的字段名
+                updateData = {
+                  name: _this3.userInfo.name,
+                  avatar: _this3.userInfo.avatar.startsWith('/profile') ? _this3.userInfo.avatar : '/profile' + _this3.userInfo.avatar,
+                  phone: _this3.userInfo.phone
+                };
+                _context3.next = 6;
+                return _index.default.user.updateProfile(updateData);
+              case 6:
+                res = _context3.sent;
+                if (!(res.code === 200)) {
+                  _context3.next = 13;
+                  break;
+                }
+                // 更新本地存储时保持前端使用的字段名
+                uni.setStorageSync('userInfo', JSON.stringify(_this3.userInfo));
+                uni.showToast({
+                  title: '保存成功',
+                  icon: 'success'
+                });
+                setTimeout(function () {
+                  var pages = getCurrentPages();
+                  var prevPage = pages[pages.length - 2];
+                  if (prevPage && typeof prevPage.checkLoginStatus === 'function') {
+                    prevPage.checkLoginStatus();
+                  }
+                  uni.navigateBack();
+                }, 1500);
+                _context3.next = 14;
+                break;
+              case 13:
+                throw new Error(res.msg || '保存失败');
+              case 14:
+                _context3.next = 19;
+                break;
+              case 16:
+                _context3.prev = 16;
+                _context3.t0 = _context3["catch"](0);
+                uni.showToast({
+                  title: _context3.t0.message || '保存失败',
+                  icon: 'none'
+                });
+              case 19:
+              case "end":
+                return _context3.stop();
+            }
+          }
+        }, _callee3, null, [[0, 16]]);
       }))();
     }
   }

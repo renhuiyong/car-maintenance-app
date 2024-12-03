@@ -4,7 +4,9 @@
     "pages/shop/shop",
     "pages/my/my",
     "pages/login/login",
-    "pages/editProfile/editProfile"
+    "pages/editProfile/editProfile",
+    "pages/grabOrder/grabOrder",
+    "pages/assignRepair/assignRepair"
   ],
   "subPackages": [],
   "window": {

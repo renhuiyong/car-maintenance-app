@@ -37,12 +37,14 @@
 
 			<!-- 抢单报修内容 -->
 			<view v-if="tabIndex === 0" class="repair-content" key="grab">
-				<view class="address-box">
-					<view class="location-icon">📍</view>
-					<view class="address-text">淮北市中医院附近</view>
-					<view class="arrow-icon">></view>
+				<view class="repair-wrap">
+					<view class="address-box" @click="chooseLocation">
+						<image class="location-icon" src="/static/images/dingwei.png"></image>
+						<view class="address-text">{{address || '选择位置'}}</view>
+						<image class="arrow-icon" src="/static/images/youjiantou2.png"></image>
+					</view>
+					<button class="submit-btn" @click="handleSubmit">立即报修</button>
 				</view>
-				<button class="submit-btn" @click="handleSubmit">立即报修</button>
 			</view>
 			
 			<!-- 指定报修内容 -->
@@ -58,6 +60,7 @@
 						v-for="(shop, index) in repairShops" 
 						:key="shop.id"
 						class="repair-item"
+						@click="goToAssignRepair(shop)"
 					>
 						<view class="repair-title">
 							<text>{{shop.name}}</text>
@@ -124,9 +127,9 @@
 					},
 					{
 						id: 2,
-						name: '阿明电动车修理',
+						name: '土楼新村',
 						distance: '1.2KM',
-						address: '安徽省淮北市相山区孟山路120号',
+						address: '安徽省淮北市相山区渠沟镇土楼新村',
 						businessHours: '07:30 - 19:00'
 					},
 					{
@@ -139,11 +142,12 @@
 				],
 				loading: false,
 				finished: false,
-				scrollTop: 0
+				scrollTop: 0,
+				address: ''
 			}
 		},
 		onLoad() {
-			// 页面加载时检查授权状态
+			// 页面加载时只检查授权状态
 			this.checkLocationAuth()
 		},
 		methods: {
@@ -151,9 +155,24 @@
 				this.tabIndex = index
 			},
 			handleSubmit() {
-				uni.showToast({
-					title: '提交成功',
-					icon: 'success'
+				// 检查是否已选择位置
+				if (!this.address) {
+					uni.showModal({
+						title: '提示',
+						content: '请先选择维修位置',
+						confirmText: '去选择',
+						success: (res) => {
+							if (res.confirm) {
+								this.chooseLocation()
+							}
+						}
+					})
+					return
+				}
+				
+				// 有位置信息时才跳转
+				uni.navigateTo({
+					url: '/pages/grabOrder/grabOrder'
 				})
 			},
 			// 处理复选框变化
@@ -178,10 +197,14 @@
 					return
 				}
 				
+				// 先关闭自定义授权弹窗
+				this.showAuthModal = false
+				
+				// 然后请求小程序位置授权
 				uni.authorize({
 					scope: 'scope.userLocation',
 					success: () => {
-						this.showAuthModal = false
+						// 授权成功后获取位置
 						this.getLocation()
 					},
 					fail: () => {
@@ -194,7 +217,6 @@
 									uni.openSetting({
 										success: (settingRes) => {
 											if (settingRes.authSetting['scope.userLocation']) {
-												this.showAuthModal = false
 												this.getLocation()
 											}
 										}
@@ -210,16 +232,46 @@
 				uni.getLocation({
 					type: 'gcj02',
 					isHighAccuracy: true,
+					geocode: true, // 开启地址解析
 					success: (res) => {
 						this.latitude = res.latitude
 						this.longitude = res.longitude
+						
+						// 使用地址信息
+						if (res.address) {
+							// 优先使用地址名称
+							if (res.name) {
+								this.address = res.name
+							} else {
+								// 使用格式化的地址
+								const address = res.address
+								this.address = address
+							}
+						}
 					},
 					fail: (err) => {
 						console.error('获取位置失败：', err)
 						uni.showToast({
-							title: '获取位置失败',
-							icon: 'none'
+							title: '获取位置失败，请检查定位权限',
+							icon: 'none',
+							duration: 2000
 						})
+					}
+				})
+			},
+			// 添加备用地址解析方法
+			getAddressByLocation(latitude, longitude) {
+				uni.request({
+					url: `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=YOUR_KEY`,
+					success: (res) => {
+						if (res.data.status === 0) {
+							this.address = res.data.result.address
+						} else {
+							this.address = '获取地址失败'
+						}
+					},
+					fail: () => {
+						this.address = '获取地址失败'
 					}
 				})
 			},
@@ -237,15 +289,53 @@
 							// 未授权，显示授权弹窗
 							this.showAuthModal = true
 						} else {
-							// 已授权，直获取位置
+							// 已授权，直接获取位置
 							this.getLocation()
 						}
 					}
 				})
 			},
+			// 修改moveToLocation方法
 			moveToLocation() {
 				const mapContext = uni.createMapContext('myMap', this)
-				mapContext.moveToLocation()
+				
+				uni.getLocation({
+					type: 'gcj02',
+					isHighAccuracy: true,
+					geocode: true, // 开启地址解析
+					success: (res) => {
+						this.latitude = res.latitude
+						this.longitude = res.longitude
+						
+						// 移动地图到当前位置
+						mapContext.moveToLocation({
+							latitude: res.latitude,
+							longitude: res.longitude
+						})
+						
+						// 更新地址显示
+						if (res.address) {
+							if (res.name) {
+								this.address = res.name
+							} else {
+								this.address = res.address
+							}
+							
+							uni.showToast({
+								title: '已定位到当前位置',
+								icon: 'success',
+								duration: 1500
+							})
+						}
+					},
+					fail: (err) => {
+						uni.showToast({
+							title: '获取当前位置失败',
+							icon: 'none',
+							duration: 2000
+						})
+					}
+				})
 			},
 			// 加载更多数据
 			loadMore() {
@@ -284,6 +374,54 @@
 			// 处理滚动事件
 			handleScroll(e) {
 				this.scrollTop = e.detail.scrollTop
+			},
+			// 选择位置
+			chooseLocation() {
+				uni.chooseLocation({
+					success: (res) => {
+						// 只要有name就更新位置，不需要检查address
+						if (res.name) {
+							// 更新地址显示，使用地点名称
+							this.address = res.name
+							this.latitude = res.latitude
+							this.longitude = res.longitude
+							
+							// 更新地图中心点和标记
+							const mapContext = uni.createMapContext('myMap', this)
+							mapContext.moveToLocation({
+								latitude: res.latitude,
+								longitude: res.longitude
+							})
+						}
+					},
+					fail: (err) => {
+						// 只有在真正的错误（非用户取消）时才提示
+						if (err.errMsg && err.errMsg.indexOf('cancel') === -1) {
+							if (err.errMsg.indexOf('auth deny') !== -1) {
+								uni.showModal({
+									title: '提示',
+									content: '需要获取位置权限能选择地址',
+									confirmText: '去设置',
+									success: (res) => {
+										if (res.confirm) {
+											uni.openSetting()
+										}
+									}
+								})
+							} else {
+								uni.showToast({
+									title: '选择位置失败',
+									icon: 'none'
+								})
+							}
+						}
+					}
+				})
+			},
+			goToAssignRepair(shop) {
+				uni.navigateTo({
+					url: `/pages/assignRepair/assignRepair?shopInfo=${encodeURIComponent(JSON.stringify(shop))}`
+				})
 			}
 		}
 	}
@@ -300,68 +438,50 @@
 	.map {
 		flex: 1;
 		width: 100%;
-		height: 65vh;
+		height: 70vh;
 		position: relative;
 	}
 
 	.bottom-area {
-		position: relative;
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
 		background-color: #fff;
-		border-radius: 24rpx 24rpx 0 0;
-		padding: 20rpx 0;
-		height: 35vh;
-		min-height: auto;
-		box-sizing: border-box;
-	}
-
-	.tab-box {
-		display: flex;
-		justify-content: space-between;
-		margin: 0 30rpx 30rpx;
-		position: relative;
-		border-radius: 8rpx;
-		height: 80rpx;
-		background: #F7F8FC;
+		border-radius: 30rpx 30rpx 0 0;
+		height: 30vh;
+		z-index: 100;
 		overflow: hidden;
-		
-		&::after {
-			display: none;
-		}
-		
-		&::before {
-			content: '';
-			position: absolute;
-			top: 0;
-			bottom: 0;
-			left: 50%;
-			width: 2rpx;
-			background: #fff;
-			transform: translateX(-50%);
-			border-radius: 50%;
-			box-shadow: 0 0 10rpx rgba(0, 0, 0, 0.1);
-		}
-		
-		.tab-item {
-			flex: 1;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			justify-content: center;
-			padding: 0;
-			font-size: 32rpx;
-			color: #666;
-			position: relative;
-			
-			&.active {
-				color: #4468E8;
-				font-weight: 500;
-				background: #fff;
-			}
+		box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
 
-			text {
-				font-size: 30rpx;
+		.tab-box {
+			display: flex;
+			justify-content: space-between;
+			margin: 0;
+			position: relative;
+			height: 110rpx;
+			background: linear-gradient(180deg, #D3DEFC 0%, #F2F5FE 100%);
+			overflow: hidden;
+			
+			.tab-item {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				
+				align-items: center;
+				justify-content: center;
+				padding: 0;
+				font-size: 32rpx;
+				color: #666;
 				position: relative;
-				z-index: 1;
+				font-weight: bold;
+				height: 110rpx;
+				
+				&.active {
+					color: #4468E8;
+					font-weight: bold;
+					background: #fff;
+				}
 			}
 		}
 	}
@@ -369,10 +489,11 @@
 	.address-box {
 		display: flex;
 		align-items: center;
-		padding: 24rpx;
+		padding: 16rpx;
 		background-color: #f8f8f8;
 		border-radius: 12rpx;
-		margin-bottom: 30rpx;
+		margin-bottom: 16rpx;
+		padding: 20rpx 0;
 		
 		.location-icon {
 			margin-right: 16rpx;
@@ -386,8 +507,9 @@
 		}
 		
 		.arrow-icon {
+			width: 32rpx;
+			height: 32rpx;
 			color: #999;
-			font-size: 24rpx;
 		}
 	}
 
@@ -437,14 +559,14 @@
 		bottom: 0;
 		background: #fff;
 		border-radius: 24rpx 24rpx 0 0;
-		padding: 40rpx 30rpx;
+		padding: 30rpx 30rpx;
 		transform: translateY(0);
 		transition: transform 0.3s;
 	}
 
 	.auth-header {
 		text-align: center;
-		margin-bottom: 120rpx;
+		margin-bottom: 60rpx;
 	}
 
 	.auth-icon {
@@ -467,15 +589,15 @@
 	.auth-btns {
 		display: flex;
 		justify-content: space-between;
-		margin-bottom: 30rpx;
+		margin-bottom: 20rpx;
 		padding: 0 20rpx;
 	}
 
 	.auth-btn {
 		flex: 1;
 		margin: 0 15rpx;
-		height: 88rpx;
-		line-height: 88rpx;
+		height: 80rpx;
+		line-height: 80rpx;
 		text-align: center;
 		border-radius: 44rpx;
 		font-size: 32rpx;
@@ -517,7 +639,7 @@
 
 	.repair-content {
 		padding: 20rpx;
-		height: calc(35vh - 120rpx);
+		height: calc(30vh - 120rpx);
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
@@ -549,7 +671,9 @@
 		
 		text {
 			font-size: 32rpx;
-			font-weight: 500;
+			font-weight: bold;
+			color: #333;
+			-webkit-font-smoothing: antialiased;
 			
 			&.distance {
 				font-size: 26rpx;
@@ -647,36 +771,7 @@
 		padding: 20rpx 0;
 	}
 
-	// 修改底部区域样式
-	.bottom-area {
-		padding: 20rpx 0;
-		height: 35vh;
-		min-height: auto;
-	}
-
-	// 指定报修样式
-	.address-box {
-		margin: 20rpx;
-		background: #f8f8f8;
-		border-radius: 12rpx;
-		padding: 24rpx;
-		display: flex;
-		align-items: center;
-	}
-
-	.submit-btn {
-		margin: 40rpx 20rpx;
-		width: calc(100% - 40rpx);
-		height: 88rpx;
-		line-height: 88rpx;
-		background-color: #4468E8;
-		color: #fff;
-		border-radius: 44rpx;
-		font-size: 32rpx;
-		font-weight: 500;
-	}
-
-	// 添加底部导航栏样式
+	// 加底部导航样式
 	.tabbar {
 		position: fixed;
 		bottom: 0;
@@ -718,8 +813,8 @@
 
 	.location-btn {
 		position: absolute;
-		bottom: 40vh;
-		right: 20rpx;
+		bottom: 32vh;
+		right: 30rpx;
 		width: 80rpx;
 		height: 80rpx;
 		background: #fff;
@@ -733,6 +828,37 @@
 		.location-icon {
 			width: 40rpx;
 			height: 40rpx;
+		}
+	}
+
+	.repair-wrap {
+		background: #F7F8FC;
+		padding: 20rpx 20rpx 40rpx;
+		margin: 0 20rpx 20rpx;
+		
+		.submit-btn {
+			margin: 20rpx 0 0;
+			width: 100%;
+			border-radius: 0;
+			padding: 36rpx 0;
+			height: auto;
+			line-height: 1;
+		}
+		
+		.address-box {
+			margin: 0;
+			
+			.location-icon {
+				width: 46rpx;
+				height: 46rpx;
+				margin-right: 16rpx;
+			}
+			
+			.arrow-icon {
+				width: 24rpx;
+				height: 24rpx;
+				color: #999;
+			}
 		}
 	}
 </style>

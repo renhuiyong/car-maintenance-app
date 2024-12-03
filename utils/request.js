@@ -69,5 +69,6 @@ export const post = (url, data = {}, options = {}) => {
 export default {
     request,
     get,
-    post
+    post,
+    BASE_URL
 } 

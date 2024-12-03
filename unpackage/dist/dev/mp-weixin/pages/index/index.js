@@ -249,6 +249,9 @@ var _toConsumableArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/
 //
 //
 //
+//
+//
+//
 var _default = {
   data: function data() {
     return {
@@ -266,9 +269,9 @@ var _default = {
         businessHours: '08:00 - 18:00'
       }, {
         id: 2,
-        name: '阿明电动车修理',
+        name: '土楼新村',
         distance: '1.2KM',
-        address: '安徽省淮北市相山区孟山路120号',
+        address: '安徽省淮北市相山区渠沟镇土楼新村',
         businessHours: '07:30 - 19:00'
       }, {
         id: 3,
@@ -279,11 +282,12 @@ var _default = {
       }],
       loading: false,
       finished: false,
-      scrollTop: 0
+      scrollTop: 0,
+      address: ''
     };
   },
   onLoad: function onLoad() {
-    // 页面加载时检查授权状态
+    // 页面加载时只检查授权状态
     this.checkLocationAuth();
   },
   methods: {
@@ -291,9 +295,25 @@ var _default = {
       this.tabIndex = index;
     },
     handleSubmit: function handleSubmit() {
-      uni.showToast({
-        title: '提交成功',
-        icon: 'success'
+      var _this = this;
+      // 检查是否已选择位置
+      if (!this.address) {
+        uni.showModal({
+          title: '提示',
+          content: '请先选择维修位置',
+          confirmText: '去选择',
+          success: function success(res) {
+            if (res.confirm) {
+              _this.chooseLocation();
+            }
+          }
+        });
+        return;
+      }
+
+      // 有位置信息时才跳转
+      uni.navigateTo({
+        url: '/pages/grabOrder/grabOrder'
       });
     },
     // 处理复选框变化
@@ -310,7 +330,7 @@ var _default = {
     },
     // 处理确认授权
     handleAuthConfirm: function handleAuthConfirm() {
-      var _this = this;
+      var _this2 = this;
       if (!this.isChecked) {
         uni.showToast({
           title: '请先阅读并同意隐私保护指引',
@@ -318,11 +338,16 @@ var _default = {
         });
         return;
       }
+
+      // 先关闭自定义授权弹窗
+      this.showAuthModal = false;
+
+      // 然后请求小程序位置授权
       uni.authorize({
         scope: 'scope.userLocation',
         success: function success() {
-          _this.showAuthModal = false;
-          _this.getLocation();
+          // 授权成功后获取位置
+          _this2.getLocation();
         },
         fail: function fail() {
           uni.showModal({
@@ -334,8 +359,7 @@ var _default = {
                 uni.openSetting({
                   success: function success(settingRes) {
                     if (settingRes.authSetting['scope.userLocation']) {
-                      _this.showAuthModal = false;
-                      _this.getLocation();
+                      _this2.getLocation();
                     }
                   }
                 });
@@ -347,20 +371,52 @@ var _default = {
     },
     // 获取位置信息
     getLocation: function getLocation() {
-      var _this2 = this;
+      var _this3 = this;
       uni.getLocation({
         type: 'gcj02',
         isHighAccuracy: true,
+        geocode: true,
+        // 开启地址解析
         success: function success(res) {
-          _this2.latitude = res.latitude;
-          _this2.longitude = res.longitude;
+          _this3.latitude = res.latitude;
+          _this3.longitude = res.longitude;
+
+          // 使用地址信息
+          if (res.address) {
+            // 优先使用地址名称
+            if (res.name) {
+              _this3.address = res.name;
+            } else {
+              // 使用格式化的地址
+              var address = res.address;
+              _this3.address = address;
+            }
+          }
         },
         fail: function fail(err) {
           console.error('获取位置失败：', err);
           uni.showToast({
-            title: '获取位置失败',
-            icon: 'none'
+            title: '获取位置失败，请检查定位权限',
+            icon: 'none',
+            duration: 2000
           });
+        }
+      });
+    },
+    // 添加备用地址解析方法
+    getAddressByLocation: function getAddressByLocation(latitude, longitude) {
+      var _this4 = this;
+      uni.request({
+        url: "https://apis.map.qq.com/ws/geocoder/v1/?location=".concat(latitude, ",").concat(longitude, "&key=YOUR_KEY"),
+        success: function success(res) {
+          if (res.data.status === 0) {
+            _this4.address = res.data.result.address;
+          } else {
+            _this4.address = '获取地址失败';
+          }
+        },
+        fail: function fail() {
+          _this4.address = '获取地址失败';
         }
       });
     },
@@ -372,56 +428,143 @@ var _default = {
     },
     // 检查位置授权状态
     checkLocationAuth: function checkLocationAuth() {
-      var _this3 = this;
+      var _this5 = this;
       uni.getSetting({
         success: function success(res) {
           if (!res.authSetting['scope.userLocation']) {
             // 未授权，显示授权弹窗
-            _this3.showAuthModal = true;
+            _this5.showAuthModal = true;
           } else {
-            // 已授权，直获取位置
-            _this3.getLocation();
+            // 已授权，直接获取位置
+            _this5.getLocation();
           }
         }
       });
     },
+    // 修改moveToLocation方法
     moveToLocation: function moveToLocation() {
+      var _this6 = this;
       var mapContext = uni.createMapContext('myMap', this);
-      mapContext.moveToLocation();
+      uni.getLocation({
+        type: 'gcj02',
+        isHighAccuracy: true,
+        geocode: true,
+        // 开启地址解析
+        success: function success(res) {
+          _this6.latitude = res.latitude;
+          _this6.longitude = res.longitude;
+
+          // 移动地图到当前位置
+          mapContext.moveToLocation({
+            latitude: res.latitude,
+            longitude: res.longitude
+          });
+
+          // 更新地址显示
+          if (res.address) {
+            if (res.name) {
+              _this6.address = res.name;
+            } else {
+              _this6.address = res.address;
+            }
+            uni.showToast({
+              title: '已定位到当前位置',
+              icon: 'success',
+              duration: 1500
+            });
+          }
+        },
+        fail: function fail(err) {
+          uni.showToast({
+            title: '获取当前位置失败',
+            icon: 'none',
+            duration: 2000
+          });
+        }
+      });
     },
     // 加载更多数据
     loadMore: function loadMore() {
-      var _this4 = this;
+      var _this7 = this;
       if (this.loading || this.finished) return;
       this.loading = true;
 
       // 模拟异步加载数据
       setTimeout(function () {
         var newShops = [{
-          id: _this4.repairShops.length + 1,
-          name: "\u7535\u52A8\u8F66\u7EF4\u4FEE\u5E97".concat(_this4.repairShops.length + 1),
-          distance: "".concat((_this4.repairShops.length * 0.8).toFixed(1), "KM"),
+          id: _this7.repairShops.length + 1,
+          name: "\u7535\u52A8\u8F66\u7EF4\u4FEE\u5E97".concat(_this7.repairShops.length + 1),
+          distance: "".concat((_this7.repairShops.length * 0.8).toFixed(1), "KM"),
           address: '安徽省淮北市相山区示例路123号',
           businessHours: '08:00 - 18:00'
         }, {
-          id: _this4.repairShops.length + 2,
-          name: "\u5FEB\u4FEE\u5E97".concat(_this4.repairShops.length + 2),
-          distance: "".concat((_this4.repairShops.length * 0.8 + 0.5).toFixed(1), "KM"),
+          id: _this7.repairShops.length + 2,
+          name: "\u5FEB\u4FEE\u5E97".concat(_this7.repairShops.length + 2),
+          distance: "".concat((_this7.repairShops.length * 0.8 + 0.5).toFixed(1), "KM"),
           address: '安徽省淮北市相山区示例路456号',
           businessHours: '08:30 - 18:30'
         }];
-        _this4.repairShops = [].concat((0, _toConsumableArray2.default)(_this4.repairShops), newShops);
-        _this4.loading = false;
+        _this7.repairShops = [].concat((0, _toConsumableArray2.default)(_this7.repairShops), newShops);
+        _this7.loading = false;
 
         // 模拟数据加载完毕
-        if (_this4.repairShops.length >= 10) {
-          _this4.finished = true;
+        if (_this7.repairShops.length >= 10) {
+          _this7.finished = true;
         }
       }, 1000);
     },
     // 处理滚动事件
     handleScroll: function handleScroll(e) {
       this.scrollTop = e.detail.scrollTop;
+    },
+    // 选择位置
+    chooseLocation: function chooseLocation() {
+      var _this8 = this;
+      uni.chooseLocation({
+        success: function success(res) {
+          // 只要有name就更新位置，不需要检查address
+          if (res.name) {
+            // 更新地址显示，使用地点名称
+            _this8.address = res.name;
+            _this8.latitude = res.latitude;
+            _this8.longitude = res.longitude;
+
+            // 更新地图中心点和标记
+            var mapContext = uni.createMapContext('myMap', _this8);
+            mapContext.moveToLocation({
+              latitude: res.latitude,
+              longitude: res.longitude
+            });
+          }
+        },
+        fail: function fail(err) {
+          // 只有在真正的错误（非用户取消）时才提示
+          if (err.errMsg && err.errMsg.indexOf('cancel') === -1) {
+            if (err.errMsg.indexOf('auth deny') !== -1) {
+              uni.showModal({
+                title: '提示',
+                content: '需要获取位置权限能选择地址',
+                confirmText: '去设置',
+                success: function success(res) {
+                  if (res.confirm) {
+                    uni.openSetting();
+                  }
+                }
+              });
+            } else {
+              uni.showToast({
+                title: '选择位置失败',
+                icon: 'none'
+              });
+            }
+          }
+        }
+      });
+    },
+    goToAssignRepair: function goToAssignRepair(shop) {
+      uni.navigateTo({
+        url: "/pages/assignRepair/assignRepair?shopInfo=".concat(encodeURIComponent(JSON.stringify(shop)))
+      });
     }
   }
 };

@@ -31,6 +31,22 @@
 			"style": {
 				"navigationBarTitleText": "编辑资料"
 			}
+		},
+		{
+			"path": "pages/grabOrder/grabOrder",
+			"style": {
+				"navigationBarTitleText": "抢单报修",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/assignRepair/assignRepair",
+			"style": {
+				"navigationBarTitleText": "指定报修",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
 		}
 	],
 	"globalStyle": {

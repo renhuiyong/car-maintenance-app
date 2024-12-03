@@ -10,7 +10,7 @@
 					open-type="chooseAvatar" 
 					@chooseavatar="onChooseAvatar"
 				>
-					<image class="avatar" :src="userInfo.avatar || '/static/my/default-avatar.png'"></image>
+					<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
 					<image class="arrow" src="/static/images/youjiantou2.png"></image>
 				</button>
 			</view>
@@ -23,6 +23,8 @@
 					v-model="userInfo.name"
 					placeholder="请输入昵称"
 					placeholder-class="input-placeholder"
+					maxlength="32"
+					@input="handleNameInput"
 				/>
 				<image class="arrow" src="/static/images/youjiantou2.png"></image>
 			</view>
@@ -30,10 +32,23 @@
 			<!-- 手机号 -->
 			<view class="form-item">
 				<text class="label">手机号</text>
-				<text class="phone-text">{{ userInfo.phone || '未绑定' }}</text>
-				<view v-if="!userInfo.phone" class="bind-btn" @click="bindPhone">
+				<button 
+					v-if="!userInfo.phone" 
+					class="phone-text-btn" 
+					open-type="getPhoneNumber" 
+					@getphonenumber="getPhoneNumber"
+				>
+					未绑定
+				</button>
+				<text v-else class="phone-text">{{ userInfo.phone }}</text>
+				<button 
+					v-if="!userInfo.phone" 
+					class="bind-btn" 
+					open-type="getPhoneNumber" 
+					@getphonenumber="getPhoneNumber"
+				>
 					绑定手机号
-				</view>
+				</button>
 				<image v-else class="arrow" src="/static/images/youjiantou2.png"></image>
 			</view>
 		</view>
@@ -54,7 +69,8 @@ export default {
 				name: '',
 				phone: '',
 				avatar: ''
-			}
+			},
+			request
 		}
 	},
 	
@@ -68,14 +84,16 @@ export default {
 	methods: {
 		async onChooseAvatar(e) {
 			try {
+				const uploadUrl = request.BASE_URL + '/web/user/upload'
+
 				// 先上传图片
 				const uploadRes = await new Promise((resolve, reject) => {
 					uni.uploadFile({
-						url: request.baseUrl + '/api/upload/file',
+						url: uploadUrl.startsWith('http') ? uploadUrl : 'http://' + uploadUrl,
 						filePath: e.detail.avatarUrl,
 						name: 'file',
 						header: {
-							'token': uni.getStorageSync('token')
+							'WaAuthorization': uni.getStorageSync('token')
 						},
 						success: (uploadFileRes) => {
 							try {
@@ -92,35 +110,93 @@ export default {
 				})
 
 				if (uploadRes.code !== 200) {
-					throw new Error(uploadRes.message || '上传失败')
+					throw new Error(uploadRes.msg || '上传失败')
 				}
 
-				this.userInfo.avatar = uploadRes.data.url
+				if (!uploadRes.fileName) {
+					throw new Error('上传成功但未返回图片地址')
+				}
+
+				this.userInfo.avatar = uploadRes.fileName
+
 			} catch (err) {
-                uni.showToast({
-					title: JSON.stringify(err),
+				uni.showToast({
+					title: typeof err === 'string' ? err : (err.errMsg || err.message || '更新头像失败'),
 					icon: 'none'
 				})
-				// uni.showToast({
-				// 	title: err.message || '更新头像失败',
-				// 	icon: 'none'
-				// })
 			}
 		},
 		
-		bindPhone() {
-			// 跳转到手机号绑定页面
-			uni.navigateTo({
-				url: '/pages/bindPhone/bindPhone'
-			})
+		async getPhoneNumber(e) {
+			try {
+				// 打印返回数据，方便调试
+				console.log('getPhoneNumber response:', e.detail)
+				
+				// 用户拒绝授权的情况
+				if (e.detail.errMsg && e.detail.errMsg.includes('deny')) {
+					throw new Error('用户拒绝授权')
+				}
+				
+				// 检查是否有code
+				if (!e.detail.code) {
+					throw new Error('获取手机号失败')
+				}
+				
+				// 调用后端接口绑定手机号
+				const res = await api.user.bindPhone({
+					phoneCode: e.detail.code
+				})
+				
+				if (res.code === 200) {
+					// 更新本地用户信息
+					this.userInfo.phone = res.data.phone
+					uni.setStorageSync('userInfo', JSON.stringify(this.userInfo))
+					
+					uni.showToast({
+						title: '手机号绑定成功',
+						icon: 'success'
+					})
+				} else {
+					throw new Error(res.msg || '绑定失败')
+				}
+			} catch (err) {
+				uni.showToast({
+					title: err.message || '绑定失败',
+					icon: 'none'
+				})
+			}
+		},
+		
+		handleNameInput(e) {
+			const value = e.detail.value
+			if (value && value.length > 32) {
+				uni.showToast({
+					title: '昵称最多32个字符',
+					icon: 'none'
+				})
+				this.userInfo.name = value.slice(0, 32)
+			}
 		},
 		
 		async saveProfile() {
 			try {
-				console.log(api.user.updateProfile)
-				const res = await api.user.updateProfile(this.userInfo)
+				// 验证昵称长度
+				if (this.userInfo.name && this.userInfo.name.length > 32) {
+					throw new Error('昵称最多32个字符')
+				}
+				
+				// 构造要提交的数据，使用正确的字段名
+				const updateData = {
+					name: this.userInfo.name,
+					avatar: this.userInfo.avatar.startsWith('/profile') ? 
+						   this.userInfo.avatar : 
+						   '/profile' + this.userInfo.avatar,
+					phone: this.userInfo.phone
+				}
+				
+				const res = await api.user.updateProfile(updateData)
 				if (res.code === 200) {
-					// 更新本地存储
+					// 更新本地存储时保持前端使用的字段名
 					uni.setStorageSync('userInfo', JSON.stringify(this.userInfo))
 					
 					uni.showToast({
@@ -128,15 +204,16 @@ export default {
 						icon: 'success'
 					})
 					
-					// 返回上一页并刷新
 					setTimeout(() => {
 						const pages = getCurrentPages()
 						const prevPage = pages[pages.length - 2]
-						prevPage.checkLoginStatus()
+						if (prevPage && typeof prevPage.checkLoginStatus === 'function') {
+							prevPage.checkLoginStatus()
+						}
 						uni.navigateBack()
 					}, 1500)
 				} else {
-					throw new Error(res.message || '保存失败')
+					throw new Error(res.msg || '保存失败')
 				}
 			} catch (err) {
 				uni.showToast({
@@ -193,9 +270,32 @@ export default {
 			color: #333;
 		}
 		
+		.phone-text-btn {
+			flex: 1;
+			font-size: 28rpx;
+			color: #333;
+			text-align: left;
+			background: none;
+			padding: 0;
+			margin: 0;
+			line-height: 1;
+			
+			&::after {
+				border: none;
+			}
+		}
+		
 		.bind-btn {
 			font-size: 24rpx;
 			color: #4468E8;
+			background: none;
+			padding: 0;
+			margin: 0;
+			line-height: 1;
+			
+			&::after {
+				border: none;
+			}
 		}
 		
 		&.avatar-item {
