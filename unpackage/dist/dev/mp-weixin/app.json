@@ -6,7 +6,8 @@
     "pages/login/login",
     "pages/editProfile/editProfile",
     "pages/grabOrder/grabOrder",
-    "pages/assignRepair/assignRepair"
+    "pages/assignRepair/assignRepair",
+    "pages/productDetail/productDetail"
   ],
   "subPackages": [],
   "window": {
