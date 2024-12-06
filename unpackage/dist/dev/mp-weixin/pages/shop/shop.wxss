@@ -49,6 +49,10 @@
 	overflow: hidden;
 	background: #fff;
 	height: 0;
+	visibility: visible;
+}
+.main-content.hidden {
+	visibility: hidden;
 }
 .category-list {
 	width: 180rpx;
@@ -80,9 +84,9 @@
 	background: #fff;
 }
 .category-section-title {
-	height: 88rpx;
-	line-height: 88rpx;
-	padding: 8rpx 20rpx;
+	height: 72rpx;
+	line-height: 72rpx;
+	padding: 0 20rpx;
 	font-size: 28rpx;
 	font-weight: bold;
 	color: #333;
@@ -92,9 +96,6 @@
 	top: 0;
 	z-index: 10;
 	box-sizing: border-box;
-	transition: -webkit-transform 0.3s ease-out;
-	transition: transform 0.3s ease-out;
-	transition: transform 0.3s ease-out, -webkit-transform 0.3s ease-out;
 	-webkit-transform: translateZ(0);
 	        transform: translateZ(0);
 	will-change: transform;
@@ -104,10 +105,10 @@
 }
 .product-item {
 	display: flex;
-	padding: 20rpx 0;
-	border-bottom: 1rpx solid #f5f5f5;
 	height: 200rpx;
+	padding: 20rpx 0;
 	box-sizing: border-box;
+	border-bottom: 1rpx solid #f5f5f5;
 }
 .product-item image {
 	width: 160rpx;
@@ -138,16 +139,16 @@
 	padding-right: 20rpx;
 }
 .price {
-	color: #ff6b6b;
+	color: #FF9B49;
 	font-size: 32rpx;
 }
 .add-btn,
 .plus {
-	width: 48rpx;
-	height: 48rpx;
-	min-width: 48rpx;
-	min-height: 48rpx;
-	background-color: #ff6b6b;
+	width: 56rpx;
+	height: 56rpx;
+	min-width: 56rpx;
+	min-height: 56rpx;
+	background-color: transparent;
 	color: #fff;
 	border-radius: 50%;
 	display: flex;
@@ -165,19 +166,20 @@
 	-webkit-user-select: none;
 	touch-action: manipulation;
 	margin-right: 10rpx;
+	margin-bottom: 2rpx;
 }
 .add-btn::before,
 .plus::before {
-	content: '+';
+	content: '';
 	position: absolute;
-	top: 46%;
+	top: 50%;
 	left: 50%;
 	-webkit-transform: translate(-50%, -50%);
 	        transform: translate(-50%, -50%);
-	font-size: 32rpx;
-	line-height: 1;
-	height: 32rpx;
-	width: 32rpx;
+	height: 56rpx;
+	width: 56rpx;
+	background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAABUCAYAAADNjBSxAAAAAXNSR0IArs4c6QAAA8tJREFUeF7tmktsTFEYx39fqVfCgh0hUc8gykLFRgjVEYlEPBILkWgHIbEh8VixERI2EoIpidhpRGJBq6rdiceCBYlHKtEQ8QqGUGN65N65HTPtTOfcuQ+TkzvbOd/33d/3P+c7T8GwnxjGQwRU6YpGCkUKhZyBqMuFnHDX4SKFXKcsZINIoZAT7jpcpJDrlIVsECkUcsJdh4sUcp2ykA0ihUJOuOtwkUJDpUydrZ/BsGHLEWpRzAJqgHHAWMcuCXwDuhGeoXhMOt0pO9tfuJaiiIFnhdSFhlr6qraA2gRMLvPDekCuUNV3WRrbHpfpwzYrG0g1N9Sh5DiwzMsHFLDtQtR+aWq7X45f10CquWE6So4CG8sJ6MKmBVGHpKntpQsbfYXU4WXDmTT6GKg9QLWbIB7apkBO8ebnATnc9UfHj5ZC6tKKCfRWtyAs13HqextFJyNTG2Vrx6dSvksCqfMNcxG57lSsUv6C/L8bpdbK9rYnQwUZEkglVtVD1dWcshvkB+v4TkLfeonfai/WuCiQo8zdCoLpZ0ii1JJiShUEssfM72qrbFoTYyX+uhmRqis0pgYB2dVs4qhb/60A6KbPKhRvf60aWP0GAyVWnwC1V9fvkO2mLIZpAwrj9/fw4KIv7kFOSvzmvlxneUDOpPnUt3lm/gZYtC3/4z+/gmu7fQIihag5uZNvPlAidsXXFUDwQFZiWiTeaq0j7V8WyFmb3fMrdbafcIBA1OL+td8/oESs0/eFZlhA0CXxVnuw2kCZLYA88lWdMBWyYlWpBdbWIwPkZ2XLzUp4Clna2BXPAYq99rA5Ky5sqED0SLx1ijjb5ue+d7ewu5wVL52eKSoR2w6cMwIIdohqjp1GscsIIOGMpdBtYIURQNBhAXUDU7WAxus1y/qasRLmrct3/fUN3LGOJFz8ku8g9VPH4JUF9BGYoNOaxhtazXxv1H4EXmstYj5ZQL3ACK2PqHyg30YCGdfl9ItC5Xc5uyjol+0x47WGWrbR7DWwcHO+zZceuHnQnZ/eJKRTOjYdRk6shi19Mnc65ixOM/shg7YPZm7wTNuCO93OnEMSGyhzxai1AtSZEOw2YW3BCx1jOSqZc9DoqGTdn5pzFOx7xQu8y5U4rLeB/LxOmVwHNUvzh9yPD/DwkvYwLNpQ9zrFhjLpwqs/I0ZdSWahTLo0HqCUGdf6WSiTHl5koUx6GpNbOo15vDRwPjDmedkgMFMeABaawY14oul9DeOvh5LPy/wNF7y3CCj4HHuLECnkLX/BW0cKBZ9jbxEihbzlL3jrv1MC4/TyQK0dAAAAAElFTkSuQmCC) no-repeat center center;
+	background-size: contain;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -214,7 +216,7 @@
 	position: absolute;
 	top: -10rpx;
 	right: -10rpx;
-	background: #ff6b6b;
+	background: #FF9B49;
 	color: #fff;
 	font-size: 20rpx;
 	padding: 0 10rpx;
@@ -230,12 +232,12 @@
 	align-items: center;
 }
 .total-price {
-	color: #ff6b6b;
+	color: #FF9B49;
 	font-size: 36rpx;
 	margin-right: 30rpx;
 }
 .checkout-btn {
-	background: #ff6b6b;
+	background: #FF9B49;
 	color: #fff;
 	padding: 20rpx 40rpx;
 	border-radius: 40rpx;
@@ -243,42 +245,48 @@
 .quantity-control {
 	display: flex;
 	align-items: center;
-	justify-content: flex-end;
+	justify-content: center;
 	background: #f5f5f5;
-	border-radius: 0 24rpx 24rpx 0;
-	height: 48rpx;
+	border-radius: 24rpx;
+	height: 56rpx;
 	flex-shrink: 0;
-	width: 140rpx;
+	width: 160rpx;
+	margin-right: 14rpx;
+	position: relative;
 }
 .quantity-control .minus,
 .quantity-control .plus {
-	width: 48rpx;
-	height: 48rpx;
-	min-width: 48rpx;
-	min-height: 48rpx;
+	width: 56rpx;
+	height: 56rpx;
+	min-width: 56rpx;
+	min-height: 56rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: #f5f5f5;
 	color: #333;
 	flex-shrink: 0;
 	user-select: none;
 	-webkit-user-select: none;
 	touch-action: manipulation;
-	border-radius: 24rpx 0 0 24rpx;
 	font-size: 32rpx;
+	position: relative;
+	top: -2rpx;
 }
 .quantity-control .num {
-	min-width: 44rpx;
-	width: 44rpx;
+	min-width: 48rpx;
+	width: 48rpx;
 	text-align: center;
 	font-size: 28rpx;
 	color: #333;
-	margin: 0 12rpx;
+	margin: 0;
 	flex-shrink: 0;
 	background: transparent;
 	border: none;
 	padding: 0;
+	height: 56rpx;
+	line-height: 54rpx;
+	position: relative;
+	top: -2rpx;
 }
 
 /* 去除输入框聚焦时的默认样式 */
@@ -287,24 +295,28 @@
 }
 .add-btn.disabled,
 .plus.disabled {
-	width: 48rpx;
-	height: 48rpx;
-	min-width: 48rpx;
-	min-height: 48rpx;
-	background-color: #ccc;
+	background-color: transparent;
 	pointer-events: none;
 	opacity: 0.6;
 	cursor: not-allowed;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	line-height: 1;
-	padding: 0;
-	pointer-events: auto;
 }
 
-/* 购物车弹出层样式 */
+/* 保留一个完整的禁用状态式 */
+.add-btn.disabled,
+.plus.disabled {
+	background-color: transparent;
+	pointer-events: none;
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* 保留结算按钮的禁用样式 */
+.checkout-btn.disabled {
+	background-color: #ccc;
+	pointer-events: none;
+}
+
+/* 购车弹出层样式 */
 .cart-popup {
 	position: fixed;
 	left: 0;
@@ -398,7 +410,7 @@
 }
 .item-price {
 	font-size: 32rpx;
-	color: #ff6b6b;
+	color: #FF9B49;
 	margin-top: 10rpx;
 }
 
@@ -406,9 +418,7 @@
 .cart-item .quantity-control {
 	display: flex;
 	align-items: center;
-	background: #f5f5f5;
-	border-radius: 0 24rpx 24rpx 0;
-	padding: 0 12rpx;
+	justify-content: center;
 	height: 48rpx;
 	flex-shrink: 0;
 	width: 140rpx;
@@ -432,11 +442,11 @@
 	text-align: center;
 	font-size: 28rpx;
 	color: #333;
-	margin: 0 12rpx;
+	margin: 0;
 	flex-shrink: 0;
 }
 
-/* 修改购物车样式 */
+/* 修改物车样式 */
 .cart-wrap {
     display: flex;
     flex-direction: column;
@@ -473,17 +483,10 @@
 /* 添加禁用状态样式 */
 .add-btn.disabled,
 .plus.disabled {
-	background-color: #ccc;
+	background-color: transparent;
 	pointer-events: none;
 	opacity: 0.6;
 	cursor: not-allowed;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	line-height: 1;
-	padding: 0;
-	pointer-events: auto;
 }
 .checkout-btn.disabled {
 	background-color: #ccc;
@@ -499,7 +502,7 @@
 	color: #ff6b6b;
 }
 
-/* 添加搜索相样式 */
+/* 添加搜索相样 */
 .clear-icon {
 	font-size: 40rpx;
 	color: #999;
@@ -526,7 +529,7 @@
 	margin: 0 20rpx;
 }
 
-/* 修改动画样式 */
+/* 修改动画样 */
 .add-to-cart-animation {
 	position: fixed;
 	z-index: 999;
@@ -540,7 +543,7 @@
 	box-shadow: 0 0 10rpx rgba(255, 107, 107, 0.5);
 }
 
-/* 购物车图标样式 */
+/* 物车图标样式 */
 .cart-icon {
 	position: relative;
 	width: 50rpx;
@@ -642,10 +645,12 @@
 .brand-scroll {
     flex: 1;
     white-space: nowrap;
+    width: 100%;
+    overflow-x: scroll;
 }
 .brand-list {
     display: inline-flex;
-    padding-right: 20rpx;
+    padding-right: 40rpx;
 }
 .brand-item {
     display: inline-block;
@@ -656,6 +661,10 @@
     background: #f7f7f7;
     border-radius: 26rpx;
     transition: all 0.3s;
+    flex-shrink: 0;
+}
+.brand-item:last-child {
+    margin-right: 0;
 }
 .brand-item.active {
     color: #fff;
@@ -713,5 +722,30 @@
 }
 .my-add-btn {
 	right: 10rpx !important
+}
+.search-results-container {
+	position: fixed;
+	top: 200rpx; /* 根据顶部搜索栏和品牌筛选的实际高度调整 */
+	left: 0;
+	right: 0;
+	bottom: 110rpx; /* 购物栏的高度 */
+	z-index: 10;
+	background: #fff;
+}
+.search-results {
+	height: 100%;
+	background: #fff;
+	overflow-y: auto;
+}
+.main-content {
+	flex: 1;
+	display: flex;
+	overflow: hidden;
+	background: #fff;
+	height: 0;
+	visibility: visible;
+}
+.main-content.hidden {
+	visibility: hidden;
 }
 

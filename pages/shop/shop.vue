@@ -41,52 +41,54 @@
 		</view>
 		
 		<!-- 搜索结果列表 -->
-		<scroll-view 
-			v-if="isSearching"
-			scroll-y 
-			class="search-results"
-			@scrolltolower="onReachBottom"
-			:refresher-enabled="true"
-			:refresher-triggered="refreshing"
-			@refresherrefresh="onSearchRefresh"
-		>
-			<view class="product-item" 
-				  v-for="(item, index) in searchResults" 
-				  :key="item.id"
-				  @tap="goToDetail(item, item.categoryIndex, item.productIndex)">
-				<image :src="item.image" mode="aspectFit"></image>
-				<view class="product-info">
-					<text class="product-name">{{ item.name }}</text>
-					<text class="product-stock">库存{{ item.stock }}</text>
-					<view class="product-price-wrap">
-						<text class="price">￥{{ item.price }}/件</text>
-						<view class="quantity-control my-quantity-control" v-if="getCartQuantity(item.categoryIndex, item.productIndex)">
-							<text class="minus" @tap.stop="removeFromCart(item.categoryIndex, item.productIndex)">-</text>
-							<input 
-								class="num" 
-								type="digit" 
-								:value="getCartQuantity(item.categoryIndex, item.productIndex)"
-								@input="handleQuantityInput($event, item.categoryIndex, item.productIndex)"
-								@blur="handleQuantityBlur(item.categoryIndex, item.productIndex)"
-								@tap.stop
-							/>
-							<text class="plus" 
+		<view class="search-results-container" v-if="isSearching">
+			<scroll-view 
+				scroll-y 
+				class="search-results"
+				@scrolltolower="onReachBottom"
+				:refresher-enabled="true"
+				:refresher-triggered="refreshing"
+				@refresherrefresh="onSearchRefresh"
+				style="height: calc(100vh - 200rpx);"
+			>
+				<view class="product-item" 
+					  v-for="(item, index) in searchResults" 
+					  :key="item.id"
+					  @tap="goToDetail(item, item.categoryIndex, item.productIndex)">
+					<image :src="item.image" mode="aspectFit"></image>
+					<view class="product-info">
+						<text class="product-name">{{ item.name }}</text>
+						<text class="product-stock">库存{{ item.stock }}</text>
+						<view class="product-price-wrap">
+							<text class="price">￥{{ item.price }}/件</text>
+							<view class="quantity-control my-quantity-control" v-if="getCartQuantity(item.categoryIndex, item.productIndex)">
+								<text class="minus" @tap.stop="removeFromCart(item.categoryIndex, item.productIndex)">-</text>
+								<input 
+									class="num" 
+									type="digit" 
+									:value="getCartQuantity(item.categoryIndex, item.productIndex)"
+									@input="handleQuantityInput($event, item.categoryIndex, item.productIndex)"
+									@blur="handleQuantityBlur(item.categoryIndex, item.productIndex)"
+									@tap.stop
+								/>
+								<text class="plus" 
+									  :class="{ disabled: isStockLimit(item.categoryIndex, item.productIndex) }"
+									  @tap.stop.prevent="handleAddToCart(item.categoryIndex, item.productIndex, $event)">+</text>
+							</view>
+							<text v-else 
+								  class="add-btn"
 								  :class="{ disabled: isStockLimit(item.categoryIndex, item.productIndex) }"
 								  @tap.stop.prevent="handleAddToCart(item.categoryIndex, item.productIndex, $event)">+</text>
 						</view>
-						<text v-else 
-							  class="add-btn"
-							  :class="{ disabled: isStockLimit(item.categoryIndex, item.productIndex) }"
-							  @tap.stop.prevent="handleAddToCart(item.categoryIndex, item.productIndex, $event)">+</text>
 					</view>
 				</view>
-			</view>
-			<view class="loading-more" v-if="loading">加载中...</view>
-			<view class="no-more" v-if="!hasMore">更多了</view>
-		</scroll-view>
+				<view class="loading-more" v-if="loading">加载中...</view>
+				<view class="no-more" v-if="!hasMore">更多了</view>
+			</scroll-view>
+		</view>
 		
 		<!-- 主体内容区 -->
-		<view class="main-content">
+		<view class="main-content" v-else>
 			<!-- 左侧分类导航 -->
 			<scroll-view scroll-y class="category-list">
 				<view class="category-item" 
@@ -104,7 +106,7 @@
 				class="product-list"
 				@scroll="onProductScroll"
 				:scroll-top="scrollTop"
-				:scroll-with-animation="true"
+				:scroll-with-animation="false"
 				style="height: 100%;"
 			>
 				<view 
@@ -183,7 +185,7 @@
 			<view class="cart-content">
 				<view class="cart-header">
 					<view class="header-left">
-						<text class="title">购物车</text>
+						<text class="title">购车</text>
 						<text class="cart-count" v-if="cartCount">(共{{ cartCount }}件商品)</text>
 					</view>
 					<text class="clear" 
@@ -272,7 +274,7 @@ export default {
 								<p>材质：高密陶瓷复材料</p>
 								<p>适用车型：</p>
 								<p>规格：标准规格</p>
-								<p>包装：1对装（2片）</p>
+								<p>装：1对装（2片）</p>
 								<h3>产品特点</h3>
 								<ul>
 									<li>高性能陶瓷配方，制动力强</li>
@@ -303,13 +305,13 @@ export default {
 							brand: 'brand2',
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
-								<p>���电压：DC 12V</p>
+								<p>电压：DC 12V</p>
 								<p>感应距离：3-8mm可调</p>
 								<p>防水等级：IP65</p>
 								<p>线长50cm</p>
 								<h3>产品</h3>
 								<ul>
-									<li>精准感应，反应灵敏</li>
+									<li>精准感，反应灵敏</li>
 									<li>防水防尘</li>
 									<li>安装便捷</li>
 									<li>用寿命长</li>
@@ -398,8 +400,8 @@ export default {
 							price: 15,
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
-								<p>材质铜合金</p>
-								<p>适配：通用型</p>
+								<p>材质</p>
+								<p>适：通用型</p>
 								<h3>品特点</h3>
 								<ul>
 									<li>接触良好</li>
@@ -441,8 +443,8 @@ export default {
 							price: 85,
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
-								<p>调速围：1-5档</p>
-								<p>适配电压：48V</p>
+								<p>速围：1-5档</p>
+								<p>适电压：48V</p>
 								<h3>产品特点</h3>
 								<ul>
 									<li>平稳调速</li>
@@ -471,7 +473,7 @@ export default {
 								<ul>
 									<li>视野清晰</li>
 									<li>防震计</li>
-									<li>安装方便</li>
+									<li>装方便</li>
 								</ul>
 							</div>`
 						},
@@ -485,9 +487,9 @@ export default {
 								<h3>产品参数</h3>
 								<p>材质：PP塑料</p>
 								<p>颜色黑色</p>
-								<h3>产品特点</h3>
+								<h3>品特点</h3>
 								<ul>
-									<li>防水耐用</li>
+									<li>防水耐</li>
 									<li>安装简单</li>
 									<li>防泥效果好</li>
 								</ul>
@@ -504,13 +506,13 @@ export default {
 			heightArr: [], // 存储每个分类品列表的高度
 			showCartPopup: false, // 控制购物车弹出层显示
 			searchKeyword: '', // 搜索关键词
-			searchResults: [], // 搜索结果
+			searchResults: [], // 搜结果
 			isSearching: false, // 是否在搜索状态
 			loading: false, // 加载态
 			refreshing: false, // 刷新状态
 			page: 1, // 当前页码
 			hasMore: true, // 是否有更多数据
-			animation: null, // 添加动画实例
+			animation: null, // 添加动画���例
 			showCartAnimation: false,
 			cartAnimationStyle: {
 				left: '0px',
@@ -529,11 +531,11 @@ export default {
 				{ id: 'all', name: '全部' },
 				{ id: 'brand1', name: '品牌1' },
 				{ id: 'brand2', name: '牌2' },
-				{ id: 'brand3', name: '品牌3' },
+				{ id: 'brand3', name: '品3' },
 				{ id: 'brand4', name: '品牌4' },
 				{ id: 'brand5', name: '品牌5' },
 				{ id: 'brand6', name: '品牌6' },
-				// 可以添加更多品牌
+				// 可以添加更多品
 			],
 			selectedBrand: 'all', // 当前选中的品牌
 			shopId: '', // 添加shopId存储
@@ -572,7 +574,7 @@ export default {
 	onLoad(options) {
 		if (options.id) {
 			this.shopId = options.id
-			// 可以在这里获取店铺详情，包括商家ID
+			// 可以在这里获取详情，括家ID
 			this.getShopDetail()
 		}
 		// 加载本地存储的购物车数据
@@ -588,31 +590,71 @@ export default {
 			return this.categories[categoryIndex]?.items || [];
 		},
 
-		// 修改切换分类方法
+		// 在 methods 中修改 switchCategory 方法
 		switchCategory(index) {
 			if (this.currentCategory === index) return;
 			
 			this.currentCategory = index;
 			this.isManualSwitching = true;
 			
-			// 计目标分类滚动位
+			// 计算目标滚动位置
 			let targetScrollTop = 0;
 			const pxRatio = uni.getSystemInfoSync().windowWidth / 750;
 			
+			// 更精确的高度计算
 			for (let i = 0; i < index; i++) {
-				const categoryItems = this.categories[i].items || [];
-				// 每个分类的总高 = 标题高度(88rpx) + 商品总高度(每个商品200rpx)
-				targetScrollTop += (88 + categoryItems.length * 200) * pxRatio;
+				const category = this.filteredCategories[i];
+				if (!category) continue;
+				
+				// 标题高度（不包含padding，因为padding已经包含在商品列表）
+				const titleHeight = 72 * pxRatio; // 减小标题实际占用高度
+				
+				// 商品列表高度（包含内边距）
+				const itemCount = category.items?.length || 0;
+				const itemHeight = ITEM_HEIGHT * pxRatio;
+				const itemsHeight = itemCount * itemHeight;
+				
+				// 每个分的总高度
+				targetScrollTop += titleHeight + itemsHeight;
 			}
 			
-			// 设置滚位置
-			this.$nextTick(() => {
-				this.scrollTop = targetScrollTop + 1;
-				
-				setTimeout(() => {
+			// 确保目标位置是整数
+			targetScrollTop = Math.floor(targetScrollTop);
+			
+			// 获取当前滚动位置
+			const startScrollTop = this.scrollTop;
+			const distance = targetScrollTop - startScrollTop;
+			
+			// 动画参数
+			const duration = 500;
+			const steps = 15;
+			const stepDuration = duration / steps;
+			let currentStep = 0;
+			
+			// 缓动函数
+			const easeInOutCubic = (t) => {
+				return t < 0.5
+					? 4 * t * t * t
+					: 1 - Math.pow(-2 * t + 2, 3) / 2;
+			};
+			
+			// 执行动画
+			const animate = () => {
+				if (currentStep >= steps) {
+					this.scrollTop = targetScrollTop;
 					this.isManualSwitching = false;
-				}, 300);
-			});
+					return;
+				}
+				
+				const progress = currentStep / steps;
+				const easeProgress = easeInOutCubic(progress);
+				this.scrollTop = Math.floor(startScrollTop + (distance * easeProgress));
+				
+				currentStep++;
+				setTimeout(animate, stepDuration);
+			};
+			
+			animate();
 		},
 		
 		// 修改滚动监听方法
@@ -624,12 +666,20 @@ export default {
 			let currentIndex = 0;
 			let heightSum = 0;
 			
-			for (let i = 0; i < this.categories.length; i++) {
-				const categoryItems = this.categories[i].items || [];
-				const categoryHeight = (88 + categoryItems.length * 200) * pxRatio;
-				heightSum += categoryHeight;
+			// 更精确的滚动位置检测
+			for (let i = 0; i < this.filteredCategories.length; i++) {
+				const category = this.filteredCategories[i];
+				if (!category) continue;
 				
-				if (scrollTop < heightSum) {
+				const titleHeight = 88 * pxRatio;
+				const itemsHeight = (category.items?.length || 0) * ITEM_HEIGHT * pxRatio;
+				const categoryGap = 20 * pxRatio;
+				
+				heightSum += titleHeight + itemsHeight + categoryGap;
+				
+				// 使用阈值来判断当前分类
+				const threshold = heightSum - (itemsHeight / 2);
+				if (scrollTop < threshold) {
 					currentIndex = i;
 					break;
 				}
@@ -677,8 +727,48 @@ export default {
 					});
 					return;
 				}
+				
+				// 计算剩余可购买数量
+				const remainingStock = product.stock - existItem.quantity;
+				
+				// 如果剩余可购买数量小于等于3，显示提示
+				if (remainingStock <= 3) {
+					// 如果剩余库存为1（加入后为0），显示已达到库存上限
+					if (remainingStock === 1) {
+						setTimeout(() => {
+							uni.showToast({
+								title: '已达到库存上限',
+								icon: 'none'
+							});
+						}, 100);
+					} else {
+						uni.showToast({
+							title: `库仅剩${remainingStock - 1}件`,
+							icon: 'none'
+						});
+					}
+				}
+				
 				existItem.quantity++;
 			} else {
+				// 如果库存小于等于3，显示提示
+				if (product.stock <= 3) {
+					// 如果库存为1，显示已达到库存上限
+					if (product.stock === 1) {
+						setTimeout(() => {
+							uni.showToast({
+								title: '已达到库存上限',
+								icon: 'none'
+							});
+						}, 100);
+					} else {
+						uni.showToast({
+							title: `库存仅剩${product.stock - 1}件`,
+							icon: 'none'
+						});
+					}
+				}
+				
 				cartList.push({
 					id: product.id,
 					categoryIndex,
@@ -791,18 +881,24 @@ export default {
 			if (!this.searchKeyword.trim()) {
 				this.isSearching = false;
 				this.searchResults = [];
+				this.enableScroll();
 				return;
 			}
 
 			this.isSearching = true;
 			this.searchResults = [];
-			this.selectedBrand = 'all';
+			this.disableScroll();
 
-			// 搜索逻辑
+			// 搜索逻辑，增加品牌筛选
 			this.categories.forEach((category, categoryIndex) => {
-				const results = category.items.filter(product => 
-					product.name.toLowerCase().includes(this.searchKeyword.toLowerCase())
-				).map((product, productIndex) => ({
+				const filteredItems = category.items.filter(product => {
+					// 同时满足搜索关键词和品牌筛选条件
+					const matchesKeyword = product.name.toLowerCase().includes(this.searchKeyword.toLowerCase());
+					const matchesBrand = this.selectedBrand === 'all' || product.brand === this.selectedBrand;
+					return matchesKeyword && matchesBrand;
+				});
+
+				const results = filteredItems.map((product, productIndex) => ({
 					...product,
 					categoryIndex,
 					productIndex
@@ -812,7 +908,7 @@ export default {
 
 			if (this.searchResults.length === 0) {
 				uni.showToast({
-					title: '暂无相关商品',
+					title: '暂无相关商',
 					icon: 'none'
 				});
 			}
@@ -823,6 +919,7 @@ export default {
 			this.searchKeyword = '';
 			this.isSearching = false;
 			this.searchResults = [];
+			this.enableScroll();
 		},
 		
 		// 拉加载更多
@@ -840,7 +937,7 @@ export default {
 			}, 1000)
 		},
 		
-		// 保存购车数到本地存储
+		// 存购车数到本地存储
 		saveCartData() {
 			uni.setStorageSync('cartData', JSON.stringify(this.cartList))
 		},
@@ -882,10 +979,10 @@ export default {
 		
 		// 修改 handleAddToCart 方法
 		handleAddToCart(categoryIndex, productIndex, event) {
-			// 先检查是否达到库存限制
+			// 先检查是否达到库限制
 			if (this.isStockLimit(categoryIndex, productIndex)) {
 				uni.showToast({
-					title: '已达到库存上',
+					title: '已达到库存上限',
 					icon: 'none'
 				});
 				return;
@@ -905,22 +1002,18 @@ export default {
 			query.select('.cart-icon').boundingClientRect(data => {
 				if (!data) return;
 
-				// 置球初始位和式
 				this.cartDot = {
 					show: true,
 					x: touch.clientX,
 					y: touch.clientY,
 					translateX: 0,
-					
 					translateY: 0,
 					opacity: 1
 				};
 
-				// 计算位移距离
 				const endX = data.left + data.width/2 - touch.clientX;
 				const endY = data.top + data.height/2 - touch.clientY;
 
-				// 延迟一帧设置终点位置，触发动画
 				setTimeout(() => {
 					this.cartDot = {
 						...this.cartDot,
@@ -929,7 +1022,6 @@ export default {
 						opacity: 0
 					};
 
-					// 动画结束后处理
 					setTimeout(() => {
 						this.cartDot.show = false;
 						this.addToCart(categoryIndex, productIndex);
@@ -938,22 +1030,26 @@ export default {
 			}).exec();
 		},
 		
-		// 计算高度的方法也需要修改
+		// 计算高度的��法也需要修改
 		calculateHeight() {
 			let height = 0;
 			this.heightArr = [];
+			const pxRatio = uni.getSystemInfoSync().windowWidth / 750;
 			
-			this.categories.forEach((category, index) => {
-				const categoryHeight = (category.items?.length || 0) * 200;
-				height += categoryHeight;
-				this.heightArr.push(height);
+			this.filteredCategories.forEach((category, index) => {
+				const titleHeight = 88 * pxRatio;
+				const itemsHeight = (category.items?.length || 0) * ITEM_HEIGHT * pxRatio;
+				const categoryGap = 20 * pxRatio;
+				
+				height += titleHeight + itemsHeight + categoryGap;
+				this.heightArr.push(Math.round(height));
 			});
 		},
 		
 		// 修改处理数量输入的方法
 		handleQuantityInput(event, categoryIndex, productIndex) {
 			const value = event.detail.value;
-			// 只允许输入数字，去除小数点
+			// 允许输入数字，去除小数点
 			const numValue = value.replace(/\D/g, '');
 			
 			const cartItem = this.cartList.find(item => 
@@ -963,7 +1059,7 @@ export default {
 			
 			if (!cartItem) return;
 			
-			// 允许输入框为空，此时不更新购物车总价和数量
+			// 允许输入框为空，此时不更购物车总价和数
 			if (numValue === '') {
 				cartItem._tempValue = '';  // 使用临时值存储空字符串
 				return;
@@ -971,7 +1067,7 @@ export default {
 			
 			const newQuantity = parseInt(numValue);
 			
-			// 如果输入0，直接移除商品
+			// 如果输入0，直接除商品
 			if (newQuantity === 0) {
 				const index = this.cartList.findIndex(item => 
 					item.categoryIndex === categoryIndex && 
@@ -988,7 +1084,7 @@ export default {
 			const product = this.categories[categoryIndex].items[productIndex];
 			const stock = product.stock;
 			
-			// 限制最大量不超过库存
+			// 限制最大量不超过库
 			if (newQuantity > stock) {
 				cartItem.quantity = stock;
 				uni.showToast({
@@ -1026,7 +1122,7 @@ export default {
 					return;
 				}
 				
-				// 清除临时值
+				// 清除临时
 				delete cartItem._tempValue;
 				
 				// 确保数量是有效数字
@@ -1039,14 +1135,14 @@ export default {
 		// 修改品牌选择方法
 		selectBrand(brandId) {
 			this.selectedBrand = brandId;
-			// 如果正在搜索，则清除搜索状态
+			
+			// 如果正在搜索，新执行搜索以应用新的品牌筛
 			if (this.isSearching) {
-				this.isSearching = false;
-				this.searchKeyword = '';
-				this.searchResults = [];
+				this.searchProducts();
+				return;
 			}
 			
-			// 重置当前分类索引
+			// 不在搜索状态时的原有逻辑
 			this.currentCategory = 0;
 			this.scrollTop = 0;
 		},
@@ -1062,7 +1158,7 @@ export default {
 			}
 		},
 		
-		// 添加 updateCartList 方法
+		// 添加 updateCartList 方
 		updateCartList() {
 			const cartData = uni.getStorageSync('cartData')
 			if (cartData) {
@@ -1078,7 +1174,7 @@ export default {
 			// 重新执行搜索
 			this.searchProducts();
 			
-			// 延迟关闭刷新状态
+			// 延迟闭刷新状态
 			setTimeout(() => {
 				this.refreshing = false;
 				uni.showToast({
@@ -1098,10 +1194,18 @@ export default {
 			//     this.merchantId = res.data.merchantId
 			//   }
 			// })
+		},
+		// 添加禁用/启用滚动方法
+		disableScroll() {
+			// 可以根据需要添加额外的滚动控制逻辑
+			this.scrollTop = 0;
+		},
+		enableScroll() {
+			// 可以根据需要加额外的滚动控制逻辑
 		}
 	},
 	created() {
-		// 在组件创时应用节流
+		// 在组件创时应节流
 		this.switchCategory = throttle(this.switchCategory, 200);
 	},
 	onShow() {
@@ -1189,6 +1293,11 @@ export default {
 	overflow: hidden;
 	background: #fff;
 	height: 0;
+	visibility: visible;
+}
+
+.main-content.hidden {
+	visibility: hidden;
 }
 
 .category-list {
@@ -1226,9 +1335,9 @@ export default {
 }
 
 .category-section-title {
-	height: 88rpx;
-	line-height: 88rpx;
-	padding: 8rpx 20rpx;
+	height: 72rpx;
+	line-height: 72rpx;
+	padding: 0 20rpx;
 	font-size: 28rpx;
 	font-weight: bold;
 	color: #333;
@@ -1237,7 +1346,6 @@ export default {
 	top: 0;
 	z-index: 10;
 	box-sizing: border-box;
-	transition: transform 0.3s ease-out;
 	transform: translateZ(0);
 	will-change: transform;
 }
@@ -1248,10 +1356,10 @@ export default {
 
 .product-item {
 	display: flex;
-	padding: 20rpx 0;
-	border-bottom: 1rpx solid #f5f5f5;
 	height: 200rpx;
+	padding: 20rpx 0;
 	box-sizing: border-box;
+	border-bottom: 1rpx solid #f5f5f5;
 }
 
 .product-item image {
@@ -1288,17 +1396,17 @@ export default {
 }
 
 .price {
-	color: #ff6b6b;
+	color: #FF9B49;
 	font-size: 32rpx;
 }
 
 .add-btn,
 .plus {
-	width: 48rpx;
-	height: 48rpx;
-	min-width: 48rpx;
-	min-height: 48rpx;
-	background-color: #ff6b6b;
+	width: 56rpx;
+	height: 56rpx;
+	min-width: 56rpx;
+	min-height: 56rpx;
+	background-color: transparent;
 	color: #fff;
 	border-radius: 50%;
 	display: flex;
@@ -1315,19 +1423,20 @@ export default {
 	-webkit-user-select: none;
 	touch-action: manipulation;
 	margin-right: 10rpx;
+	margin-bottom: 2rpx;
 }
 
 .add-btn::before,
 .plus::before {
-	content: '+';
+	content: '';
 	position: absolute;
-	top: 46%;
+	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
-	font-size: 32rpx;
-	line-height: 1;
-	height: 32rpx;
-	width: 32rpx;
+	height: 56rpx;
+	width: 56rpx;
+	background: url('/static/products/jiahao.png') no-repeat center center;
+	background-size: contain;
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1370,7 +1479,7 @@ export default {
 	position: absolute;
 	top: -10rpx;
 	right: -10rpx;
-	background: #ff6b6b;
+	background: #FF9B49;
 	color: #fff;
 	font-size: 20rpx;
 	padding: 0 10rpx;
@@ -1388,13 +1497,13 @@ export default {
 }
 
 .total-price {
-	color: #ff6b6b;
+	color: #FF9B49;
 	font-size: 36rpx;
 	margin-right: 30rpx;
 }
 
 .checkout-btn {
-	background: #ff6b6b;
+	background: #FF9B49;
 	color: #fff;
 	padding: 20rpx 40rpx;
 	border-radius: 40rpx;
@@ -1403,44 +1512,50 @@ export default {
 .quantity-control {
 	display: flex;
 	align-items: center;
-	justify-content: flex-end;
+	justify-content: center;
 	background: #f5f5f5;
-	border-radius: 0 24rpx 24rpx 0;
-	height: 48rpx;
+	border-radius: 24rpx;
+	height: 56rpx;
 	flex-shrink: 0;
-	width: 140rpx;
+	width: 160rpx;
+	margin-right: 14rpx;
+	position: relative;
 }
 
 .quantity-control .minus,
 .quantity-control .plus {
-	width: 48rpx;
-	height: 48rpx;
-	min-width: 48rpx;
-	min-height: 48rpx;
+	width: 56rpx;
+	height: 56rpx;
+	min-width: 56rpx;
+	min-height: 56rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	background-color: #f5f5f5;
 	color: #333;
 	flex-shrink: 0;
 	user-select: none;
 	-webkit-user-select: none;
 	touch-action: manipulation;
-	border-radius: 24rpx 0 0 24rpx;
 	font-size: 32rpx;
+	position: relative;
+	top: -2rpx;
 }
 
 .quantity-control .num {
-	min-width: 44rpx;
-	width: 44rpx;
+	min-width: 48rpx;
+	width: 48rpx;
 	text-align: center;
 	font-size: 28rpx;
 	color: #333;
-	margin: 0 12rpx;
+	margin: 0;
 	flex-shrink: 0;
 	background: transparent;
 	border: none;
 	padding: 0;
+	height: 56rpx;
+	line-height: 54rpx;
+	position: relative;
+	top: -2rpx;
 }
 
 /* 去除输入框聚焦时的默认样式 */
@@ -1450,24 +1565,28 @@ export default {
 
 .add-btn.disabled,
 .plus.disabled {
-	width: 48rpx;
-	height: 48rpx;
-	min-width: 48rpx;
-	min-height: 48rpx;
-	background-color: #ccc;
+	background-color: transparent;
 	pointer-events: none;
 	opacity: 0.6;
 	cursor: not-allowed;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	line-height: 1;
-	padding: 0;
-	pointer-events: auto;
 }
 
-/* 购物车弹出层样式 */
+/* 保留一个完整的禁用状态式 */
+.add-btn.disabled,
+.plus.disabled {
+	background-color: transparent;
+	pointer-events: none;
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+/* 保留结算按钮的禁用样式 */
+.checkout-btn.disabled {
+	background-color: #ccc;
+	pointer-events: none;
+}
+
+/* 购车弹出层样式 */
 .cart-popup {
 	position: fixed;
 	left: 0;
@@ -1574,7 +1693,7 @@ export default {
 
 .item-price {
 	font-size: 32rpx;
-	color: #ff6b6b;
+	color: #FF9B49;
 	margin-top: 10rpx;
 }
 
@@ -1582,9 +1701,7 @@ export default {
 .cart-item .quantity-control {
 	display: flex;
 	align-items: center;
-	background: #f5f5f5;
-	border-radius: 0 24rpx 24rpx 0;
-	padding: 0 12rpx;
+	justify-content: center;
 	height: 48rpx;
 	flex-shrink: 0;
 	width: 140rpx;
@@ -1610,11 +1727,11 @@ export default {
 	text-align: center;
 	font-size: 28rpx;
 	color: #333;
-	margin: 0 12rpx;
+	margin: 0;
 	flex-shrink: 0;
 }
 
-/* 修改购物车样式 */
+/* 修改物车样式 */
 .cart-wrap {
     display: flex;
     flex-direction: column;
@@ -1655,17 +1772,10 @@ export default {
 /* 添加禁用状态样式 */
 .add-btn.disabled,
 .plus.disabled {
-	background-color: #ccc;
+	background-color: transparent;
 	pointer-events: none;
 	opacity: 0.6;
 	cursor: not-allowed;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	line-height: 1;
-	padding: 0;
-	pointer-events: auto;
 }
 
 .checkout-btn.disabled {
@@ -1683,7 +1793,7 @@ export default {
 	color: #ff6b6b;
 }
 
-/* 添加搜索相样式 */
+/* 添加搜索相样 */
 .clear-icon {
 	font-size: 40rpx;
 	color: #999;
@@ -1712,7 +1822,7 @@ export default {
 	margin: 0 20rpx;
 }
 
-/* 修改动画样式 */
+/* 修改动画样 */
 .add-to-cart-animation {
 	position: fixed;
 	z-index: 999;
@@ -1727,7 +1837,7 @@ export default {
 	box-shadow: 0 0 10rpx rgba(255, 107, 107, 0.5);
 }
 
-/* 购物车图标样式 */
+/* 物车图标样式 */
 .cart-icon {
 	position: relative;
 	width: 50rpx;
@@ -1826,11 +1936,13 @@ export default {
 .brand-scroll {
     flex: 1;
     white-space: nowrap;
+    width: 100%;
+    overflow-x: scroll;
 }
 
 .brand-list {
     display: inline-flex;
-    padding-right: 20rpx;
+    padding-right: 40rpx;
 }
 
 .brand-item {
@@ -1842,6 +1954,11 @@ export default {
     background: #f7f7f7;
     border-radius: 26rpx;
     transition: all 0.3s;
+    flex-shrink: 0;
+}
+
+.brand-item:last-child {
+    margin-right: 0;
 }
 
 .brand-item.active {
@@ -1906,5 +2023,34 @@ export default {
 
 .my-add-btn {
 	right: 10rpx !important
+}
+
+.search-results-container {
+	position: fixed;
+	top: 200rpx; /* 根据顶部搜索栏和品牌筛选的实际高度调整 */
+	left: 0;
+	right: 0;
+	bottom: 110rpx; /* 购物栏的高度 */
+	z-index: 10;
+	background: #fff;
+}
+
+.search-results {
+	height: 100%;
+	background: #fff;
+	overflow-y: auto;
+}
+
+.main-content {
+	flex: 1;
+	display: flex;
+	overflow: hidden;
+	background: #fff;
+	height: 0;
+	visibility: visible;
+}
+
+.main-content.hidden {
+	visibility: hidden;
 }
 </style> 

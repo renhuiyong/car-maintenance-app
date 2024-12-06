@@ -124,30 +124,29 @@ var render = function () {
         }
       })
     : null
-  var l2 = _vm.__map(
-    _vm.filteredCategories,
-    function (category, categoryIndex) {
-      var $orig = _vm.__get_orig(category)
-      var l1 = _vm.__map(category.items, function (item, index) {
-        var $orig = _vm.__get_orig(item)
-        var m4 = _vm.getCartQuantity(categoryIndex, index)
-        var m5 = m4 ? _vm.getCartQuantity(categoryIndex, index) : null
-        var m6 = m4 ? _vm.isStockLimit(categoryIndex, index) : null
-        var m7 = !m4 ? _vm.isStockLimit(categoryIndex, index) : null
+  var l2 = !_vm.isSearching
+    ? _vm.__map(_vm.filteredCategories, function (category, categoryIndex) {
+        var $orig = _vm.__get_orig(category)
+        var l1 = _vm.__map(category.items, function (item, index) {
+          var $orig = _vm.__get_orig(item)
+          var m4 = _vm.getCartQuantity(categoryIndex, index)
+          var m5 = m4 ? _vm.getCartQuantity(categoryIndex, index) : null
+          var m6 = m4 ? _vm.isStockLimit(categoryIndex, index) : null
+          var m7 = !m4 ? _vm.isStockLimit(categoryIndex, index) : null
+          return {
+            $orig: $orig,
+            m4: m4,
+            m5: m5,
+            m6: m6,
+            m7: m7,
+          }
+        })
         return {
           $orig: $orig,
-          m4: m4,
-          m5: m5,
-          m6: m6,
-          m7: m7,
+          l1: l1,
         }
       })
-      return {
-        $orig: $orig,
-        l1: l1,
-      }
-    }
-  )
+    : null
   var g0 = _vm.showCartPopup ? _vm.cartList.length : null
   var g1 = _vm.showCartPopup ? _vm.cartList.length : null
   var l3 =
@@ -456,6 +455,8 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 //
 //
 //
+//
+//
 
 // 在 methods 外部定义节流函数
 var throttle = function throttle(fn, delay) {
@@ -488,7 +489,7 @@ var _default = {
           stock: 5,
           price: 20,
           brand: 'brand1',
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1A\u9AD8\u5BC6\u9676\u74F7\u590D\u6750\u6599</p>\n\t\t\t\t\t\t\t\t<p>\u9002\u7528\u8F66\u578B\uFF1A</p>\n\t\t\t\t\t\t\t\t<p>\u89C4\u683C\uFF1A\u6807\u51C6\u89C4\u683C</p>\n\t\t\t\t\t\t\t\t<p>\u5305\u88C5\uFF1A1\u5BF9\u88C5\uFF082\u7247\uFF09</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u9AD8\u6027\u80FD\u9676\u74F7\u914D\u65B9\uFF0C\u5236\u52A8\u529B\u5F3A</li>\n\t\t\t\t\t\t\t\t\t<li>\u4F4E\u566A\u97F3\uFF0C\u4E0D\u4F24\u5236\u76D8</li>\n\t\t\t\t\t\t\t\t\t<li>\u8010\u9AD8\u6E29\uFF0C\u5BFF\u547D\u957F</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u4FBF\u6377\uFF0C\u901A\u7528\u6027\u5F3A</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t\t<h3>\u4F7F\u7528\u8BF4\u660E</h3>\n\t\t\t\t\t\t\t\t<p>1. \u68C0\u67E5\u539F\u5239\u8F66\u7247\u78E8\u635F\u60C5\u51B5</p>\n\t\t\t\t\t\t\t\t<p>2. \u66F4\u6362\u524D\u8BF7\u6E05\u7406\u5239\u8F66\u7247\u5EA7</p>\n\t\t\t\t\t\t\t\t<p>3. \u5BF9\u51C6\u5361\u69FD\u5B89\u88C5\u65B0\u5239\u8F66\u7247</p>\n\t\t\t\t\t\t\t\t<p>4. \u6D4B\u8BD5\u5236\u52A8\u6548\u679C</p>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1A\u9AD8\u5BC6\u9676\u74F7\u590D\u6750\u6599</p>\n\t\t\t\t\t\t\t\t<p>\u9002\u7528\u8F66\u578B\uFF1A</p>\n\t\t\t\t\t\t\t\t<p>\u89C4\u683C\uFF1A\u6807\u51C6\u89C4\u683C</p>\n\t\t\t\t\t\t\t\t<p>\u88C5\uFF1A1\u5BF9\u88C5\uFF082\u7247\uFF09</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u9AD8\u6027\u80FD\u9676\u74F7\u914D\u65B9\uFF0C\u5236\u52A8\u529B\u5F3A</li>\n\t\t\t\t\t\t\t\t\t<li>\u4F4E\u566A\u97F3\uFF0C\u4E0D\u4F24\u5236\u76D8</li>\n\t\t\t\t\t\t\t\t\t<li>\u8010\u9AD8\u6E29\uFF0C\u5BFF\u547D\u957F</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u4FBF\u6377\uFF0C\u901A\u7528\u6027\u5F3A</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t\t<h3>\u4F7F\u7528\u8BF4\u660E</h3>\n\t\t\t\t\t\t\t\t<p>1. \u68C0\u67E5\u539F\u5239\u8F66\u7247\u78E8\u635F\u60C5\u51B5</p>\n\t\t\t\t\t\t\t\t<p>2. \u66F4\u6362\u524D\u8BF7\u6E05\u7406\u5239\u8F66\u7247\u5EA7</p>\n\t\t\t\t\t\t\t\t<p>3. \u5BF9\u51C6\u5361\u69FD\u5B89\u88C5\u65B0\u5239\u8F66\u7247</p>\n\t\t\t\t\t\t\t\t<p>4. \u6D4B\u8BD5\u5236\u52A8\u6548\u679C</p>\n\t\t\t\t\t\t\t</div>"
         }
         // ... 其他车系统商品
         ]
@@ -502,7 +503,7 @@ var _default = {
           stock: 50,
           price: 45,
           brand: 'brand2',
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\uFFFD\uFFFD\uFFFD\u7535\u538B\uFF1ADC 12V</p>\n\t\t\t\t\t\t\t\t<p>\u611F\u5E94\u8DDD\u79BB\uFF1A3-8mm\u53EF\u8C03</p>\n\t\t\t\t\t\t\t\t<p>\u9632\u6C34\u7B49\u7EA7\uFF1AIP65</p>\n\t\t\t\t\t\t\t\t<p>\u7EBF\u957F50cm</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u7CBE\u51C6\u611F\u5E94\uFF0C\u53CD\u5E94\u7075\u654F</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u9632\u5C18</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u4FBF\u6377</li>\n\t\t\t\t\t\t\t\t\t<li>\u7528\u5BFF\u547D\u957F</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t\t<h3>\u9002\u8303\u56F4</h3>\n\t\t\t\t\t\t\t\t<p>\u9002\u7528\u4E8E\u5404\u7C7B\u7535\u52A8\u8F66\u901F\u5EA6\u68C0\u6D4B\u7CFB\u7EDF</p>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u7535\u538B\uFF1ADC 12V</p>\n\t\t\t\t\t\t\t\t<p>\u611F\u5E94\u8DDD\u79BB\uFF1A3-8mm\u53EF\u8C03</p>\n\t\t\t\t\t\t\t\t<p>\u9632\u6C34\u7B49\u7EA7\uFF1AIP65</p>\n\t\t\t\t\t\t\t\t<p>\u7EBF\u957F50cm</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u7CBE\u51C6\u611F\uFF0C\u53CD\u5E94\u7075\u654F</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u9632\u5C18</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u4FBF\u6377</li>\n\t\t\t\t\t\t\t\t\t<li>\u7528\u5BFF\u547D\u957F</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t\t<h3>\u9002\u8303\u56F4</h3>\n\t\t\t\t\t\t\t\t<p>\u9002\u7528\u4E8E\u5404\u7C7B\u7535\u52A8\u8F66\u901F\u5EA6\u68C0\u6D4B\u7CFB\u7EDF</p>\n\t\t\t\t\t\t\t</div>"
         }]
       },
       // ... 其他分类
@@ -540,7 +541,7 @@ var _default = {
           name: '充电口',
           stock: 80,
           price: 15,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\u94DC\u5408\u91D1</p>\n\t\t\t\t\t\t\t\t<p>\u9002\u914D\uFF1A\u901A\u7528\u578B</p>\n\t\t\t\t\t\t\t\t<h3>\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u63A5\u89E6\u826F\u597D</li>\n\t\t\t\t\t\t\t\t\t<li>\u8010\u7528\u9632\u8150</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u65B9\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28</p>\n\t\t\t\t\t\t\t\t<p>\u9002\uFF1A\u901A\u7528\u578B</p>\n\t\t\t\t\t\t\t\t<h3>\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u63A5\u89E6\u826F\u597D</li>\n\t\t\t\t\t\t\t\t\t<li>\u8010\u7528\u9632\u8150</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u65B9\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }]
       }, {
         id: 4,
@@ -558,7 +559,7 @@ var _default = {
           name: '调速器',
           stock: 55,
           price: 85,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u8C03\u901F\u56F4\uFF1A1-5\u6863</p>\n\t\t\t\t\t\t\t\t<p>\u9002\u914D\u7535\u538B\uFF1A48V</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u5E73\u7A33\u8C03\u901F</li>\n\t\t\t\t\t\t\t\t\t<li>\u6C34\u8BBE\u8BA1</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u901F\u56F4\uFF1A1-5\u6863</p>\n\t\t\t\t\t\t\t\t<p>\u9002\u7535\u538B\uFF1A48V</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u5E73\u7A33\u8C03\u901F</li>\n\t\t\t\t\t\t\t\t\t<li>\u6C34\u8BBE\u8BA1</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }]
       }, {
         id: 5,
@@ -569,14 +570,14 @@ var _default = {
           name: '后视镜',
           stock: 88,
           price: 20,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1AABS+\u73BB\u7483</p>\n\t\t\t\t\t\t\t\t<p>\u5BF8\uFF1A\u6807\u51C6\u578B</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u89C6\u91CE\u6E05\u6670</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u9707\u8BA1</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u65B9\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1AABS+\u73BB\u7483</p>\n\t\t\t\t\t\t\t\t<p>\u5BF8\uFF1A\u6807\u51C6\u578B</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u89C6\u91CE\u6E05\u6670</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u9707\u8BA1</li>\n\t\t\t\t\t\t\t\t\t<li>\u88C5\u65B9\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }, {
           id: '6002',
           image: '/static/products/shangpin_default.png',
           name: '泥板',
           stock: 100,
           price: 15,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1APP\u5851\u6599</p>\n\t\t\t\t\t\t\t\t<p>\u989C\u8272\u9ED1\u8272</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u8010\u7528</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u7B80\u5355</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6CE5\u6548\u679C\u597D</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1APP\u5851\u6599</p>\n\t\t\t\t\t\t\t\t<p>\u989C\u8272\u9ED1\u8272</p>\n\t\t\t\t\t\t\t\t<h3>\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u8010</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u7B80\u5355</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6CE5\u6548\u679C\u597D</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }]
       }],
       currentCategory: 0,
@@ -594,7 +595,7 @@ var _default = {
       searchKeyword: '',
       // 搜索关键词
       searchResults: [],
-      // 搜索结果
+      // 搜结果
       isSearching: false,
       // 是否在搜索状态
       loading: false,
@@ -606,7 +607,7 @@ var _default = {
       hasMore: true,
       // 是否有更多数据
       animation: null,
-      // 添加动画实例
+      // 添加动画���例
       showCartAnimation: false,
       cartAnimationStyle: {
         left: '0px',
@@ -633,7 +634,7 @@ var _default = {
         name: '牌2'
       }, {
         id: 'brand3',
-        name: '品牌3'
+        name: '品3'
       }, {
         id: 'brand4',
         name: '品牌4'
@@ -644,7 +645,7 @@ var _default = {
         id: 'brand6',
         name: '品牌6'
       }
-      // 可以添加更多品牌
+      // 可以添加更多品
       ],
 
       selectedBrand: 'all',
@@ -692,7 +693,7 @@ var _default = {
   onLoad: function onLoad(options) {
     if (options.id) {
       this.shopId = options.id;
-      // 可以在这里获取店铺详情，包括商家ID
+      // 可以在这里获取详情，括家ID
       this.getShopDetail();
     }
     // 加载本地存储的购物车数据
@@ -708,29 +709,67 @@ var _default = {
       var _this$categories$cate;
       return ((_this$categories$cate = this.categories[categoryIndex]) === null || _this$categories$cate === void 0 ? void 0 : _this$categories$cate.items) || [];
     },
-    // 修改切换分类方法
+    // 在 methods 中修改 switchCategory 方法
     switchCategory: function switchCategory(index) {
       var _this4 = this;
       if (this.currentCategory === index) return;
       this.currentCategory = index;
       this.isManualSwitching = true;
 
-      // 计目标分类滚动位
+      // 计算目标滚动位置
       var targetScrollTop = 0;
       var pxRatio = uni.getSystemInfoSync().windowWidth / 750;
+
+      // 更精确的高度计算
       for (var i = 0; i < index; i++) {
-        var categoryItems = this.categories[i].items || [];
-        // 每个分类的总高 = 标题高度(88rpx) + 商品总高度(每个商品200rpx)
-        targetScrollTop += (88 + categoryItems.length * 200) * pxRatio;
+        var _category$items;
+        var category = this.filteredCategories[i];
+        if (!category) continue;
+
+        // 标题高度（不包含padding，因为padding已经包含在商品列表）
+        var titleHeight = 72 * pxRatio; // 减小标题实际占用高度
+
+        // 商品列表高度（包含内边距）
+        var itemCount = ((_category$items = category.items) === null || _category$items === void 0 ? void 0 : _category$items.length) || 0;
+        var itemHeight = ITEM_HEIGHT * pxRatio;
+        var itemsHeight = itemCount * itemHeight;
+
+        // 每个分的总高度
+        targetScrollTop += titleHeight + itemsHeight;
       }
 
-      // 设置滚位置
-      this.$nextTick(function () {
-        _this4.scrollTop = targetScrollTop + 1;
-        setTimeout(function () {
+      // 确保目标位置是整数
+      targetScrollTop = Math.floor(targetScrollTop);
+
+      // 获取当前滚动位置
+      var startScrollTop = this.scrollTop;
+      var distance = targetScrollTop - startScrollTop;
+
+      // 动画参数
+      var duration = 500;
+      var steps = 15;
+      var stepDuration = duration / steps;
+      var currentStep = 0;
+
+      // 缓动函数
+      var easeInOutCubic = function easeInOutCubic(t) {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+      };
+
+      // 执行动画
+      var animate = function animate() {
+        if (currentStep >= steps) {
+          _this4.scrollTop = targetScrollTop;
           _this4.isManualSwitching = false;
-        }, 300);
-      });
+          return;
+        }
+        var progress = currentStep / steps;
+        var easeProgress = easeInOutCubic(progress);
+        _this4.scrollTop = Math.floor(startScrollTop + distance * easeProgress);
+        currentStep++;
+        setTimeout(animate, stepDuration);
+      };
+      animate();
     },
     // 修改滚动监听方法
     onProductScroll: throttle(function (e) {
@@ -739,11 +778,20 @@ var _default = {
       var pxRatio = uni.getSystemInfoSync().windowWidth / 750;
       var currentIndex = 0;
       var heightSum = 0;
-      for (var i = 0; i < this.categories.length; i++) {
-        var categoryItems = this.categories[i].items || [];
-        var categoryHeight = (88 + categoryItems.length * 200) * pxRatio;
-        heightSum += categoryHeight;
-        if (scrollTop < heightSum) {
+
+      // 更精确的滚动位置检测
+      for (var i = 0; i < this.filteredCategories.length; i++) {
+        var _category$items2;
+        var category = this.filteredCategories[i];
+        if (!category) continue;
+        var titleHeight = 88 * pxRatio;
+        var itemsHeight = (((_category$items2 = category.items) === null || _category$items2 === void 0 ? void 0 : _category$items2.length) || 0) * ITEM_HEIGHT * pxRatio;
+        var categoryGap = 20 * pxRatio;
+        heightSum += titleHeight + itemsHeight + categoryGap;
+
+        // 使用阈值来判断当前分类
+        var threshold = heightSum - itemsHeight / 2;
+        if (scrollTop < threshold) {
           currentIndex = i;
           break;
         }
@@ -784,8 +832,46 @@ var _default = {
           });
           return;
         }
+
+        // 计算剩余可购买数量
+        var remainingStock = product.stock - existItem.quantity;
+
+        // 如果剩余可购买数量小于等于3，显示提示
+        if (remainingStock <= 3) {
+          // 如果剩余库存为1（加入后为0），显示已达到库存上限
+          if (remainingStock === 1) {
+            setTimeout(function () {
+              uni.showToast({
+                title: '已达到库存上限',
+                icon: 'none'
+              });
+            }, 100);
+          } else {
+            uni.showToast({
+              title: "\u5E93\u4EC5\u5269".concat(remainingStock - 1, "\u4EF6"),
+              icon: 'none'
+            });
+          }
+        }
         existItem.quantity++;
       } else {
+        // 如果库存小于等于3，显示提示
+        if (product.stock <= 3) {
+          // 如果库存为1，显示已达到库存上限
+          if (product.stock === 1) {
+            setTimeout(function () {
+              uni.showToast({
+                title: '已达到库存上限',
+                icon: 'none'
+              });
+            }, 100);
+          } else {
+            uni.showToast({
+              title: "\u5E93\u5B58\u4EC5\u5269".concat(product.stock - 1, "\u4EF6"),
+              icon: 'none'
+            });
+          }
+        }
         cartList.push({
           id: product.id,
           categoryIndex: categoryIndex,
@@ -890,18 +976,23 @@ var _default = {
       if (!this.searchKeyword.trim()) {
         this.isSearching = false;
         this.searchResults = [];
+        this.enableScroll();
         return;
       }
       this.isSearching = true;
       this.searchResults = [];
-      this.selectedBrand = 'all';
+      this.disableScroll();
 
-      // 搜索逻辑
+      // 搜索逻辑，增加品牌筛选
       this.categories.forEach(function (category, categoryIndex) {
         var _this6$searchResults;
-        var results = category.items.filter(function (product) {
-          return product.name.toLowerCase().includes(_this6.searchKeyword.toLowerCase());
-        }).map(function (product, productIndex) {
+        var filteredItems = category.items.filter(function (product) {
+          // 同时满足搜索关键词和品牌筛选条件
+          var matchesKeyword = product.name.toLowerCase().includes(_this6.searchKeyword.toLowerCase());
+          var matchesBrand = _this6.selectedBrand === 'all' || product.brand === _this6.selectedBrand;
+          return matchesKeyword && matchesBrand;
+        });
+        var results = filteredItems.map(function (product, productIndex) {
           return _objectSpread(_objectSpread({}, product), {}, {
             categoryIndex: categoryIndex,
             productIndex: productIndex
@@ -911,7 +1002,7 @@ var _default = {
       });
       if (this.searchResults.length === 0) {
         uni.showToast({
-          title: '暂无相关商品',
+          title: '暂无相关商',
           icon: 'none'
         });
       }
@@ -921,6 +1012,7 @@ var _default = {
       this.searchKeyword = '';
       this.isSearching = false;
       this.searchResults = [];
+      this.enableScroll();
     },
     // 拉加载更多
     onReachBottom: function onReachBottom() {
@@ -937,7 +1029,7 @@ var _default = {
         _this7.loading = false;
       }, 1000);
     },
-    // 保存购车数到本地存储
+    // 存购车数到本地存储
     saveCartData: function saveCartData() {
       uni.setStorageSync('cartData', JSON.stringify(this.cartList));
     },
@@ -977,10 +1069,10 @@ var _default = {
     // 修改 handleAddToCart 方法
     handleAddToCart: function handleAddToCart(categoryIndex, productIndex, event) {
       var _this8 = this;
-      // 先检查是否达到库存限制
+      // 先检查是否达到库限制
       if (this.isStockLimit(categoryIndex, productIndex)) {
         uni.showToast({
-          title: '已达到库存上',
+          title: '已达到库存上限',
           icon: 'none'
         });
         return;
@@ -999,8 +1091,6 @@ var _default = {
       var query = uni.createSelectorQuery();
       query.select('.cart-icon').boundingClientRect(function (data) {
         if (!data) return;
-
-        // 置球初始位和式
         _this8.cartDot = {
           show: true,
           x: touch.clientX,
@@ -1009,20 +1099,14 @@ var _default = {
           translateY: 0,
           opacity: 1
         };
-
-        // 计算位移距离
         var endX = data.left + data.width / 2 - touch.clientX;
         var endY = data.top + data.height / 2 - touch.clientY;
-
-        // 延迟一帧设置终点位置，触发动画
         setTimeout(function () {
           _this8.cartDot = _objectSpread(_objectSpread({}, _this8.cartDot), {}, {
             translateX: endX,
             translateY: endY,
             opacity: 0
           });
-
-          // 动画结束后处理
           setTimeout(function () {
             _this8.cartDot.show = false;
             _this8.addToCart(categoryIndex, productIndex);
@@ -1030,36 +1114,39 @@ var _default = {
         }, 50);
       }).exec();
     },
-    // 计算高度的方法也需要修改
+    // 计算高度的��法也需要修改
     calculateHeight: function calculateHeight() {
       var _this9 = this;
       var height = 0;
       this.heightArr = [];
-      this.categories.forEach(function (category, index) {
-        var _category$items;
-        var categoryHeight = (((_category$items = category.items) === null || _category$items === void 0 ? void 0 : _category$items.length) || 0) * 200;
-        height += categoryHeight;
-        _this9.heightArr.push(height);
+      var pxRatio = uni.getSystemInfoSync().windowWidth / 750;
+      this.filteredCategories.forEach(function (category, index) {
+        var _category$items3;
+        var titleHeight = 88 * pxRatio;
+        var itemsHeight = (((_category$items3 = category.items) === null || _category$items3 === void 0 ? void 0 : _category$items3.length) || 0) * ITEM_HEIGHT * pxRatio;
+        var categoryGap = 20 * pxRatio;
+        height += titleHeight + itemsHeight + categoryGap;
+        _this9.heightArr.push(Math.round(height));
       });
     },
     // 修改处理数量输入的方法
     handleQuantityInput: function handleQuantityInput(event, categoryIndex, productIndex) {
       var value = event.detail.value;
-      // 只允许输入数字，去除小数点
+      // 允许输入数字，去除小数点
       var numValue = value.replace(/\D/g, '');
       var cartItem = this.cartList.find(function (item) {
         return item.categoryIndex === categoryIndex && item.productIndex === productIndex;
       });
       if (!cartItem) return;
 
-      // 允许输入框为空，此时不更新购物车总价和数量
+      // 允许输入框为空，此时不更购物车总价和数
       if (numValue === '') {
         cartItem._tempValue = ''; // 使用临时值存储空字符串
         return;
       }
       var newQuantity = parseInt(numValue);
 
-      // 如果输入0，直接移除商品
+      // 如果输入0，直接除商品
       if (newQuantity === 0) {
         var index = this.cartList.findIndex(function (item) {
           return item.categoryIndex === categoryIndex && item.productIndex === productIndex;
@@ -1074,7 +1161,7 @@ var _default = {
       var product = this.categories[categoryIndex].items[productIndex];
       var stock = product.stock;
 
-      // 限制最大量不超过库存
+      // 限制最大量不超过库
       if (newQuantity > stock) {
         cartItem.quantity = stock;
         uni.showToast({
@@ -1107,7 +1194,7 @@ var _default = {
           return;
         }
 
-        // 清除临时值
+        // 清除临时
         delete cartItem._tempValue;
 
         // 确保数量是有效数字
@@ -1119,14 +1206,14 @@ var _default = {
     // 修改品牌选择方法
     selectBrand: function selectBrand(brandId) {
       this.selectedBrand = brandId;
-      // 如果正在搜索，则清除搜索状态
+
+      // 如果正在搜索，新执行搜索以应用新的品牌筛
       if (this.isSearching) {
-        this.isSearching = false;
-        this.searchKeyword = '';
-        this.searchResults = [];
+        this.searchProducts();
+        return;
       }
 
-      // 重置当前分类索引
+      // 不在搜索状态时的原有逻辑
       this.currentCategory = 0;
       this.scrollTop = 0;
     },
@@ -1142,7 +1229,7 @@ var _default = {
         this.cartCount = 0;
       }
     },
-    // 添加 updateCartList 方法
+    // 添加 updateCartList 方
     updateCartList: function updateCartList() {
       var cartData = uni.getStorageSync('cartData');
       if (cartData) {
@@ -1158,7 +1245,7 @@ var _default = {
       // 重新执行搜索
       this.searchProducts();
 
-      // 延迟关闭刷新状态
+      // 延迟闭刷新状态
       setTimeout(function () {
         _this10.refreshing = false;
         uni.showToast({
@@ -1178,10 +1265,18 @@ var _default = {
       //     this.merchantId = res.data.merchantId
       //   }
       // })
+    },
+    // 添加禁用/启用滚动方法
+    disableScroll: function disableScroll() {
+      // 可以根据需要添加额外的滚动控制逻辑
+      this.scrollTop = 0;
+    },
+    enableScroll: function enableScroll() {
+      // 可以根据需要加额外的滚动控制逻辑
     }
   },
   created: function created() {
-    // 在组件创时应用节流
+    // 在组件创时应节流
     this.switchCategory = throttle(this.switchCategory, 200);
   },
   onShow: function onShow() {
