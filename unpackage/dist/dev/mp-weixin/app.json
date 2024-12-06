@@ -7,7 +7,10 @@
     "pages/editProfile/editProfile",
     "pages/grabOrder/grabOrder",
     "pages/assignRepair/assignRepair",
-    "pages/productDetail/productDetail"
+    "pages/productDetail/productDetail",
+    "pages/merchantDetails/merchantDetails",
+    "pages/repairRules/repairRules",
+    "pages/invite/invite"
   ],
   "subPackages": [],
   "window": {

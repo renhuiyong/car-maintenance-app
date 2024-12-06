@@ -58,7 +58,7 @@
 				<view class="header">
 					<image class="header-bg" src="/static/images/tg.png" mode="aspectFill"></image>
 					<text class="title">推广得佣金</text>
-					<button class="promote-btn">立即推广</button>
+					<button class="promote-btn" @click="goToInvite">立即推广</button>
 				</view>
 				<view class="body">
 					<view class="amount-info">
@@ -154,9 +154,15 @@ export default {
 						fail: reject
 					})
 				})
+
+				// 获取存储的promotionCode
+				const promotionCode = uni.getStorageSync('promotionCode') || ''
+				
+				// 在登录请求中带上promotionCode
 				const res = await api.user.wxLogin({
 					code: loginRes.code,
-					userInfo: userInfo
+					userInfo: userInfo,
+					promotionCode: promotionCode
 				})
 				
 				if (res.code === 200) {
@@ -169,6 +175,9 @@ export default {
 					
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
 					uni.setStorageSync('token', res.data.token)
+					
+					// 登录成功后清除promotionCode
+					uni.removeStorageSync('promotionCode')
 					
 					this.isLogin = true
 					this.userInfo = userData
@@ -191,6 +200,25 @@ export default {
 		goToEditProfile() {
 			uni.navigateTo({
 				url: '/pages/editProfile/editProfile'
+			})
+		},
+		goToInvite() {
+			if (!this.isLogin) {
+				uni.showToast({
+					title: '请先登录',
+					icon: 'none'
+				})
+				return
+			}
+			uni.navigateTo({
+				url: '/pages/invite/invite',
+				fail: (err) => {
+					console.error('Navigation failed:', err)
+					uni.showToast({
+						title: '页面跳转失败',
+						icon: 'none'
+					})
+				}
 			})
 		}
 	}

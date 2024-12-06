@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "配件商城",
+  "enablePullDownRefresh": true,
+  "backgroundColor": "#f0f2f7",
   "usingComponents": {}
 }

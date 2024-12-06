@@ -38,12 +38,12 @@
 			<!-- 抢单报修内容 -->
 			<view v-if="tabIndex === 0" class="repair-content" key="grab">
 				<view class="repair-wrap">
-					<view class="address-box" @click="chooseLocation">
-						<image class="location-icon" src="/static/images/dingwei.png"></image>
-						<view class="address-text">{{address || '选择位置'}}</view>
+					<view class="rule-box" @click="checkRules">
+						<image class="rule-icon" src="/static/images/lusei.png"></image>
+						<view class="rule-text">查看报修规则</view>
 						<image class="arrow-icon" src="/static/images/youjiantou2.png"></image>
 					</view>
-					<button class="submit-btn" @click="handleSubmit">立即报修</button>
+					<button class="submit-btn" @click="handleSubmit">发起报修</button>
 				</view>
 			</view>
 			
@@ -143,39 +143,27 @@
 				loading: false,
 				finished: false,
 				scrollTop: 0,
-				address: ''
+				promotionCode: ''
 			}
 		},
-		onLoad() {
-			// 页面加载时只检查授权状态
+		onLoad(query) {
+			// 检查授权状态
 			this.checkLocationAuth()
+			
+			// 处理小程序二维码参数
+			this.handleSceneCode(query)
 		},
 		methods: {
 			switchTab(index) {
 				this.tabIndex = index
 			},
+			
 			handleSubmit() {
-				// 检查是否已选择位置
-				if (!this.address) {
-					uni.showModal({
-						title: '提示',
-						content: '请先选择维修位置',
-						confirmText: '去选择',
-						success: (res) => {
-							if (res.confirm) {
-								this.chooseLocation()
-							}
-						}
-					})
-					return
-				}
-				
-				// 有位置信息时才跳转
 				uni.navigateTo({
 					url: '/pages/grabOrder/grabOrder'
 				})
 			},
-			// 处理复选框变化
+			// 处理复框变化
 			handleCheckboxChange(e) {
 				this.isChecked = e.detail.value.length > 0
 			},
@@ -210,7 +198,7 @@
 					fail: () => {
 						uni.showModal({
 							title: '提示',
-							content: '需要获取您的位置信息，请在设置中打开位置权限',
+							content: '需要获取您的位置信息，请��设置中打开位置权限',
 							confirmText: '去设置',
 							success: (res) => {
 								if (res.confirm) {
@@ -252,7 +240,7 @@
 					fail: (err) => {
 						console.error('获取位置失败：', err)
 						uni.showToast({
-							title: '获取位置失败，请检查定位权限',
+							title: '获取位置失败，请检查定位��限',
 							icon: 'none',
 							duration: 2000
 						})
@@ -375,53 +363,41 @@
 			handleScroll(e) {
 				this.scrollTop = e.detail.scrollTop
 			},
-			// 选择位置
-			chooseLocation() {
-				uni.chooseLocation({
-					success: (res) => {
-						// 只要有name就更新位置，不需要检查address
-						if (res.name) {
-							// 更新地址显示，使用地点名称
-							this.address = res.name
-							this.latitude = res.latitude
-							this.longitude = res.longitude
-							
-							// 更新地图中心点和标记
-							const mapContext = uni.createMapContext('myMap', this)
-							mapContext.moveToLocation({
-								latitude: res.latitude,
-								longitude: res.longitude
-							})
-						}
-					},
-					fail: (err) => {
-						// 只有在真正的错误（非用户取消）时才提示
-						if (err.errMsg && err.errMsg.indexOf('cancel') === -1) {
-							if (err.errMsg.indexOf('auth deny') !== -1) {
-								uni.showModal({
-									title: '提示',
-									content: '需要获取位置权限能选择地址',
-									confirmText: '去设置',
-									success: (res) => {
-										if (res.confirm) {
-											uni.openSetting()
-										}
-									}
-								})
-							} else {
-								uni.showToast({
-									title: '选择位置失败',
-									icon: 'none'
-								})
-							}
-						}
-					}
-				})
-			},
 			goToAssignRepair(shop) {
 				uni.navigateTo({
 					url: `/pages/assignRepair/assignRepair?shopInfo=${encodeURIComponent(JSON.stringify(shop))}`
 				})
+			},
+			// 添加查看规则方法
+			checkRules() {
+				uni.navigateTo({
+					url: '/pages/repairRules/repairRules'
+				})
+			},
+			/**
+			 * 处理小程序二维码中的场景值
+			 * @param {Object} query - 页面参数对象
+			 * @param {string} [query.scene] - 小程序码场景值
+			 */
+			handleSceneCode(query) {
+				if (!query.scene) return
+				
+				try {
+					// scene 需要使用 decodeURIComponent 才能获取到生成二维码时传入的 scene
+					const scene = decodeURIComponent(query.scene)
+					console.log('解码后的scene:', scene)
+					
+					// 解析 scene 中的邀请码
+					const [key, value] = scene.split('=')
+					if (key === 'promotionCode' && value) {
+						this.promotionCode = value
+						// 存储邀请码到本地存储，以便后续使用
+						uni.setStorageSync('promotionCode', value)
+						console.log('成功设置邀请码:', value)
+					}
+				} catch (error) {
+					console.error('解析邀请码失败:', error)
+				}
 			}
 		}
 	}
@@ -791,7 +767,6 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
 		
 		&.active {
 			.tabbar-text {
@@ -839,26 +814,44 @@
 		.submit-btn {
 			margin: 20rpx 0 0;
 			width: 100%;
-			border-radius: 0;
+			border-radius: 45rpx;
 			padding: 36rpx 0;
 			height: auto;
 			line-height: 1;
+			background-color: #4468E8;
+			color: #fff;
+			font-size: 32rpx;
+			
+			&:active {
+				opacity: 0.9;
+			}
+		}
+	}
+
+	.rule-box {
+		display: flex;
+		align-items: center;
+		padding: 20rpx 0;
+		background-color: #f8f8f8;
+		border-radius: 12rpx;
+		
+		.rule-icon {
+			width: 46rpx;
+			height: 46rpx;
+			margin: 0 16rpx;
 		}
 		
-		.address-box {
-			margin: 0;
-			
-			.location-icon {
-				width: 46rpx;
-				height: 46rpx;
-				margin-right: 16rpx;
-			}
-			
-			.arrow-icon {
-				width: 24rpx;
-				height: 24rpx;
-				color: #999;
-			}
+		.rule-text {
+			flex: 1;
+			font-size: 28rpx;
+			color: #333;
+		}
+		
+		.arrow-icon {
+			width: 24rpx;
+			height: 24rpx;
+			margin: 0 16rpx;
+			color: #999;
 		}
 	}
 </style>

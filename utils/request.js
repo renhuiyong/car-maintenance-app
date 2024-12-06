@@ -19,12 +19,38 @@ const request = (options = {}) => {
         uni.request({
             ...options,
             success: (res) => {
+                console.log(res)
                 if (res.statusCode === 200) {
+                    // 处理 token 无效和未能读取到有效 token 的情况
+                    if (res.data.code === 401 && res.data.msg && 
+                        (res.data.msg.includes('token') || 
+                        res.data.msg.includes('未登录'))) {
+                        // 清除所有用户相关的缓存数据
+                        uni.removeStorageSync('token')
+                        uni.removeStorageSync('userInfo')
+                        uni.removeStorageSync('profile')
+                        
+                        // 提示用户
+                        uni.showToast({
+                            title: '登录已过期，请重新登录',
+                            icon: 'none'
+                        })
+                        
+                        // 延迟执行跳转和reject
+                        setTimeout(() => {
+                            uni.switchTab({
+                                url: '/pages/my/my'
+                            })
+                            reject(res.data)
+                        }, 1500)
+                        return
+                    }
+
                     if (res.data.code === 200) {
                         resolve(res.data)
                     } else {
                         uni.showToast({
-                            title: res.data.message || '请求失败',
+                            title: res.data.message || res.data.msg || '请求失败',
                             icon: 'none'
                         })
                         reject(res.data)

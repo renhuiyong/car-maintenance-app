@@ -142,6 +142,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
+var _slicedToArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/slicedToArray */ 5));
 var _toConsumableArray2 = _interopRequireDefault(__webpack_require__(/*! @babel/runtime/helpers/toConsumableArray */ 18));
 //
 //
@@ -283,40 +284,26 @@ var _default = {
       loading: false,
       finished: false,
       scrollTop: 0,
-      address: ''
+      promotionCode: ''
     };
   },
-  onLoad: function onLoad() {
-    // 页面加载时只检查授权状态
+  onLoad: function onLoad(query) {
+    // 检查授权状态
     this.checkLocationAuth();
+
+    // 处理小程序二维码参数
+    this.handleSceneCode(query);
   },
   methods: {
     switchTab: function switchTab(index) {
       this.tabIndex = index;
     },
     handleSubmit: function handleSubmit() {
-      var _this = this;
-      // 检查是否已选择位置
-      if (!this.address) {
-        uni.showModal({
-          title: '提示',
-          content: '请先选择维修位置',
-          confirmText: '去选择',
-          success: function success(res) {
-            if (res.confirm) {
-              _this.chooseLocation();
-            }
-          }
-        });
-        return;
-      }
-
-      // 有位置信息时才跳转
       uni.navigateTo({
         url: '/pages/grabOrder/grabOrder'
       });
     },
-    // 处理复选框变化
+    // 处理复框变化
     handleCheckboxChange: function handleCheckboxChange(e) {
       this.isChecked = e.detail.value.length > 0;
     },
@@ -330,7 +317,7 @@ var _default = {
     },
     // 处理确认授权
     handleAuthConfirm: function handleAuthConfirm() {
-      var _this2 = this;
+      var _this = this;
       if (!this.isChecked) {
         uni.showToast({
           title: '请先阅读并同意隐私保护指引',
@@ -347,19 +334,19 @@ var _default = {
         scope: 'scope.userLocation',
         success: function success() {
           // 授权成功后获取位置
-          _this2.getLocation();
+          _this.getLocation();
         },
         fail: function fail() {
           uni.showModal({
             title: '提示',
-            content: '需要获取您的位置信息，请在设置中打开位置权限',
+            content: '需要获取您的位置信息，请��设置中打开位置权限',
             confirmText: '去设置',
             success: function success(res) {
               if (res.confirm) {
                 uni.openSetting({
                   success: function success(settingRes) {
                     if (settingRes.authSetting['scope.userLocation']) {
-                      _this2.getLocation();
+                      _this.getLocation();
                     }
                   }
                 });
@@ -371,32 +358,32 @@ var _default = {
     },
     // 获取位置信息
     getLocation: function getLocation() {
-      var _this3 = this;
+      var _this2 = this;
       uni.getLocation({
         type: 'gcj02',
         isHighAccuracy: true,
         geocode: true,
         // 开启地址解析
         success: function success(res) {
-          _this3.latitude = res.latitude;
-          _this3.longitude = res.longitude;
+          _this2.latitude = res.latitude;
+          _this2.longitude = res.longitude;
 
           // 使用地址信息
           if (res.address) {
             // 优先使用地址名称
             if (res.name) {
-              _this3.address = res.name;
+              _this2.address = res.name;
             } else {
               // 使用格式化的地址
               var address = res.address;
-              _this3.address = address;
+              _this2.address = address;
             }
           }
         },
         fail: function fail(err) {
           console.error('获取位置失败：', err);
           uni.showToast({
-            title: '获取位置失败，请检查定位权限',
+            title: '获取位置失败，请检查定位��限',
             icon: 'none',
             duration: 2000
           });
@@ -405,18 +392,18 @@ var _default = {
     },
     // 添加备用地址解析方法
     getAddressByLocation: function getAddressByLocation(latitude, longitude) {
-      var _this4 = this;
+      var _this3 = this;
       uni.request({
         url: "https://apis.map.qq.com/ws/geocoder/v1/?location=".concat(latitude, ",").concat(longitude, "&key=YOUR_KEY"),
         success: function success(res) {
           if (res.data.status === 0) {
-            _this4.address = res.data.result.address;
+            _this3.address = res.data.result.address;
           } else {
-            _this4.address = '获取地址失败';
+            _this3.address = '获取地址失败';
           }
         },
         fail: function fail() {
-          _this4.address = '获取地址失败';
+          _this3.address = '获取地址失败';
         }
       });
     },
@@ -428,22 +415,22 @@ var _default = {
     },
     // 检查位置授权状态
     checkLocationAuth: function checkLocationAuth() {
-      var _this5 = this;
+      var _this4 = this;
       uni.getSetting({
         success: function success(res) {
           if (!res.authSetting['scope.userLocation']) {
             // 未授权，显示授权弹窗
-            _this5.showAuthModal = true;
+            _this4.showAuthModal = true;
           } else {
             // 已授权，直接获取位置
-            _this5.getLocation();
+            _this4.getLocation();
           }
         }
       });
     },
     // 修改moveToLocation方法
     moveToLocation: function moveToLocation() {
-      var _this6 = this;
+      var _this5 = this;
       var mapContext = uni.createMapContext('myMap', this);
       uni.getLocation({
         type: 'gcj02',
@@ -451,8 +438,8 @@ var _default = {
         geocode: true,
         // 开启地址解析
         success: function success(res) {
-          _this6.latitude = res.latitude;
-          _this6.longitude = res.longitude;
+          _this5.latitude = res.latitude;
+          _this5.longitude = res.longitude;
 
           // 移动地图到当前位置
           mapContext.moveToLocation({
@@ -463,9 +450,9 @@ var _default = {
           // 更新地址显示
           if (res.address) {
             if (res.name) {
-              _this6.address = res.name;
+              _this5.address = res.name;
             } else {
-              _this6.address = res.address;
+              _this5.address = res.address;
             }
             uni.showToast({
               title: '已定位到当前位置',
@@ -485,31 +472,31 @@ var _default = {
     },
     // 加载更多数据
     loadMore: function loadMore() {
-      var _this7 = this;
+      var _this6 = this;
       if (this.loading || this.finished) return;
       this.loading = true;
 
       // 模拟异步加载数据
       setTimeout(function () {
         var newShops = [{
-          id: _this7.repairShops.length + 1,
-          name: "\u7535\u52A8\u8F66\u7EF4\u4FEE\u5E97".concat(_this7.repairShops.length + 1),
-          distance: "".concat((_this7.repairShops.length * 0.8).toFixed(1), "KM"),
+          id: _this6.repairShops.length + 1,
+          name: "\u7535\u52A8\u8F66\u7EF4\u4FEE\u5E97".concat(_this6.repairShops.length + 1),
+          distance: "".concat((_this6.repairShops.length * 0.8).toFixed(1), "KM"),
           address: '安徽省淮北市相山区示例路123号',
           businessHours: '08:00 - 18:00'
         }, {
-          id: _this7.repairShops.length + 2,
-          name: "\u5FEB\u4FEE\u5E97".concat(_this7.repairShops.length + 2),
-          distance: "".concat((_this7.repairShops.length * 0.8 + 0.5).toFixed(1), "KM"),
+          id: _this6.repairShops.length + 2,
+          name: "\u5FEB\u4FEE\u5E97".concat(_this6.repairShops.length + 2),
+          distance: "".concat((_this6.repairShops.length * 0.8 + 0.5).toFixed(1), "KM"),
           address: '安徽省淮北市相山区示例路456号',
           businessHours: '08:30 - 18:30'
         }];
-        _this7.repairShops = [].concat((0, _toConsumableArray2.default)(_this7.repairShops), newShops);
-        _this7.loading = false;
+        _this6.repairShops = [].concat((0, _toConsumableArray2.default)(_this6.repairShops), newShops);
+        _this6.loading = false;
 
         // 模拟数据加载完毕
-        if (_this7.repairShops.length >= 10) {
-          _this7.finished = true;
+        if (_this6.repairShops.length >= 10) {
+          _this6.finished = true;
         }
       }, 1000);
     },
@@ -517,54 +504,43 @@ var _default = {
     handleScroll: function handleScroll(e) {
       this.scrollTop = e.detail.scrollTop;
     },
-    // 选择位置
-    chooseLocation: function chooseLocation() {
-      var _this8 = this;
-      uni.chooseLocation({
-        success: function success(res) {
-          // 只要有name就更新位置，不需要检查address
-          if (res.name) {
-            // 更新地址显示，使用地点名称
-            _this8.address = res.name;
-            _this8.latitude = res.latitude;
-            _this8.longitude = res.longitude;
-
-            // 更新地图中心点和标记
-            var mapContext = uni.createMapContext('myMap', _this8);
-            mapContext.moveToLocation({
-              latitude: res.latitude,
-              longitude: res.longitude
-            });
-          }
-        },
-        fail: function fail(err) {
-          // 只有在真正的错误（非用户取消）时才提示
-          if (err.errMsg && err.errMsg.indexOf('cancel') === -1) {
-            if (err.errMsg.indexOf('auth deny') !== -1) {
-              uni.showModal({
-                title: '提示',
-                content: '需要获取位置权限能选择地址',
-                confirmText: '去设置',
-                success: function success(res) {
-                  if (res.confirm) {
-                    uni.openSetting();
-                  }
-                }
-              });
-            } else {
-              uni.showToast({
-                title: '选择位置失败',
-                icon: 'none'
-              });
-            }
-          }
-        }
-      });
-    },
     goToAssignRepair: function goToAssignRepair(shop) {
       uni.navigateTo({
         url: "/pages/assignRepair/assignRepair?shopInfo=".concat(encodeURIComponent(JSON.stringify(shop)))
       });
+    },
+    // 添加查看规则方法
+    checkRules: function checkRules() {
+      uni.navigateTo({
+        url: '/pages/repairRules/repairRules'
+      });
+    },
+    /**
+     * 处理小程序二维码中的场景值
+     * @param {Object} query - 页面参数对象
+     * @param {string} [query.scene] - 小程序码场景值
+     */
+    handleSceneCode: function handleSceneCode(query) {
+      if (!query.scene) return;
+      try {
+        // scene 需要使用 decodeURIComponent 才能获取到生成二维码时传入的 scene
+        var scene = decodeURIComponent(query.scene);
+        console.log('解码后的scene:', scene);
+
+        // 解析 scene 中的邀请码
+        var _scene$split = scene.split('='),
+          _scene$split2 = (0, _slicedToArray2.default)(_scene$split, 2),
+          key = _scene$split2[0],
+          value = _scene$split2[1];
+        if (key === 'promotionCode' && value) {
+          this.promotionCode = value;
+          // 存储邀请码到本地存储，以便后续使用
+          uni.setStorageSync('promotionCode', value);
+          console.log('成功设置邀请码:', value);
+        }
+      } catch (error) {
+        console.error('解析邀请码失败:', error);
+      }
     }
   }
 };

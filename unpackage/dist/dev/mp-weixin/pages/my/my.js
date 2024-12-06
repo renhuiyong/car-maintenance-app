@@ -293,7 +293,7 @@ var _default = {
     login: function login(userInfo) {
       var _this2 = this;
       return (0, _asyncToGenerator2.default)( /*#__PURE__*/_regenerator.default.mark(function _callee() {
-        var loginRes, res, userData;
+        var loginRes, promotionCode, res, userData;
         return _regenerator.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
@@ -309,15 +309,18 @@ var _default = {
                 });
               case 3:
                 loginRes = _context.sent;
-                _context.next = 6;
+                // 获取存储的promotionCode
+                promotionCode = uni.getStorageSync('promotionCode') || ''; // 在登录请求中带上promotionCode
+                _context.next = 7;
                 return _index.default.user.wxLogin({
                   code: loginRes.code,
-                  userInfo: userInfo
+                  userInfo: userInfo,
+                  promotionCode: promotionCode
                 });
-              case 6:
+              case 7:
                 res = _context.sent;
                 if (!(res.code === 200)) {
-                  _context.next = 16;
+                  _context.next = 18;
                   break;
                 }
                 userData = {
@@ -328,38 +331,60 @@ var _default = {
                 };
                 uni.setStorageSync('userInfo', JSON.stringify(userData));
                 uni.setStorageSync('token', res.data.token);
+
+                // 登录成功后清除promotionCode
+                uni.removeStorageSync('promotionCode');
                 _this2.isLogin = true;
                 _this2.userInfo = userData;
                 uni.showToast({
                   title: '登录成功',
                   icon: 'success'
                 });
-                _context.next = 17;
+                _context.next = 19;
                 break;
-              case 16:
+              case 18:
                 throw new Error(res.message || '登录失败');
-              case 17:
-                _context.next = 23;
-                break;
               case 19:
-                _context.prev = 19;
+                _context.next = 25;
+                break;
+              case 21:
+                _context.prev = 21;
                 _context.t0 = _context["catch"](0);
                 console.error('Login error:', _context.t0);
                 uni.showToast({
                   title: JSON.stringify(_context.t0),
                   icon: 'none'
                 });
-              case 23:
+              case 25:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 19]]);
+        }, _callee, null, [[0, 21]]);
       }))();
     },
     goToEditProfile: function goToEditProfile() {
       uni.navigateTo({
         url: '/pages/editProfile/editProfile'
+      });
+    },
+    goToInvite: function goToInvite() {
+      if (!this.isLogin) {
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none'
+        });
+        return;
+      }
+      uni.navigateTo({
+        url: '/pages/invite/invite',
+        fail: function fail(err) {
+          console.error('Navigation failed:', err);
+          uni.showToast({
+            title: '页面跳转失败',
+            icon: 'none'
+          });
+        }
       });
     }
   }

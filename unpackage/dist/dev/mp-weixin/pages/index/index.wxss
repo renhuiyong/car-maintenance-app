@@ -369,7 +369,6 @@ to {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 }
 .tabbar-item.active .tabbar-text.data-v-57280228 {
   color: #4468E8;
@@ -409,22 +408,38 @@ to {
 .repair-wrap .submit-btn.data-v-57280228 {
   margin: 20rpx 0 0;
   width: 100%;
-  border-radius: 0;
+  border-radius: 45rpx;
   padding: 36rpx 0;
   height: auto;
   line-height: 1;
+  background-color: #4468E8;
+  color: #fff;
+  font-size: 32rpx;
 }
-.repair-wrap .address-box.data-v-57280228 {
-  margin: 0;
+.repair-wrap .submit-btn.data-v-57280228:active {
+  opacity: 0.9;
 }
-.repair-wrap .address-box .location-icon.data-v-57280228 {
+.rule-box.data-v-57280228 {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  background-color: #f8f8f8;
+  border-radius: 12rpx;
+}
+.rule-box .rule-icon.data-v-57280228 {
   width: 46rpx;
   height: 46rpx;
-  margin-right: 16rpx;
+  margin: 0 16rpx;
 }
-.repair-wrap .address-box .arrow-icon.data-v-57280228 {
+.rule-box .rule-text.data-v-57280228 {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+}
+.rule-box .arrow-icon.data-v-57280228 {
   width: 24rpx;
   height: 24rpx;
+  margin: 0 16rpx;
   color: #999;
 }
 

@@ -10,7 +10,9 @@
 		{
 			"path": "pages/shop/shop",
 			"style": {
-				"navigationBarTitleText": "配件商城"
+				"navigationBarTitleText": "配件商城",
+				"enablePullDownRefresh": true,
+				"backgroundColor": "#f0f2f7"
 			}
 		},
 		{
@@ -52,6 +54,26 @@
 			"path": "pages/productDetail/productDetail",
 			"style": {
 				"navigationBarTitleText": "商品详情",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/merchantDetails/merchantDetails",
+			"style": {
+				"navigationBarTitleText": "商家详情"
+			}
+		},
+		{
+			"path": "pages/repairRules/repairRules",
+			"style": {
+				"navigationBarTitleText": "报修规则"
+			}
+		},
+		{
+			"path": "pages/invite/invite",
+			"style": {
+				"navigationBarTitleText": "推广",
 				"navigationBarBackgroundColor": "#ffffff",
 				"navigationBarTextStyle": "black"
 			}

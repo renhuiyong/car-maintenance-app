@@ -3,6 +3,8 @@
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
+	overflow: hidden;
+	padding-bottom: 110rpx;
 }
 .search-bar {
 	padding: 20rpx;
@@ -32,18 +34,21 @@
 .merchant-entry {
 	display: flex;
 	align-items: center;
-	font-size: 28rpx;
+	font-size: 32rpx;
 	color: #333;
+	gap: 10rpx;
 }
-.merchant-entry .icon-shop {
-	font-size: 40rpx;
-	margin-left: 6rpx;
+.merchant-entry .merchant-icon {
+	width: 44rpx;
+	height: 44rpx;
+	margin-left: 0;
 }
 .main-content {
 	flex: 1;
 	display: flex;
 	overflow: hidden;
 	background: #fff;
+	height: 0;
 }
 .category-list {
 	width: 180rpx;
@@ -130,6 +135,7 @@
 	position: relative;
 	z-index: 1;
 	width: 100%;
+	padding-right: 20rpx;
 }
 .price {
 	color: #ff6b6b;
@@ -158,6 +164,7 @@
 	user-select: none;
 	-webkit-user-select: none;
 	touch-action: manipulation;
+	margin-right: 10rpx;
 }
 .add-btn::before,
 .plus::before {
@@ -180,13 +187,13 @@
 	font-size: 0;
 }
 .cart-bar {
-	height: 100rpx;
+	height: 110rpx;
 	background: #fff;
 	border-top: 1rpx solid #eee;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 0 30rpx;
+	padding: 8rpx 30rpx;
 }
 .cart-left {
 	display: flex;
@@ -238,8 +245,7 @@
 	align-items: center;
 	justify-content: flex-end;
 	background: #f5f5f5;
-	border-radius: 24rpx;
-	padding: 0 12rpx;
+	border-radius: 0 24rpx 24rpx 0;
 	height: 48rpx;
 	flex-shrink: 0;
 	width: 140rpx;
@@ -259,7 +265,7 @@
 	user-select: none;
 	-webkit-user-select: none;
 	touch-action: manipulation;
-	border-radius: 24rpx;
+	border-radius: 24rpx 0 0 24rpx;
 	font-size: 32rpx;
 }
 .quantity-control .num {
@@ -336,9 +342,19 @@
 	align-items: center;
 	border-bottom: 1rpx solid #eee;
 }
+.header-left {
+	display: flex;
+	align-items: center;
+}
 .cart-header .title {
 	font-size: 32rpx;
 	font-weight: bold;
+}
+.cart-header .cart-count {
+	font-size: 24rpx;
+	color: #666;
+	margin-left: 10rpx;
+	font-weight: normal;
 }
 .cart-header .clear {
 	font-size: 28rpx;
@@ -391,7 +407,7 @@
 	display: flex;
 	align-items: center;
 	background: #f5f5f5;
-	border-radius: 24rpx;
+	border-radius: 0 24rpx 24rpx 0;
 	padding: 0 12rpx;
 	height: 48rpx;
 	flex-shrink: 0;
@@ -474,7 +490,7 @@
 	pointer-events: none;
 }
 
-/* 修改库存显示样式 */
+/* 修改库存显样式 */
 .product-stock {
 	font-size: 24rpx;
 	color: #999;
@@ -485,13 +501,21 @@
 
 /* 添加搜索相样式 */
 .clear-icon {
-	font-size: 32rpx;
+	font-size: 40rpx;
 	color: #999;
 	padding: 0 10rpx;
+	height: 40rpx;
+	line-height: 40rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 .search-results {
-	flex: 1;
+	flex: 0 1 auto;
 	background: #fff;
+	padding: 0 20rpx;
+	min-height: 0;
+	height: auto;
 }
 .loading-more,
 .no-more {
@@ -499,6 +523,7 @@
 	padding: 20rpx;
 	color: #999;
 	font-size: 24rpx;
+	margin: 0 20rpx;
 }
 
 /* 修改动画样式 */
@@ -600,5 +625,93 @@
 	width: 0;
 	height: 0;
 	background: transparent;
+}
+.brand-filter {
+    display: flex;
+    align-items: center;
+    padding: 20rpx;
+    background-color: #fff;
+    border-bottom: 1rpx solid #f0f2f7;
+}
+.brand-label {
+    font-size: 28rpx;
+    color: #333;
+    margin: 0 20rpx;
+    white-space: nowrap;
+}
+.brand-scroll {
+    flex: 1;
+    white-space: nowrap;
+}
+.brand-list {
+    display: inline-flex;
+    padding-right: 20rpx;
+}
+.brand-item {
+    display: inline-block;
+    padding: 10rpx 30rpx;
+    margin-right: 20rpx;
+    font-size: 26rpx;
+    color: #666;
+    background: #f7f7f7;
+    border-radius: 26rpx;
+    transition: all 0.3s;
+}
+.brand-item.active {
+    color: #fff;
+    background: #007AFF;
+}
+
+/* 修改搜果中的 add-btn 样式 */
+.search-results .product-price-wrap {
+    padding-right: 20rpx;
+}
+.search-results .add-btn,
+.search-results .quantity-control {
+    margin-right: 20rpx;
+}
+
+/* 搜索结为空时的样式 */
+.search-results:empty {
+    display: none;
+}
+
+/* 统一搜索结果中的商品项样式 */
+.search-results .product-item {
+    display: flex;
+    padding: 20rpx 0;
+    border-bottom: 1rpx solid #f5f5f5;
+    height: 200rpx;
+    box-sizing: border-box;
+}
+.search-results .product-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-right: 20rpx;
+    position: relative;
+}
+.search-results .product-price-wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding-right: 0; /* 移除内边距，因为已经在 product-info 中设置了 */
+    margin-bottom: 10rpx; /* 添加底部间距，使按钮对齐 */
+}
+.search-results .add-btn,
+.search-results .quantity-control {
+    position: absolute; /* 使用绝对定位 */
+    right: 20rpx; /* 右对齐 */
+    bottom: 0; /* 底部对齐 */
+}
+.my-quantity-control {
+	right: 0rpx !important
+}
+.my-add-btn {
+	right: 10rpx !important
 }
 

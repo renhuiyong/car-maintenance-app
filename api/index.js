@@ -34,7 +34,12 @@ const api = {
             return request.post('/user/updateAvatar', {
                 avatarUrl: data.avatarUrl
             })
-        }
+        },
+        
+        // 获取推广二维码
+        getPromotionCode() {
+            return request.post('/web/user/getPromotionCode')
+        },
     },
 
     // 维修相关接口

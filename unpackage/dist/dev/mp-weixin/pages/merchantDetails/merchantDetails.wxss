@@ -1,0 +1,186 @@
+@charset "UTF-8";
+/**
+ * 这里是uni-app内置的常用样式变量
+ *
+ * uni-app 官方扩展插件及插件市场（https://ext.dcloud.net.cn）上很多三方插件均使用了这些样式变量
+ * 如果你是插件开发者，建议你使用scss预处理，并在插件代码中直接使用这些变量（无需 import 这个文件），方便用户通过搭积木的方式开发整体风格一致的App
+ *
+ */
+/**
+ * 如果你是App开发者（插件使用者），你可以通过修改这些变量来定制自己的插件主题，实现自定义主题功能
+ *
+ * 如果你的项目同样使用了scss预处理，你也可以直接在你的 scss 代码中使用如下变量，同时无需 import 这个文件
+ */
+/* 颜色变量 */
+/* 行为相关颜色 */
+/* 文字基本颜色 */
+/* 背景颜色 */
+/* 边框颜色 */
+/* 尺寸变量 */
+/* 文字尺寸 */
+/* 图片尺寸 */
+/* Border Radius */
+/* 水平间距 */
+/* 垂直间距 */
+/* 透明度 */
+/* 文章场景相关 */
+/* 输入框样式重置 */
+.merchant-details.data-v-4f7096bc {
+  min-height: 100vh;
+  background-color: #f5f6fa;
+  padding-bottom: 120rpx;
+}
+.merchant-details .merchant-info.data-v-4f7096bc {
+  position: relative;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+  height: 210rpx;
+}
+.merchant-details .merchant-info .bg-image.data-v-4f7096bc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+}
+.merchant-details .merchant-info .info-content.data-v-4f7096bc {
+  position: relative;
+  z-index: 1;
+}
+.merchant-details .merchant-info .info-content .header.data-v-4f7096bc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+.merchant-details .merchant-info .info-content .header .shop-name.data-v-4f7096bc {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+.merchant-details .merchant-info .info-content .header .distance.data-v-4f7096bc {
+  font-size: 28rpx;
+  color: #666;
+  font-weight: bold;
+}
+.merchant-details .merchant-info .info-content .address.data-v-4f7096bc {
+  font-size: 28rpx;
+  color: #666;
+  margin-bottom: 4rpx;
+  margin-top: 30rpx;
+}
+.merchant-details .merchant-info .info-content .info-row.data-v-4f7096bc {
+  margin-bottom: 4rpx;
+  font-size: 28rpx;
+  color: #666;
+}
+.merchant-details .merchant-info .info-content .fixed-icons.data-v-4f7096bc {
+  position: absolute;
+  right: 0;
+  bottom: -15rpx;
+  display: flex;
+  flex-direction: column;
+}
+.merchant-details .merchant-info .info-content .fixed-icons .icon-item.data-v-4f7096bc {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.merchant-details .merchant-info .info-content .fixed-icons .icon-item image.data-v-4f7096bc {
+  width: 50rpx;
+  height: 50rpx;
+}
+.merchant-details .shop-info.data-v-4f7096bc, .merchant-details .shop-qualification.data-v-4f7096bc {
+  background-color: #fff;
+  padding: 30rpx;
+  margin-bottom: 20rpx;
+}
+.merchant-details .shop-info .title.data-v-4f7096bc, .merchant-details .shop-qualification .title.data-v-4f7096bc {
+  font-size: 32rpx;
+  font-weight: 500;
+  margin-bottom: 20rpx;
+  font-weight: bold;
+}
+.merchant-details .shop-info .shop-description.data-v-4f7096bc, .merchant-details .shop-qualification .shop-description.data-v-4f7096bc {
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+.merchant-details .shop-info .image-list.data-v-4f7096bc, .merchant-details .shop-qualification .image-list.data-v-4f7096bc {
+  width: 100%;
+  white-space: nowrap;
+}
+.merchant-details .shop-info .image-list .image-wrapper.data-v-4f7096bc, .merchant-details .shop-qualification .image-list .image-wrapper.data-v-4f7096bc {
+  display: inline-flex;
+}
+.merchant-details .shop-info .image-list .image-wrapper .image-placeholder.data-v-4f7096bc, .merchant-details .shop-qualification .image-list .image-wrapper .image-placeholder.data-v-4f7096bc {
+  flex-shrink: 0;
+  width: 220rpx;
+  height: 160rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  margin-right: 20rpx;
+}
+.merchant-details .shop-info .image-list .image-wrapper .image-placeholder.data-v-4f7096bc:last-child, .merchant-details .shop-qualification .image-list .image-wrapper .image-placeholder.data-v-4f7096bc:last-child {
+  margin-right: 0;
+}
+.merchant-details .shop-qualification .qualification-list.data-v-4f7096bc {
+  width: 100%;
+  white-space: nowrap;
+}
+.merchant-details .shop-qualification .qualification-list .qualification-wrapper.data-v-4f7096bc {
+  display: inline-flex;
+}
+.merchant-details .shop-qualification .qualification-list .qualification-wrapper .qualification-placeholder.data-v-4f7096bc {
+  flex-shrink: 0;
+  width: 340rpx;
+  height: 180rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  margin-right: 20rpx;
+}
+.merchant-details .shop-qualification .qualification-list .qualification-wrapper .qualification-placeholder.data-v-4f7096bc:last-child {
+  margin-right: 0;
+}
+.merchant-details .bottom-actions.data-v-4f7096bc {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 130rpx;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  padding: 0 30rpx;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+.merchant-details .bottom-actions .collect.data-v-4f7096bc {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-right: 30rpx;
+}
+.merchant-details .bottom-actions .collect image.data-v-4f7096bc {
+  width: 40rpx;
+  height: 40rpx;
+}
+.merchant-details .bottom-actions .collect text.data-v-4f7096bc {
+  font-size: 24rpx;
+  color: #666;
+}
+.merchant-details .bottom-actions .enter-shop.data-v-4f7096bc {
+  flex: 1;
+  height: 80rpx;
+  background-color: #4e6ef2;
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
