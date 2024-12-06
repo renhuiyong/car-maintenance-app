@@ -57,8 +57,10 @@
 					  @tap="goToDetail(item, item.categoryIndex, item.productIndex)">
 					<image :src="item.image" mode="aspectFit"></image>
 					<view class="product-info">
-						<text class="product-name">{{ item.name }}</text>
-						<text class="product-stock">库存{{ item.stock }}</text>
+						<view class="product-info-top">
+							<text class="product-name">{{ item.name }}</text>
+							<text class="product-stock">库存{{ item.stock }}</text>
+						</view>
 						<view class="product-price-wrap">
 							<text class="price">￥{{ item.price }}/件</text>
 							<view class="quantity-control my-quantity-control" v-if="getCartQuantity(item.categoryIndex, item.productIndex)">
@@ -124,8 +126,10 @@
 							  @tap="goToDetail(item, categoryIndex, index)">
 							<image :src="item.image" mode="aspectFit"></image>
 							<view class="product-info">
-								<text class="product-name">{{ item.name }}</text>
-								<text class="product-stock">库存{{ item.stock }}</text>
+								<view class="product-info-top">
+									<text class="product-name">{{ item.name }}</text>
+									<text class="product-stock">库存{{ item.stock }}</text>
+								</view>
 								<view class="product-price-wrap">
 									<text class="price">￥{{ item.price }}/件</text>
 									<view class="quantity-control" v-if="getCartQuantity(categoryIndex, index)">
@@ -355,7 +359,7 @@ export default {
 							stock: 60,
 							price: 25,
 							detail: `<div class="detail-content">
-								<h3>产品参数</h3>
+								<h3>产品数</h3>
 								<p>电压：12V</p>
 								<p>功率：5W</p>
 								<p>颜色：琥珀色</p>
@@ -400,7 +404,7 @@ export default {
 							price: 15,
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
-								<p>材质</p>
+								<p>材质：铜合金</p>
 								<p>适：通用型</p>
 								<h3>品特点</h3>
 								<ul>
@@ -423,7 +427,7 @@ export default {
 							stock: 40,
 							price: 120,
 							detail: `<div class="detail-content">
-								<h3>品参数</h3>
+								<h3>参数</h3>
 								<p>工作电压：48V</p>
 								<p>大电流：30A</p>
 								<p>防水等级：IP54</p>
@@ -443,12 +447,12 @@ export default {
 							price: 85,
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
-								<p>速围：1-5档</p>
+								<p>调速范围：1-5档</p>
 								<p>适电压：48V</p>
 								<h3>产品特点</h3>
 								<ul>
 									<li>平稳调速</li>
-									<li>水设计</li>
+									<li>防水设计</li>
 									<li>安装便</li>
 								</ul>
 							</div>`
@@ -489,7 +493,7 @@ export default {
 								<p>颜色黑色</p>
 								<h3>品特点</h3>
 								<ul>
-									<li>防水耐</li>
+									<li>防水耐用</li>
 									<li>安装简单</li>
 									<li>防泥效果好</li>
 								</ul>
@@ -512,7 +516,7 @@ export default {
 			refreshing: false, // 刷新状态
 			page: 1, // 当前页码
 			hasMore: true, // 是否有更多数据
-			animation: null, // 添加动画���例
+			animation: null, // 添加动画例
 			showCartAnimation: false,
 			cartAnimationStyle: {
 				left: '0px',
@@ -614,7 +618,7 @@ export default {
 				const itemHeight = ITEM_HEIGHT * pxRatio;
 				const itemsHeight = itemCount * itemHeight;
 				
-				// 每个分的总高度
+				// 每个分类的总高度
 				targetScrollTop += titleHeight + itemsHeight;
 			}
 			
@@ -731,7 +735,7 @@ export default {
 				// 计算剩余可购买数量
 				const remainingStock = product.stock - existItem.quantity;
 				
-				// 如果剩余可购买数量小于等于3，显示提示
+				// 如果剩余可购数量小于等于3，显示提示
 				if (remainingStock <= 3) {
 					// 如果剩余库存为1（加入后为0），显示已达到库存上限
 					if (remainingStock === 1) {
@@ -751,7 +755,7 @@ export default {
 				
 				existItem.quantity++;
 			} else {
-				// 如果库存小于等于3，显示提示
+				// ���果库存小于等于3，显示提示
 				if (product.stock <= 3) {
 					// 如果库存为1，显示已达到库存上限
 					if (product.stock === 1) {
@@ -821,7 +825,7 @@ export default {
 			}
 		},
 		
-		// 显示购物车
+		// 显示物车
 		showCart() {
 			this.showCartPopup = true
 		},
@@ -876,7 +880,7 @@ export default {
 			return cartItem ? cartItem.quantity >= product.stock : false;
 		},
 		
-		// 修改搜索商品方法
+		// 修改索商品方法
 		searchProducts() {
 			if (!this.searchKeyword.trim()) {
 				this.isSearching = false;
@@ -908,7 +912,7 @@ export default {
 
 			if (this.searchResults.length === 0) {
 				uni.showToast({
-					title: '暂无相关商',
+					title: '暂无相关商品',
 					icon: 'none'
 				});
 			}
@@ -942,7 +946,7 @@ export default {
 			uni.setStorageSync('cartData', JSON.stringify(this.cartList))
 		},
 		
-		// 修改跳转到详情页方法
+		// 修改跳转到详页方法
 		goToDetail(item, categoryIndex, productIndex) {
 			const productInfo = this.isSearching ? item : this.categories[categoryIndex].items[productIndex];
 			
@@ -960,7 +964,7 @@ export default {
 			// 构建查询参数
 			const query = {
 				id: productInfo.id,
-				categoryIndex: categoryIndex,  // 确保传递这个
+				categoryIndex: categoryIndex,  // 确保���递这个
 				productIndex: productIndex,    // 确保传递这个
 				name: productInfo.name,
 				price: productInfo.price,
@@ -1030,7 +1034,7 @@ export default {
 			}).exec();
 		},
 		
-		// 计算高度的��法也需要修改
+		// 计算高度的法也需要修改
 		calculateHeight() {
 			let height = 0;
 			this.heightArr = [];
@@ -1059,7 +1063,7 @@ export default {
 			
 			if (!cartItem) return;
 			
-			// 允许输入框为空，此时不更购物车总价和数
+			// 允许输入框为空，此时不更新购物车总价和数量
 			if (numValue === '') {
 				cartItem._tempValue = '';  // 使用临时值存储空字符串
 				return;
@@ -1136,7 +1140,7 @@ export default {
 		selectBrand(brandId) {
 			this.selectedBrand = brandId;
 			
-			// 如果正在搜索，新执行搜索以应用新的品牌筛
+			// 如果正在搜索，新执行搜索以应用新的品��筛
 			if (this.isSearching) {
 				this.searchProducts();
 				return;
@@ -1174,7 +1178,7 @@ export default {
 			// 重新执行搜索
 			this.searchProducts();
 			
-			// 延迟闭刷新状态
+			// 延迟关闭刷新状态
 			setTimeout(() => {
 				this.refreshing = false;
 				uni.showToast({
@@ -1205,7 +1209,7 @@ export default {
 		}
 	},
 	created() {
-		// 在组件创时应节流
+		// 在组件创建时应用节流
 		this.switchCategory = throttle(this.switchCategory, 200);
 	},
 	onShow() {
@@ -1218,19 +1222,19 @@ export default {
 	},
 	// 添加 onPullDownRefresh 生命周期方法（与 methods 级）
 	onPullDownRefresh() {
-		// 果正在搜索状态，刷新搜索结果
+		// 如果正在搜索状态，刷新搜索结果
 		if (this.isSearching) {
 			this.searchProducts();
 		}
 		
 		// 延迟关闭下拉刷新
 		setTimeout(() => {
-			uni.stopPullDownRefresh();
-			uni.showToast({
-				title: '刷新成功',
-				icon: 'none'
-			});
-		}, 1000);
+				uni.stopPullDownRefresh();
+				uni.showToast({
+					title: '刷新成功',
+					icon: 'none'
+				});
+			}, 1000);
 	}
 }
 </script>
@@ -1375,9 +1379,21 @@ export default {
 	justify-content: space-between;
 }
 
+.product-info-top {
+	display: flex;
+	flex-direction: column;
+	gap: 10rpx;
+}
+
 .product-name {
 	font-size: 28rpx;
 	color: #333;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	word-break: break-all;
 }
 
 .product-stock {
@@ -1393,11 +1409,16 @@ export default {
 	z-index: 1;
 	width: 100%;
 	padding-right: 20rpx;
+	height: 56rpx;
+	transform: translateZ(0);
 }
 
 .price {
 	color: #FF9B49;
 	font-size: 32rpx;
+	position: relative;
+	z-index: 1;
+	flex-shrink: 0;
 }
 
 .add-btn,
@@ -1422,8 +1443,10 @@ export default {
 	user-select: none;
 	-webkit-user-select: none;
 	touch-action: manipulation;
-	margin-right: 10rpx;
-	margin-bottom: 2rpx;
+	margin-right: 11rpx;
+	margin-bottom: 4rpx;
+	z-index: 2;
+	isolation: isolate;
 }
 
 .add-btn::before,
@@ -1520,6 +1543,11 @@ export default {
 	width: 160rpx;
 	margin-right: 14rpx;
 	position: relative;
+	z-index: 2;
+	isolation: isolate;
+	transform: translateZ(0);
+	-webkit-tap-highlight-color: transparent;
+	padding-top: 4rpx;
 }
 
 .quantity-control .minus,
@@ -1769,7 +1797,7 @@ export default {
     margin-top: 4rpx;
 }
 
-/* 添加禁用状态样式 */
+/* 添加禁用态样式 */
 .add-btn.disabled,
 .plus.disabled {
 	background-color: transparent;
@@ -1837,7 +1865,7 @@ export default {
 	box-shadow: 0 0 10rpx rgba(255, 107, 107, 0.5);
 }
 
-/* 物车图标样式 */
+/* 物车图标样 */
 .cart-icon {
 	position: relative;
 	width: 50rpx;
@@ -2018,7 +2046,7 @@ export default {
 }
 
 .my-quantity-control {
-	right: 0rpx !important
+	right: 15rpx !important
 }
 
 .my-add-btn {
@@ -2030,7 +2058,7 @@ export default {
 	top: 200rpx; /* 根据顶部搜索栏和品牌筛选的实际高度调整 */
 	left: 0;
 	right: 0;
-	bottom: 110rpx; /* 购物栏的高度 */
+	bottom: 110rpx; /* 购物车栏的高度 */
 	z-index: 10;
 	background: #fff;
 }

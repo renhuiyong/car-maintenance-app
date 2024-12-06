@@ -457,6 +457,10 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 //
 //
 //
+//
+//
+//
+//
 
 // 在 methods 外部定义节流函数
 var throttle = function throttle(fn, delay) {
@@ -523,7 +527,7 @@ var _default = {
           name: '转向灯组',
           stock: 60,
           price: 25,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u7535\u538B\uFF1A12V</p>\n\t\t\t\t\t\t\t\t<p>\u529F\u7387\uFF1A5W</p>\n\t\t\t\t\t\t\t\t<p>\u989C\u8272\uFF1A\u7425\u73C0\u8272</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u9AD8\u4EAELED\u706F\u73E0</li>\n\t\t\t\t\t\t\t\t\t<li>\u95EA\u70C1\u9891\u7387\u7A33\u5B9A</li>\n\t\t\t\t\t\t\t\t\t<li>\u88C5\u7B80\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u7535\u538B\uFF1A12V</p>\n\t\t\t\t\t\t\t\t<p>\u529F\u7387\uFF1A5W</p>\n\t\t\t\t\t\t\t\t<p>\u989C\u8272\uFF1A\u7425\u73C0\u8272</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u9AD8\u4EAELED\u706F\u73E0</li>\n\t\t\t\t\t\t\t\t\t<li>\u95EA\u70C1\u9891\u7387\u7A33\u5B9A</li>\n\t\t\t\t\t\t\t\t\t<li>\u88C5\u7B80\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }]
       }, {
         id: 3,
@@ -541,7 +545,7 @@ var _default = {
           name: '充电口',
           stock: 80,
           price: 15,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28</p>\n\t\t\t\t\t\t\t\t<p>\u9002\uFF1A\u901A\u7528\u578B</p>\n\t\t\t\t\t\t\t\t<h3>\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u63A5\u89E6\u826F\u597D</li>\n\t\t\t\t\t\t\t\t\t<li>\u8010\u7528\u9632\u8150</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u65B9\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1A\u94DC\u5408\u91D1</p>\n\t\t\t\t\t\t\t\t<p>\u9002\uFF1A\u901A\u7528\u578B</p>\n\t\t\t\t\t\t\t\t<h3>\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u63A5\u89E6\u826F\u597D</li>\n\t\t\t\t\t\t\t\t\t<li>\u8010\u7528\u9632\u8150</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u65B9\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }]
       }, {
         id: 4,
@@ -552,14 +556,14 @@ var _default = {
           name: '控制器',
           stock: 40,
           price: 120,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u5DE5\u4F5C\u7535\u538B\uFF1A48V</p>\n\t\t\t\t\t\t\t\t<p>\u5927\u7535\u6D41\uFF1A30A</p>\n\t\t\t\t\t\t\t\t<p>\u9632\u6C34\u7B49\u7EA7\uFF1AIP54</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u667A\u80FD\u63A7\u5236\u7CFB\u7EDF</li>\n\t\t\t\t\t\t\t\t\t<li>\u8FC7\u8F7D\u4FDD\u62A4</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u8BBE\u8BA1</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u5DE5\u4F5C\u7535\u538B\uFF1A48V</p>\n\t\t\t\t\t\t\t\t<p>\u5927\u7535\u6D41\uFF1A30A</p>\n\t\t\t\t\t\t\t\t<p>\u9632\u6C34\u7B49\u7EA7\uFF1AIP54</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u667A\u80FD\u63A7\u5236\u7CFB\u7EDF</li>\n\t\t\t\t\t\t\t\t\t<li>\u8FC7\u8F7D\u4FDD\u62A4</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u8BBE\u8BA1</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }, {
           id: '5002',
           image: '/static/products/shangpin_default.png',
           name: '调速器',
           stock: 55,
           price: 85,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u901F\u56F4\uFF1A1-5\u6863</p>\n\t\t\t\t\t\t\t\t<p>\u9002\u7535\u538B\uFF1A48V</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u5E73\u7A33\u8C03\u901F</li>\n\t\t\t\t\t\t\t\t\t<li>\u6C34\u8BBE\u8BA1</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u8C03\u901F\u8303\u56F4\uFF1A1-5\u6863</p>\n\t\t\t\t\t\t\t\t<p>\u9002\u7535\u538B\uFF1A48V</p>\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u5E73\u7A33\u8C03\u901F</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u8BBE\u8BA1</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u4FBF</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }]
       }, {
         id: 5,
@@ -577,7 +581,7 @@ var _default = {
           name: '泥板',
           stock: 100,
           price: 15,
-          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1APP\u5851\u6599</p>\n\t\t\t\t\t\t\t\t<p>\u989C\u8272\u9ED1\u8272</p>\n\t\t\t\t\t\t\t\t<h3>\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u8010</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u7B80\u5355</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6CE5\u6548\u679C\u597D</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
+          detail: "<div class=\"detail-content\">\n\t\t\t\t\t\t\t\t<h3>\u4EA7\u54C1\u53C2\u6570</h3>\n\t\t\t\t\t\t\t\t<p>\u6750\u8D28\uFF1APP\u5851\u6599</p>\n\t\t\t\t\t\t\t\t<p>\u989C\u8272\u9ED1\u8272</p>\n\t\t\t\t\t\t\t\t<h3>\u54C1\u7279\u70B9</h3>\n\t\t\t\t\t\t\t\t<ul>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6C34\u8010\u7528</li>\n\t\t\t\t\t\t\t\t\t<li>\u5B89\u88C5\u7B80\u5355</li>\n\t\t\t\t\t\t\t\t\t<li>\u9632\u6CE5\u6548\u679C\u597D</li>\n\t\t\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t\t</div>"
         }]
       }],
       currentCategory: 0,
@@ -607,7 +611,7 @@ var _default = {
       hasMore: true,
       // 是否有更多数据
       animation: null,
-      // 添加动画���例
+      // 添加动画例
       showCartAnimation: false,
       cartAnimationStyle: {
         left: '0px',
@@ -734,7 +738,7 @@ var _default = {
         var itemHeight = ITEM_HEIGHT * pxRatio;
         var itemsHeight = itemCount * itemHeight;
 
-        // 每个分的总高度
+        // 每个分类的总高度
         targetScrollTop += titleHeight + itemsHeight;
       }
 
@@ -836,7 +840,7 @@ var _default = {
         // 计算剩余可购买数量
         var remainingStock = product.stock - existItem.quantity;
 
-        // 如果剩余可购买数量小于等于3，显示提示
+        // 如果剩余可购数量小于等于3，显示提示
         if (remainingStock <= 3) {
           // 如果剩余库存为1（加入后为0），显示已达到库存上限
           if (remainingStock === 1) {
@@ -855,7 +859,7 @@ var _default = {
         }
         existItem.quantity++;
       } else {
-        // 如果库存小于等于3，显示提示
+        // ���果库存小于等于3，显示提示
         if (product.stock <= 3) {
           // 如果库存为1，显示已达到库存上限
           if (product.stock === 1) {
@@ -921,7 +925,7 @@ var _default = {
         this.totalPrice = 0;
       }
     },
-    // 显示购物车
+    // 显示物车
     showCart: function showCart() {
       this.showCartPopup = true;
     },
@@ -970,7 +974,7 @@ var _default = {
       });
       return cartItem ? cartItem.quantity >= product.stock : false;
     },
-    // 修改搜索商品方法
+    // 修改索商品方法
     searchProducts: function searchProducts() {
       var _this6 = this;
       if (!this.searchKeyword.trim()) {
@@ -1002,7 +1006,7 @@ var _default = {
       });
       if (this.searchResults.length === 0) {
         uni.showToast({
-          title: '暂无相关商',
+          title: '暂无相关商品',
           icon: 'none'
         });
       }
@@ -1033,7 +1037,7 @@ var _default = {
     saveCartData: function saveCartData() {
       uni.setStorageSync('cartData', JSON.stringify(this.cartList));
     },
-    // 修改跳转到详情页方法
+    // 修改跳转到详页方法
     goToDetail: function goToDetail(item, categoryIndex, productIndex) {
       var productInfo = this.isSearching ? item : this.categories[categoryIndex].items[productIndex];
       if (!productInfo) {
@@ -1051,7 +1055,7 @@ var _default = {
       var query = {
         id: productInfo.id,
         categoryIndex: categoryIndex,
-        // 确保传递这个
+        // 确保���递这个
         productIndex: productIndex,
         // 确保传递这个
         name: productInfo.name,
@@ -1114,7 +1118,7 @@ var _default = {
         }, 50);
       }).exec();
     },
-    // 计算高度的��法也需要修改
+    // 计算高度的法也需要修改
     calculateHeight: function calculateHeight() {
       var _this9 = this;
       var height = 0;
@@ -1139,7 +1143,7 @@ var _default = {
       });
       if (!cartItem) return;
 
-      // 允许输入框为空，此时不更购物车总价和数
+      // 允许输入框为空，此时不更新购物车总价和数量
       if (numValue === '') {
         cartItem._tempValue = ''; // 使用临时值存储空字符串
         return;
@@ -1207,7 +1211,7 @@ var _default = {
     selectBrand: function selectBrand(brandId) {
       this.selectedBrand = brandId;
 
-      // 如果正在搜索，新执行搜索以应用新的品牌筛
+      // 如果正在搜索，新执行搜索以应用新的品��筛
       if (this.isSearching) {
         this.searchProducts();
         return;
@@ -1245,7 +1249,7 @@ var _default = {
       // 重新执行搜索
       this.searchProducts();
 
-      // 延迟闭刷新状态
+      // 延迟关闭刷新状态
       setTimeout(function () {
         _this10.refreshing = false;
         uni.showToast({
@@ -1276,7 +1280,7 @@ var _default = {
     }
   },
   created: function created() {
-    // 在组件创时应节流
+    // 在组件创建时应用节流
     this.switchCategory = throttle(this.switchCategory, 200);
   },
   onShow: function onShow() {
@@ -1289,7 +1293,7 @@ var _default = {
   },
   // 添加 onPullDownRefresh 生命周期方法（与 methods 级）
   onPullDownRefresh: function onPullDownRefresh() {
-    // 果正在搜索状态，刷新搜索结果
+    // 如果正在搜索状态，刷新搜索结果
     if (this.isSearching) {
       this.searchProducts();
     }
