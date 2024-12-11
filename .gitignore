@@ -1,6 +1,6 @@
-# 忽略 unpackage 目录
-/unpackage/
-/unpackage/*
+# 忽略 unpackage 目录的所有内容
+unpackage/
+unpackage/*
 
 # 其他常用的 uni-app 忽略项
 .DS_Store
