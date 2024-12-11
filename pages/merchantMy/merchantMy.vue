@@ -33,17 +33,17 @@
 		<view class="menu-grid">
 			<view class="menu-item" @click="goToMyOrders">
 				<image class="menu-icon" src="/static/images/wddd.png"></image>
-				<text>我的订单</text>
+				<text>维修订单</text>
 			</view>
 			<image class="divider" src="/static/images/shuxian.png"></image>
 			<view class="menu-item" @click="goToMyFavorites">
-				<image class="menu-icon" src="/static/images/sc.png"></image>
-				<text>我的收藏</text>
+				<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
+				<text>进货订单</text>
 			</view>
 			<image class="divider" src="/static/images/shuxian.png"></image>
 			<view class="menu-item" @click="goToMyCoupons">
-				<image class="menu-icon" src="/static/images/yhq.png"></image>
-				<text>优惠券</text>
+				<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
+				<text>收入结算</text>
 			</view>
 			<image class="divider" src="/static/images/shuxian.png"></image>
 			<button class="menu-item contact-btn" open-type="contact">
@@ -87,6 +87,21 @@
 				</view>
 			</view>
 		</view>
+		
+		<!-- 使用merchant-tabbar组件 -->
+		<merchant-tabbar :current="3"></merchant-tabbar>
+		
+		<!-- 添加悬浮扫描按钮 -->
+		<view 
+			class="float-scan-btn"
+			:style="{ left: buttonPosition.left + 'px', top: buttonPosition.top + 'px' }"
+			@touchstart="touchStart"
+			@touchmove="touchMove"
+			@touchend="touchEnd"
+			@tap="handleScan"
+		>
+			<image src="/static/images/scan.png" mode="aspectFit"></image>
+		</view>
 	</view>
 </template>
 
@@ -121,7 +136,7 @@ export default {
 					content: '亲爱的用户，平台正在开展新一轮优惠活动，点击查看详情了解更多优惠信息。'
 				},
 				{ 
-					title: '您收到一笔推广佣金',
+					title: '您收���一笔推广佣金',
 					isRead: false,
 					content: '恭喜您获得推广佣金奖励，可以在"我的资产"中查看详情。'
 				},
@@ -130,7 +145,17 @@ export default {
 					isRead: true,
 					content: '您的维修订单已完成服务，如对服务不满意，请及时反馈。'
 				}
-			]
+			],
+			// 添加按钮位置相关数据
+			buttonPosition: {
+				left: uni.getSystemInfoSync().windowWidth - 80, // 默认靠右
+				top: uni.getSystemInfoSync().windowHeight - 240 // 默认距底部 240px
+			},
+			isDragging: false,
+			startPosition: {
+				x: 0,
+				y: 0
+			}
 		}
 	},
 	onShow() {
@@ -158,7 +183,7 @@ export default {
 		},
 		getUserProfile() {
 			uni.getUserProfile({
-				desc: '用于完善用户资料',
+				desc: '用于��善用户资料',
 				success: (res) => {
 					this.login(res.userInfo)
 				},
@@ -305,7 +330,7 @@ export default {
 				return
 			}
 			
-			// 将当前��息列表保存到本地存储
+			// 将当前消息列表保存到本地存储
 			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
 			
 			uni.navigateTo({
@@ -321,7 +346,7 @@ export default {
 				return
 			}
 			
-			// 将消息数据存储到本地，以便在消息列表页面使用
+			// ���消息数据存储到本地，以便在消息列表页面使用
 			uni.setStorageSync('selectedMessage', JSON.stringify({
 				title: message.title,
 					content: message.content,
@@ -355,6 +380,131 @@ export default {
 					})
 				}
 			})
+		},
+		// 添加拖动相关方法
+		touchStart(e) {
+			this.isDragging = true
+			this.startPosition = {
+				x: e.touches[0].clientX - this.buttonPosition.left,
+				y: e.touches[0].clientY - this.buttonPosition.top
+			}
+		},
+		
+		touchMove(e) {
+			if (!this.isDragging) return
+			
+			const systemInfo = uni.getSystemInfoSync()
+			const buttonSize = 100 // 按钮的大小（包括内边距）
+			
+			// 计算新位置
+			let newLeft = e.touches[0].clientX - this.startPosition.x
+			let newTop = e.touches[0].clientY - this.startPosition.y
+			
+			// 限制按钮不超出屏幕边界
+			newLeft = Math.max(0, Math.min(newLeft, systemInfo.windowWidth - buttonSize))
+			newTop = Math.max(0, Math.min(newTop, systemInfo.windowHeight - buttonSize))
+			
+			// 更新位置
+			this.buttonPosition = {
+				left: newLeft,
+				top: newTop
+			}
+		},
+		
+		touchEnd() {
+			this.isDragging = false
+			
+			// 靠边吸附
+			const systemInfo = uni.getSystemInfoSync()
+			const buttonSize = 100
+			const threshold = 50 // 吸附阈值
+			
+			if (this.buttonPosition.left < threshold) {
+				this.buttonPosition.left = 0
+			} else if (this.buttonPosition.left > systemInfo.windowWidth - buttonSize - threshold) {
+				this.buttonPosition.left = systemInfo.windowWidth - buttonSize
+			}
+		},
+		
+		handleScan() {
+			if (this.isDragging) return // 如果是拖动状态，不触发扫描
+			
+			// 检查是否登录
+			if (!this.isLogin) {
+				uni.showToast({
+					title: '请先登录',
+					icon: 'none'
+				})
+				return
+			}
+			
+			// 请求相机权限并进行扫码
+			uni.authorize({
+				scope: 'scope.camera',
+				success: () => {
+					// 相机权限获取成功，开始扫码
+					uni.scanCode({
+						onlyFromCamera: true, // 只允许相机扫码
+						scanType: ['qrCode', 'barCode'], // 支持二维码和条形码
+						success: (res) => {
+							console.log('扫码结果：', res)
+							// 处理扫码结果
+							if (res.result) {
+								try {
+									// 这里以根��实际需求处理扫码结果
+									// 比如解析二维码内容，跳转到相应页面等
+									uni.showToast({
+										title: '扫描成功',
+										icon: 'success'
+									})
+								} catch (error) {
+									uni.showToast({
+										title: '无效的二维码',
+										icon: 'none'
+									})
+								}
+							} else {
+								uni.showToast({
+									title: '未识别到内容',
+									icon: 'none'
+								})
+							}
+						},
+						fail: (err) => {
+							console.error('扫码失败：', err)
+							// 根据错误类型显示不同提示
+							if (err.errMsg.includes('cancel')) {
+								uni.showToast({
+									title: '已取消扫码',
+									icon: 'none'
+								})
+							} else {
+								uni.showToast({
+									title: '扫码失败，请重试',
+									icon: 'none'
+								})
+							}
+						}
+					})
+				},
+				fail: () => {
+					// 用户拒绝相机权限
+					uni.showModal({
+						title: '提示',
+						content: '需要相机权限才能进行扫码，是否去开？',
+						success: (res) => {
+							if (res.confirm) {
+								// 引导用户去设置页开启权限
+								uni.openSetting({
+									success: (settingRes) => {
+										console.log('设置页返回：', settingRes)
+									}
+								})
+							}
+						}
+					})
+				}
+			})
 		}
 	}
 }
@@ -365,7 +515,7 @@ export default {
 	min-height: 100vh;
 	background: #F7F8FC;
 	position: relative;
-	padding-bottom: env(safe-area-inset-bottom);
+	padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
 }
 
 .bg-image {
@@ -660,6 +810,26 @@ export default {
 	
 	&::after {
 		border: none;
+	}
+}
+
+.float-scan-btn {
+	position: fixed;
+	z-index: 999;
+	width: 100rpx;
+	height: 100rpx;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: transform 0.2s;
+	
+	image {
+		width: 100rpx;
+		height: 100rpx;
+	}
+	
+	&:active {
+		transform: scale(0.95);
 	}
 }
 </style> 

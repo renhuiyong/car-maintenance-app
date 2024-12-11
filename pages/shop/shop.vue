@@ -24,7 +24,6 @@
 		
 		<!-- 在搜索栏下方添加品牌筛选 -->
 		<view class="brand-filter">
-			<view class="brand-label">品牌：</view>
 			<scroll-view scroll-x class="brand-scroll">
 				<view class="brand-list">
 					<view 
@@ -272,7 +271,7 @@ export default {
 							name: '电动车刹车片',
 							stock: 5,
 							price: 20,
-							brand: 'brand1',
+							brand: 'yadea',
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
 								<p>材质：高密陶瓷复材料</p>
@@ -306,7 +305,7 @@ export default {
 							name: '传感系统1速度传感器',
 							stock: 50,
 							price: 45,
-							brand: 'brand2',
+							brand: 'aima',
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
 								<p>电压：DC 12V</p>
@@ -337,6 +336,7 @@ export default {
 							name: '照明系统LED大灯',
 							stock: 45,
 							price: 40,
+							brand: 'ninebot',
 							detail: `<div class="detail-content">
 								<h3>品参数</h3>
 								<p>功率：12W</p>
@@ -347,7 +347,7 @@ export default {
 								<ul>
 									<li>超高亮度LED</li>
 									<li>低耗设</li>
-									<li>防水防尘</li>
+									<li>水防尘</li>
 									<li>寿命长达50000小时</li>
 								</ul>
 							</div>`
@@ -358,6 +358,7 @@ export default {
 							name: '转向灯组',
 							stock: 60,
 							price: 25,
+							brand: 'tailg',
 							detail: `<div class="detail-content">
 								<h3>产品数</h3>
 								<p>电压：12V</p>
@@ -383,6 +384,7 @@ export default {
 							name: '快速充电器',
 							stock: 30,
 							price: 65,
+							brand: 'sunra',
 							detail: `<div class="detail-content">
 								<h3>产品数</h3>
 								<p>输入电压：220V</p>
@@ -402,6 +404,7 @@ export default {
 							name: '充电口',
 							stock: 80,
 							price: 15,
+							brand: 'luyuan',
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
 								<p>材质：铜合金</p>
@@ -426,6 +429,7 @@ export default {
 							name: '控制器',
 							stock: 40,
 							price: 120,
+							brand: 'lima',
 							detail: `<div class="detail-content">
 								<h3>参数</h3>
 								<p>工作电压：48V</p>
@@ -445,6 +449,7 @@ export default {
 							name: '调速器',
 							stock: 55,
 							price: 85,
+							brand: 'yadea',
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
 								<p>调速范围：1-5档</p>
@@ -469,6 +474,7 @@ export default {
 							name: '后视镜',
 							stock: 88,
 							price: 20,
+							brand: 'aima',
 							detail: `<div class="detail-content">
 								<h3>产品数</h3>
 								<p>材质：ABS+玻璃</p>
@@ -487,6 +493,7 @@ export default {
 							name: '泥板',
 							stock: 100,
 							price: 15,
+							brand: 'ninebot',
 							detail: `<div class="detail-content">
 								<h3>产品参数</h3>
 								<p>材质：PP塑料</p>
@@ -530,16 +537,16 @@ export default {
 				translateY: 0,
 				opacity: 1
 			},
-			isManualSwitching: false, // 添加手动切换标记
+			isManualSwitching: false, // ���加手动切换标记
 			brands: [
 				{ id: 'all', name: '全部' },
-				{ id: 'brand1', name: '品牌1' },
-				{ id: 'brand2', name: '牌2' },
-				{ id: 'brand3', name: '品3' },
-				{ id: 'brand4', name: '品牌4' },
-				{ id: 'brand5', name: '品牌5' },
-				{ id: 'brand6', name: '品牌6' },
-				// 可以添加更多品
+				{ id: 'aima', name: '爱玛' },
+				{ id: 'yadea', name: '雅迪' },
+				{ id: 'ninebot', name: '九号' },
+				{ id: 'tailg', name: '台铃' },
+				{ id: 'sunra', name: '新日' },
+				{ id: 'luyuan', name: '绿源' },
+				{ id: 'lima', name: '立马' },
 			],
 			selectedBrand: 'all', // 当前选中的品牌
 			shopId: '', // 添加shopId存储
@@ -661,7 +668,7 @@ export default {
 			animate();
 		},
 		
-		// 修改滚动监听方法
+		// 修���滚动监听方法
 		onProductScroll: throttle(function(e) {
 			if (this.isManualSwitching) return;
 			
@@ -702,7 +709,7 @@ export default {
 		
 		// 修改加商品购物车方法
 		addToCart(categoryIndex, productIndex) {
-			// 如果是从购物车中直接操作
+			// 如果是从购物车中直接操��
 			if (typeof categoryIndex === 'object') {
 				const item = categoryIndex;
 				categoryIndex = item.categoryIndex;
@@ -735,7 +742,7 @@ export default {
 				// 计算剩余可购买数量
 				const remainingStock = product.stock - existItem.quantity;
 				
-				// 如果剩余可购数量小于等于3，显示提示
+				// 如果剩余可购数量小于等于3，示提示
 				if (remainingStock <= 3) {
 					// 如果剩余库存为1（加入后为0），显示已达到库存上限
 					if (remainingStock === 1) {
@@ -755,7 +762,7 @@ export default {
 				
 				existItem.quantity++;
 			} else {
-				// ���果库存小于等于3，显示提示
+				// 果库存小于等于3，显示提示
 				if (product.stock <= 3) {
 					// 如果库存为1，显示已达到库存上限
 					if (product.stock === 1) {
@@ -861,7 +868,17 @@ export default {
 				return
 			}
 			
-			// TODO: 跳转结算页面
+			const orderInfo = {
+				shopName: '电动车维修店一',  // 店铺名称
+				orderGoods: this.cartList,   // 购物车商品列表
+				totalAmount: this.totalPrice, // 商品总额
+				freight: 0,                   // 运费
+				finalAmount: this.totalPrice  // 最终金额
+			}
+			
+			// 将订单信息存储到本地
+			uni.setStorageSync('orderInfo', JSON.stringify(orderInfo))
+			
 			uni.navigateTo({
 				url: '/pages/checkout/checkout'
 			})
@@ -964,7 +981,7 @@ export default {
 			// 构建查询参数
 			const query = {
 				id: productInfo.id,
-				categoryIndex: categoryIndex,  // 确保���递这个
+				categoryIndex: categoryIndex,  // 确保递这个
 				productIndex: productIndex,    // 确保传递这个
 				name: productInfo.name,
 				price: productInfo.price,
@@ -1092,7 +1109,7 @@ export default {
 			if (newQuantity > stock) {
 				cartItem.quantity = stock;
 				uni.showToast({
-					title: `已达到库存上限${stock}件`,
+					title: `已达到库存上���${stock}件`,
 					icon: 'none'
 				});
 			} else {
@@ -1140,7 +1157,7 @@ export default {
 		selectBrand(brandId) {
 			this.selectedBrand = brandId;
 			
-			// 如果正在搜索，新执行搜索以应用新的品��筛
+			// 如果正在搜索，新执行搜索以应用新的品筛
 			if (this.isSearching) {
 				this.searchProducts();
 				return;
@@ -1811,7 +1828,7 @@ export default {
 	pointer-events: none;
 }
 
-/* 修改库存显样式 */
+/* 修改库存显���式 */
 .product-stock {
 	font-size: 24rpx;
 	color: #999;
@@ -1954,13 +1971,6 @@ export default {
     border-bottom: 1rpx solid #f0f2f7;
 }
 
-.brand-label {
-    font-size: 28rpx;
-    color: #333;
-    margin: 0 20rpx;
-    white-space: nowrap;
-}
-
 .brand-scroll {
     flex: 1;
     white-space: nowrap;
@@ -2055,7 +2065,7 @@ export default {
 
 .search-results-container {
 	position: fixed;
-	top: 200rpx; /* 根据顶部搜索栏和品牌筛选的实际高度调整 */
+	top: 200rpx; /* 据顶部搜索栏和品牌筛选的实际高度调整 */
 	left: 0;
 	right: 0;
 	bottom: 110rpx; /* 购物车栏的高度 */

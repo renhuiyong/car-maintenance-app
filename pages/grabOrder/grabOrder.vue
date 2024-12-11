@@ -72,13 +72,47 @@
 		</view>
 
 		<!-- 联系人信息 -->
-		<view class="contact-info" @click="editContact">
-			<image src="/static/images/dingwei.png" class="location-icon" mode="aspectFit"></image>
+		<view class="contact-info">
 			<view class="contact-details">
-				<view>淮北市中医院附近</view>
-				<view class="contact-name">张某某 188888888</view>
+				<view class="contact-name">
+					<input 
+						type="text" 
+						v-model="contactName" 
+						placeholder="请输入姓名"
+						class="name-input"
+						maxlength="6"
+						@click.stop
+						@input="validateName"
+					/>
+					<view class="phone-input-wrapper">
+						<input 
+							type="number" 
+							v-model="contactPhone" 
+							placeholder="请输入手机号"
+							class="phone-input"
+							maxlength="11"
+							@click.stop
+							@input="validatePhone"
+						/>
+						<button 
+							class="get-phone-btn"
+							open-type="getPhoneNumber"
+							@getphonenumber="getPhoneNumber"
+							:disabled="!contactPhone"
+						>快速获取</button>
+					</view>
+				</view>
+				<view class="address-wrapper">
+					<image src="/static/images/dingwei.png" class="location-icon" mode="aspectFit"></image>
+					<view class="contact-address" @click="chooseLocation">{{ address || '点击选择地址' }}</view>
+					<image 
+						src="/static/images/youshang.png" 
+						class="arrow-right" 
+						mode="aspectFit"
+						@click="chooseLocation"
+					></image>
+				</view>
 			</view>
-			<image src="/static/images/youshang.png" class="arrow-right" mode="aspectFit"></image>
 		</view>
 
 		<!-- 底部按钮区域 -->
@@ -135,7 +169,7 @@
 				</view>
 				<view class="voice-status">
 					<text class="voice-tip">{{ recordTip }}</text>
-					<text class="voice-time">{{ currentSeconds }}″</text>
+					<text class="voice-time">{{ currentSeconds }}秒</text>
 					<text class="voice-cancel" :class="{ 'cancel-active': isCanceled }">上滑取消录音</text>
 				</view>
 			</view>
@@ -166,6 +200,11 @@ export default {
 			startTime: 0, // 开始录音的时间戳
 			currentSeconds: 0, // 当前录音秒数
 			recordTimer: null, // 记录实时秒数的定时器
+			contactName: '',
+			contactPhone: '',
+			address: '',
+			latitude: '',
+			longitude: '',
 		}
 	},
 	onLoad() {
@@ -296,7 +335,7 @@ export default {
 			} else if (this.currentSeconds < 3) {
 				this.recorderManager.stop()
 				uni.showToast({
-					title: '说话时间太短',
+					title: '录音时间太短',
 					icon: 'none'
 				})
 			} else {
@@ -356,10 +395,89 @@ export default {
 			if (this.innerAudioContext) {
 				this.innerAudioContext.destroy()
 			}
+		},
+		chooseLocation() {
+			uni.chooseLocation({
+				success: (res) => {
+					this.address = res.address
+					this.latitude = res.latitude
+					this.longitude = res.longitude
+				},
+				fail: (err) => {
+					// 如果是因为用户拒绝授权导致的失败，则引导用户开启位置权限
+					if (err.errMsg.indexOf('auth deny') !== -1) {
+						uni.showModal({
+							title: '提示',
+							content: '需要获取您的地理位置，请确认授权',
+							success: (res) => {
+								if (res.confirm) {
+									uni.openSetting({
+										success: (settingRes) => {
+											if (settingRes.authSetting['scope.userLocation']) {
+												this.chooseLocation()
+											}
+										}
+									})
+								}
+							}
+						})
+					} else {
+						uni.showToast({
+							title: '选择地址失败',
+							icon: 'none'
+						})
+					}
+				}
+			})
+		},
+		getPhoneNumber(e) {
+			if (e.detail.errMsg === 'getPhoneNumber:ok') {
+				const encryptedData = e.detail.encryptedData
+				const iv = e.detail.iv
+				// 这里模拟解密后的手机号验证
+				const phoneNumber = '18888888888' // 实际应该是解密后的手机号
+				const phoneReg = /^1[3-9]\d{9}$/
+				
+				if (phoneReg.test(phoneNumber)) {
+					this.contactPhone = phoneNumber
+				} else {
+					uni.showToast({
+						title: '获取到的手机号格式错误',
+						icon: 'none'
+					})
+				}
+			} else {
+				uni.showToast({
+					title: '获取手机号失败',
+					icon: 'none'
+				})
+			}
+		},
+		validateName(e) {
+			// 限制姓名长度为6个字符
+			if (e.detail.value.length > 6) {
+				this.contactName = e.detail.value.slice(0, 6)
+				uni.showToast({
+					title: '姓名最多6个字符',
+					icon: 'none'
+				})
+			}
+		},
+		validatePhone(e) {
+			const phoneReg = /^1[3-9]\d{9}$/
+			const value = e.detail.value
+			
+			// 如果输入的不是有效手机号，但长度已经是11位
+			if (value.length === 11 && !phoneReg.test(value)) {
+				uni.showToast({
+					title: '请输入正确的手机号',
+					icon: 'none'
+				})
+			}
 		}
 	},
 	computed: {
-		// 计算上传区域的高度
+		// 计算上传区域的度
 		uploadAreaHeight() {
 			const rows = Math.ceil(this.uploadedImages.length / 3)
 			const baseHeight = 160 // 基础高度
@@ -437,7 +555,7 @@ export default {
 		box-sizing: border-box;
 
 		.image-item {
-			width: calc((100% - 40rpx) / 3); // 减去两个间距后平分
+			width: calc((100% - 40rpx) / 3); // 减去两行间距后平分
 			height: 160rpx;
 			position: relative;
 			overflow: hidden;
@@ -500,7 +618,7 @@ export default {
 	.upload-box {
 		position: absolute;
 		right: 20rpx;
-		bottom: 20rpx; // 改为固定在底部
+		bottom: 20rpx; // 改为固定底部
 		z-index: 2;
 
 		.upload-icon {
@@ -543,37 +661,104 @@ export default {
 .contact-info {
 	padding: 20rpx 30rpx;
 	display: flex;
-	align-items: center;
 	background-color: #fff;
 	margin-top: 20rpx;
 	border-radius: 12rpx;
 	border-top: none;
-
-	.location-icon {
-		width: 46rpx;
-		height: 46rpx;
-		margin-right: 20rpx;
-	}
+	min-width: 0;
 
 	.contact-details {
 		flex: 1;
-		font-size: 28rpx;
-
-		view:first-child {
-			font-weight: 500;
-			color: #333;
-            font-weight: bold;
-		}
+		min-width: 0;
+		font-size: 32rpx;
 
 		.contact-name {
-			color: #999;
-			margin-top: 8rpx;
-		}
-	}
+			display: flex;
+			align-items: center;
+			margin-bottom: 32rpx;
+			
+			.name-input {
+				flex: 0 0 160rpx; // 固定宽度
+				font-size: 34rpx;
+				color: #333;
+				font-weight: bold;
+				padding: 4rpx 0;
+				margin-left: 38rpx;
+			}
 
-	.arrow-right {
-		width: 28rpx;
-		height: 28rpx;
+			.phone-input-wrapper {
+				flex: 1;
+				min-width: 0;
+				display: flex;
+				align-items: center;
+				gap: 10rpx;
+				transform: translateZ(0);
+				will-change: transform;
+
+				.phone-input {
+					flex: 1;
+					min-width: 0;
+					font-size: 34rpx;
+					color: #333;
+					font-weight: bold;
+					padding: 4rpx 0;
+					margin-left: 10rpx;
+				}
+
+				.get-phone-btn {
+					flex: none;
+					font-size: 24rpx;
+					color: #FF9500;
+					background: rgba(255, 149, 0, 0.1);
+					padding: 0 16rpx;
+					height: 44rpx;
+					line-height: 44rpx;
+					border: none;
+					border-radius: 22rpx;
+					transform: translateZ(0);
+					transition: background-color 0.2s ease;
+
+					&::after {
+						border: none;
+					}
+
+					&:active {
+						background: rgba(255, 149, 0, 0.2);
+						transform: translateZ(0) scale(0.98);
+					}
+				}
+			}
+		}
+
+		.address-wrapper {
+			display: flex;
+			align-items: center;
+			gap: 10rpx;
+			width: 100%;
+			padding: 4rpx 0;
+
+			.location-icon {
+				flex: none;
+				width: 32rpx;
+				height: 32rpx;
+			}
+
+			.contact-address {
+				flex: 1;
+				min-width: 0;
+				color: #999;
+				font-size: 32rpx;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.arrow-right {
+				flex: none;
+				width: 32rpx;
+				height: 32rpx;
+			}
+		}
 	}
 }
 
@@ -887,7 +1072,7 @@ export default {
 					width: 6rpx;
 					background: #FF9500;
 					border-radius: 3rpx;
-					transition: height 0.1s ease-out; // 优化过渡效果
+					transition: height 0.1s ease-out; // 化过渡效果
 				}
 			}
 

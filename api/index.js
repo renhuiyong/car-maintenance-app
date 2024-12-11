@@ -65,6 +65,11 @@ const api = {
         // 获取商品详情
         getProductDetail(id) {
             return request.get(`/shop/product/${id}`)
+        },
+
+        // 添加获取维修商家列表接口
+        getShopList(params) {
+            return request.get('/web/shop/getList', params)
         }
     },
 
@@ -97,7 +102,7 @@ const api = {
         markRead(messageId) {
             return request.post(`/message/read/${messageId}`)
         }
-    }
+    },
 }
 
 export default api 

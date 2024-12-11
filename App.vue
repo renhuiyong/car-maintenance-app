@@ -53,7 +53,7 @@
 		font-family: inherit !important;
 	}
 
-	/* 移除输入框点击时的所有默认效果 */
+	/* 移除输入框��击时的所有默认效果 */
 	input,
 	input:focus,
 	input:active,
@@ -83,4 +83,9 @@
 		overflow: hidden !important;
 	}
 	/* #endif */
+
+	/* 重置默认样式 */
+	view, scroll-view {
+		box-sizing: border-box;
+	}
 </style>

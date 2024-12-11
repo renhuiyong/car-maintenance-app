@@ -6,16 +6,22 @@
 			class="map"
 			:latitude="latitude"
 			:longitude="longitude"
-			:markers="[]"
+			:markers="markers"
 			:show-location="true"
+			@markertap="onMarkerTap"
+			@tap="onMapTap"
+			@regionchange="onMapRegionChange"
 		></map>
 		<view class="location-btn" @click="moveToLocation">
 			<image class="location-icon" src="/static/images/location_icon.png"></image>
 		</view>
 		
 		<!-- 底部预约区域 -->
-		<view class="bottom-area">
-			<!-- 切换按钮 -->
+		<view class="bottom-area" :style="{ 
+			height: bottomAreaHeight,
+			transitionDuration: transitionDuration 
+		}">
+			<!-- 原有的 tab-box 内容 -->
 			<view class="tab-box">
 				<view 
 					class="tab-item" 
@@ -29,6 +35,9 @@
 					class="tab-item" 
 					:class="{ active: tabIndex === 1 }" 
 					@click="switchTab(1)"
+					@touchstart="handleTouchStart"
+					@touchmove="handleTouchMove"
+					@touchend="handleTouchEnd"
 				>
 					<text>指定报修</text>
 					<view class="tab-line"></view>
@@ -53,8 +62,16 @@
 				<scroll-view 
 					scroll-y 
 					class="repair-list"
-					@scrolltolower="loadMore"
+					@scrolltolower="onLoadMore"
 					:scroll-top="scrollTop"
+					:show-scrollbar="false"
+					refresher-enabled
+					@refresherrefresh="onRefresh"
+					:refresher-triggered="isRefreshing"
+					:style="{
+						height: isExpanded ? 'calc(80vh - 180rpx)' : 'calc(30vh - 180rpx)',
+						transitionDuration: transitionDuration
+					}"
 				>
 					<view 
 						v-for="(shop, index) in repairShops" 
@@ -70,14 +87,23 @@
 						<view class="repair-time-actions">
 							<view class="repair-time">营业时间：{{shop.businessHours}}</view>
 							<view class="repair-actions">
-								<button class="action-btn"><text class="iconfont">🔧</text></button>
-								<button class="action-btn"><text class="iconfont">📞</text></button>
+								<button class="action-btn"><image src="/static/products/weixiu.png" class="action-icon"></image></button>
+								<button class="action-btn"><image src="/static/images/dianhua.png" class="action-icon"></image></button>
 							</view>
 						</view>
 					</view>
 					<view class="load-status">
-						<view v-if="loading" class="loading">加载中...</view>
-						<view v-if="finished" class="no-more">没有更多了</view>
+						<view v-if="loading" class="loading">
+							<view class="loading-spinner"></view>
+							<text>加载中...</text>
+						</view>
+						<view v-if="finished && repairShops.length > 0" class="no-more">
+							<text>已经到底啦</text>
+						</view>
+						<view v-if="finished && repairShops.length === 0" class="empty">
+							<image src="/static/images/empty.png" mode="aspectFit" class="empty-icon"></image>
+							<text>暂无维修商家</text>
+						</view>
 					</view>
 				</scroll-view>
 			</view>
@@ -108,6 +134,8 @@
 </template>
 
 <script>
+	import api from '@/api/index.js'
+
 	export default {
 		data() {
 			return {
@@ -117,45 +145,93 @@
 				markers: [],
 				showAuthModal: false,
 				isChecked: false,
-				repairShops: [
-					{
-						id: 1,
-						name: '电动车维修店一',
-						distance: '0.6KM',
-						address: '安徽省淮北市濉溪县濉溪镇濉中路88号',
-						businessHours: '08:00 - 18:00'
-					},
-					{
-						id: 2,
-						name: '土楼新村',
-						distance: '1.2KM',
-						address: '安徽省淮北市相山区渠沟镇土楼新村',
-						businessHours: '07:30 - 19:00'
-					},
-					{
-						id: 3,
-						name: '老张电瓶车维修中心',
-						distance: '1.8KM',
-						address: '安徽省淮北市相山区长山路56号',
-						businessHours: '08:30 - 18:30'
-					}
-				],
+				repairShops: [],
+				pageNum: 1,
+				pageSize: 10,
 				loading: false,
 				finished: false,
 				scrollTop: 0,
-				promotionCode: ''
+				promotionCode: '',
+				isExpanded: false,
+				startY: 0,
+				bottomAreaHeight: '30vh',
+				minHeight: '30vh',
+				maxHeight: '80vh',
+				windowHeight: 0,
+				lastMoveTime: 0,
+				transitionDuration: '0.6s',
+				selectedShopId: null,
+				isMapMoving: false,
+				isRefreshing: false,
+				loadMoreThrottle: null,
+			}
+		},
+		computed: {
+			repairContentHeight() {
+				return this.isExpanded ? 
+					`calc(${this.maxHeight} - 110rpx)` : 
+					`calc(${this.minHeight} - 110rpx)`
 			}
 		},
 		onLoad(query) {
+			// 获取系统信息
+			const { windowHeight } = uni.getSystemInfoSync()
+			this.windowHeight = windowHeight
+			
 			// 检查授权状态
 			this.checkLocationAuth()
 			
-			// 处理小程序二维码参数
+			// 处理小程序二���码参数
 			this.handleSceneCode(query)
+		},
+		watch: {
+			repairShops: {
+				handler(shops) {
+					this.updateMarkers(shops)
+				},
+				immediate: true
+			}
 		},
 		methods: {
 			switchTab(index) {
 				this.tabIndex = index
+				if (index === 0) {
+					// 抢单报修 - 收起底部区域
+					this.clearSelectedShop()
+					this.transitionDuration = '0.3s'
+					this.isExpanded = false
+					this.bottomAreaHeight = this.minHeight
+				} else {
+					// 指定报修 - 展开底部区域
+					// 重置列表状态
+					this.scrollTop = 0
+					this.pageNum = 1
+					this.finished = false
+					this.repairShops = []
+					this.loading = false
+					
+					this.$nextTick(() => {
+						setTimeout(() => {
+							this.transitionDuration = '0.6s'
+							this.isExpanded = true
+							this.bottomAreaHeight = this.maxHeight
+							// 切换后立即加载数据
+							this.loadMore()
+						}, 150)
+					})
+				}
+			},
+			
+			setTransitionDuration(duration) {
+				const bottomArea = document.querySelector('.bottom-area')
+				const repairContent = document.querySelector('.repair-content[key="assign"]')
+				
+				if (bottomArea) {
+					bottomArea.style.transitionDuration = duration
+				}
+				if (repairContent) {
+					repairContent.style.transitionDuration = duration
+				}
 			},
 			
 			handleSubmit() {
@@ -179,7 +255,7 @@
 			handleAuthConfirm() {
 				if (!this.isChecked) {
 					uni.showToast({
-						title: '请先阅读并同意隐私保护指引',
+						title: '请阅读并同意隐私保护指引',
 						icon: 'none'
 					})
 					return
@@ -198,7 +274,7 @@
 					fail: () => {
 						uni.showModal({
 							title: '提示',
-							content: '需要获取您的位置信息，请��设置中打开位置权限',
+							content: '需要获取您的位置信息，请设置中打开位置权限',
 							confirmText: '去设置',
 							success: (res) => {
 								if (res.confirm) {
@@ -220,10 +296,16 @@
 				uni.getLocation({
 					type: 'gcj02',
 					isHighAccuracy: true,
-					geocode: true, // 开启地址解析
+					geocode: true,
 					success: (res) => {
 						this.latitude = res.latitude
 						this.longitude = res.longitude
+						
+						// 获取位置成功后立即加载商家列表
+						this.repairShops = []
+						this.pageNum = 1
+						this.finished = false
+						this.loadMore()
 						
 						// 使用地址信息
 						if (res.address) {
@@ -240,26 +322,10 @@
 					fail: (err) => {
 						console.error('获取位置失败：', err)
 						uni.showToast({
-							title: '获取位置失败，请检查定位��限',
+							title: '获取位置失败，请检查定位权限',
 							icon: 'none',
 							duration: 2000
 						})
-					}
-				})
-			},
-			// 添加备用地址解析方法
-			getAddressByLocation(latitude, longitude) {
-				uni.request({
-					url: `https://apis.map.qq.com/ws/geocoder/v1/?location=${latitude},${longitude}&key=YOUR_KEY`,
-					success: (res) => {
-						if (res.data.status === 0) {
-							this.address = res.data.result.address
-						} else {
-							this.address = '获取地址失败'
-						}
-					},
-					fail: () => {
-						this.address = '获取地址失败'
 					}
 				})
 			},
@@ -269,7 +335,7 @@
 					url
 				})
 			},
-			// 检查位置授权状态
+			// 检查位置权限状态
 			checkLocationAuth() {
 				uni.getSetting({
 					success: (res) => {
@@ -327,46 +393,105 @@
 			},
 			// 加载更多数据
 			loadMore() {
-				if (this.loading || this.finished) return
+				if (this.loading || this.finished) return Promise.resolve()
 				
 				this.loading = true
 				
-				// 模拟异步加载数据
-				setTimeout(() => {
-					const newShops = [
-						{
-							id: this.repairShops.length + 1,
-							name: `电动车维修店${this.repairShops.length + 1}`,
-							distance: `${(this.repairShops.length * 0.8).toFixed(1)}KM`,
-							address: '安徽省淮北市相山区示例路123号',
-							businessHours: '08:00 - 18:00'
-						},
-						{
-							id: this.repairShops.length + 2,
-							name: `快修店${this.repairShops.length + 2}`,
-							distance: `${(this.repairShops.length * 0.8 + 0.5).toFixed(1)}KM`,
-							address: '安徽省淮北市相山区示例路456号',
-							businessHours: '08:30 - 18:30'
+				return api.shop.getShopList({
+					longitude: this.longitude,
+					latitude: this.latitude, 
+					pageNum: this.pageNum,
+					pageSize: this.pageSize
+				}).then(res => {
+					if (res.code === 200) {
+						const { rows, total } = res
+						
+						if (!rows || rows.length === 0) {
+							this.finished = true
+							return
 						}
-					]
-					
-					this.repairShops = [...this.repairShops, ...newShops]
-					this.loading = false
-					
-					// 模拟数据加载完毕
-					if (this.repairShops.length >= 10) {
-						this.finished = true
+						
+						const shopsWithDistance = rows.map(shop => {
+							const distance = this.calculateDistance(
+								this.latitude,
+								this.longitude,
+								shop.latitude,
+								shop.longitude
+							)
+							
+							// 改进距离显示逻辑
+							let distanceText;
+							if (distance < 0.1) {
+								// 小于100米时显示具体米数
+								distanceText = `${Math.round(distance * 1000)}m`;
+							} else if (distance < 1) {
+								// 小于1公里时显示具体米数
+								distanceText = `${Math.round(distance * 1000)}m`;
+							} else if (distance < 10) {
+								// 小于10公里时保留一位小数
+								distanceText = `${distance.toFixed(1)}km`;
+							} else {
+								// 大于10公里时取整
+								distanceText = `${Math.round(distance)}km`;
+							}
+							
+							return {
+								...shop,
+								distance: distanceText,
+								distanceValue: distance // 保存原始距离值用于排序
+							}
+						})
+						
+						// 按距离排序
+						shopsWithDistance.sort((a, b) => a.distanceValue - b.distanceValue)
+						
+						// 追加新数据
+						this.repairShops = this.repairShops.concat(shopsWithDistance)
+						
+						this.pageNum++
+						
+						if (rows.length < this.pageSize) {
+							this.finished = true
+						}
+					} else {
+						throw new Error(res.msg || '获取商家列表失败')
 					}
-				}, 1000)
+				}).catch(error => {
+					console.error('加载更多数据失败:', error)
+					uni.showToast({
+						title: error.message || '获取商家列表失败',
+						icon: 'none'
+					})
+				}).finally(() => {
+					this.loading = false
+				})
 			},
 			// 处理滚动事件
 			handleScroll(e) {
 				this.scrollTop = e.detail.scrollTop
 			},
 			goToAssignRepair(shop) {
-				uni.navigateTo({
-					url: `/pages/assignRepair/assignRepair?shopInfo=${encodeURIComponent(JSON.stringify(shop))}`
+				// 更新地图中心点到选中的商家
+				this.latitude = shop.latitude
+				this.longitude = shop.longitude
+				
+				// 设置选中的商家 ID 并立即更新标记
+				this.selectedShopId = shop.id
+				this.updateMarkers(this.repairShops)
+				
+				// 使用 nextTick 确保视图更新后再导航
+				this.$nextTick(() => {
+					setTimeout(() => {
+						uni.navigateTo({
+							url: `/pages/assignRepair/assignRepair?shopInfo=${encodeURIComponent(JSON.stringify(shop))}`
+						})
+					}, 300)
 				})
+			},
+			// 添加取消选中的方法
+			clearSelectedShop() {
+				this.selectedShopId = null
+				this.updateMarkers(this.repairShops)
 			},
 			// 添加查看规则方法
 			checkRules() {
@@ -393,12 +518,272 @@
 						this.promotionCode = value
 						// 存储邀请码到本地存储，以便后续使用
 						uni.setStorageSync('promotionCode', value)
-						console.log('成功设置邀请码:', value)
+						console.log('功设置邀请码:', value)
 					}
 				} catch (error) {
-					console.error('解析邀请码失败:', error)
+					console.error('解析请码失败:', error)
 				}
-			}
+			},
+			handleTouchStart(e) {
+				this.startY = e.touches[0].clientY
+			},
+			
+			handleTouchMove(e) {
+				// 只有在指定报修时才允许��动
+				if (this.tabIndex !== 1) return
+				
+				// 添加简单的节流
+				const now = Date.now()
+				if (now - this.lastMoveTime < 16) {
+					return
+				}
+				this.lastMoveTime = now
+				
+				// 其他辑保持不变
+				const currentY = e.touches[0].clientY
+				const diff = this.startY - currentY
+				
+				const vh = (diff / this.windowHeight) * 100
+				const currentHeight = parseInt(this.bottomAreaHeight)
+				let newHeight = currentHeight + vh
+				
+				newHeight = Math.max(parseInt(this.minHeight), Math.min(parseInt(this.maxHeight), newHeight))
+				
+				this.bottomAreaHeight = `${newHeight}vh`
+				this.startY = currentY
+			},
+			
+			handleTouchEnd() {
+				if (this.tabIndex !== 1) return
+				
+				const currentHeight = parseInt(this.bottomAreaHeight)
+				const threshold = (parseInt(this.maxHeight) + parseInt(this.minHeight)) / 2
+				
+				if (currentHeight > threshold) {
+					this.transitionDuration = '0.6s'
+					this.bottomAreaHeight = this.maxHeight
+					this.isExpanded = true
+				} else {
+					this.transitionDuration = '0.3s'
+					this.bottomAreaHeight = this.minHeight
+					this.isExpanded = false
+				}
+			},
+			// 修改 updateMarkers 方法
+			updateMarkers(shops) {
+				if (!shops || !shops.length) return
+				
+				this.markers = shops.map(shop => {
+					const isSelected = shop.id === this.selectedShopId
+					return {
+						id: shop.id,
+						latitude: shop.latitude,
+						longitude: shop.longitude,
+						width: isSelected ? 48 : 40,
+						height: isSelected ? 48 : 40,
+						iconPath: isSelected ? '/static/images/marker_active.png' : '/static/images/marker.png',
+						anchor: {
+							x: 0.5,
+							y: 1
+						},
+						callout: {
+							content: shop.name,
+							color: '#333333',
+							fontSize: 12,
+							borderRadius: 4,
+							bgColor: '#FFFFFF',
+							padding: 8,
+							display: isSelected ? 'ALWAYS' : 'BYCLICK',
+							textAlign: 'center',
+							borderWidth: 1,
+							borderColor: '#EEEEEE',
+							anchorY: -5
+						},
+						label: {
+							content: shop.distance,
+							color: '#666666',
+							fontSize: 10,
+							anchorX: 40,
+							anchorY: -30,
+							borderWidth: 1,
+							borderColor: '#FFFFFF',
+							borderRadius: 2,
+							bgColor: '#FFFFFF',
+							padding: 4,
+							textAlign: 'center'
+						}
+					}
+				})
+			},
+			// 添加标记点击事件处理
+			onMarkerTap(e) {
+				const markerId = e.markerId
+				const shop = this.repairShops.find(shop => shop.id === markerId)
+				if (shop) {
+					// 新地图中心点到选的商家
+					this.latitude = shop.latitude
+					this.longitude = shop.longitude
+					
+					// 设置选中的商家 ID
+					this.selectedShopId = shop.id
+					
+					// 更新标记
+					this.updateMarkers(this.repairShops)
+
+					// 阻止地图点击事件的冒泡
+					e.stopPropagation && e.stopPropagation()
+				}
+			},
+			// 添加地图点击事件处理
+			onMapTap() {
+				if (this.tabIndex === 1 && this.isExpanded) {
+					this.collapseBottomArea()
+				}
+			},
+
+			// 添加地图区域变化事件处理
+			onMapRegionChange(e) {
+				if (e.type === 'begin') {
+					this.isMapMoving = true
+				} else if (e.type === 'end') {
+					this.isMapMoving = false
+					// 如果是指定��修且展开状态，则收起
+					if (this.tabIndex === 1 && this.isExpanded) {
+						this.collapseBottomArea()
+					}
+				}
+			},
+
+			// 添加收起底部区域的方法
+			collapseBottomArea() {
+				this.transitionDuration = '0.3s'
+				this.bottomAreaHeight = this.minHeight
+				this.isExpanded = false
+			},
+
+			calculateDistance(lat1, lon1, lat2, lon2) {
+				// 检查参数是否有效
+				if (!lat1 || !lon1 || !lat2 || !lon2) {
+					return 999999; // 返回一个较大值，表示无效距离
+				}
+
+				// 将字符串转换为数字
+				lat1 = Number(lat1);
+				lon1 = Number(lon1);
+				lat2 = Number(lat2);
+				lon2 = Number(lon2);
+
+				// 地球半径（单位：千米）
+				const R = 6371;
+				
+				// 将角度转换为弧度
+				const lat1Rad = this.deg2rad(lat1);
+				const lat2Rad = this.deg2rad(lat2);
+				const latDiff = this.deg2rad(lat2 - lat1);
+				const lonDiff = this.deg2rad(lon2 - lon1);
+
+				// Haversine 公式
+				const a = 
+					Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
+					Math.cos(lat1Rad) * Math.cos(lat2Rad) * 
+					Math.sin(lonDiff / 2) * Math.sin(lonDiff / 2);
+				
+				const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+				
+				// 计算距离（单位：千米）
+				let distance = R * c;
+
+				// 处理异常值
+				if (isNaN(distance) || !isFinite(distance)) {
+					return 999999;
+				}
+
+				// 限制精度，避免显示过多小数位
+				return Math.max(0, distance);
+			},
+
+			deg2rad(deg) {
+				return deg * (Math.PI/180)
+			},
+
+			// 添加下拉刷新方法
+			onRefresh() {
+				if (this.isRefreshing) return
+				
+				this.isRefreshing = true
+				this.pageNum = 1
+				this.finished = false
+				
+				// 调用接口获取数据
+				api.shop.getShopList({
+					longitude: this.longitude,
+					latitude: this.latitude, 
+					pageNum: 1,
+					pageSize: this.pageSize
+				}).then(res => {
+					if (res.code === 200) {
+						const { rows } = res
+						
+						const shopsWithDistance = rows.map(shop => {
+							const distance = this.calculateDistance(
+								this.latitude,
+								this.longitude,
+								shop.latitude,
+								shop.longitude
+							)
+							return {
+								...shop,
+								distance: distance < 1 ? 
+									`${(distance * 1000).toFixed(0)}m` : 
+									`${distance.toFixed(1)}km`
+							}
+						})
+						
+						// 重置数据
+						this.repairShops = shopsWithDistance
+						
+						// 只有当获取的数据条数小于 pageSize 时，才标记为加载完成
+						if (rows.length < this.pageSize) {
+							this.finished = true
+						}
+						
+						uni.showToast({
+							title: '刷新成功',
+							icon: 'none',
+						})
+					} else {
+						uni.showToast({
+							title: res.msg || '刷新失败',
+							icon: 'none'
+						})
+					}
+				}).catch(error => {
+					console.error('刷新失败:', error)
+					uni.showToast({
+						title: '刷新失败',
+						icon: 'none'
+					})
+				}).finally(() => {
+					this.isRefreshing = false
+				})
+			},
+
+			// 添加上拉加载更多方法
+			onLoadMore() {
+				console.log('触发上拉加载')
+				if (this.loading || this.finished) {
+					console.log('正在加载或已加载完成，不触发加载', {
+						loading: this.loading,
+						finished: this.finished,
+						pageNum: this.pageNum,
+						total: this.repairShops.length
+					})
+					return
+				}
+				
+				// 直接调用 loadMore
+				this.loadMore()
+			},
 		}
 	}
 </script>
@@ -409,17 +794,21 @@
 		display: flex;
 		flex-direction: column;
 		position: relative;
+		overflow: hidden;
 	}
 
 	.map {
 		flex: 1;
 		width: 100%;
 		height: 70vh;
-		position: relative;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
 	}
 
 	.bottom-area {
-		position: absolute;
+		position: fixed;
 		left: 0;
 		right: 0;
 		bottom: 0;
@@ -429,35 +818,36 @@
 		z-index: 100;
 		overflow: hidden;
 		box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.05);
+		transition-property: height;
+		transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+	}
 
-		.tab-box {
+	.tab-box {
+		display: flex;
+		justify-content: space-between;
+		margin: 0;
+		position: relative;
+		height: 110rpx;
+		background: linear-gradient(180deg, #D3DEFC 0%, #F2F5FE 100%);
+		overflow: hidden;
+		
+		.tab-item {
+			flex: 1;
 			display: flex;
-			justify-content: space-between;
-			margin: 0;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 0;
+			font-size: 32rpx;
+			color: #666;
 			position: relative;
+			font-weight: bold;
 			height: 110rpx;
-			background: linear-gradient(180deg, #D3DEFC 0%, #F2F5FE 100%);
-			overflow: hidden;
 			
-			.tab-item {
-				flex: 1;
-				display: flex;
-				flex-direction: column;
-				
-				align-items: center;
-				justify-content: center;
-				padding: 0;
-				font-size: 32rpx;
-				color: #666;
-				position: relative;
+			&.active {
+				color: #4468E8;
 				font-weight: bold;
-				height: 110rpx;
-				
-				&.active {
-					color: #4468E8;
-					font-weight: bold;
-					background: #fff;
-				}
+				background: #fff;
 			}
 		}
 	}
@@ -614,17 +1004,19 @@
 	}
 
 	.repair-content {
-		padding: 20rpx;
-		height: calc(30vh - 120rpx);
+		padding: 20rpx 0 0;
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
 		background: #fff;
+		height: 100%;
 	}
 
 	.repair-list {
-		flex: 1;
-		height: calc(100% - 60rpx);
+		position: relative;
+		-webkit-overflow-scrolling: touch;
+		transition-property: height;
+		transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
 	.repair-item {
@@ -632,7 +1024,6 @@
 		border-radius: 12rpx;
 		padding: 24rpx;
 		margin: 0 20rpx 20rpx;
-		box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 		
 		&:active {
 			transform: scale(0.98);
@@ -682,19 +1073,23 @@
 		
 		.action-btn {
 			padding: 0;
-			width: 60rpx;
-			height: 60rpx;
-			line-height: 60rpx;
-			text-align: center;
-			background: #fff;
-			border-radius: 50%;
+			margin: 0;
+			width: 64rpx;
+			height: 64rpx;
+			line-height: 1;
+			background: transparent;
 			border: none;
-			font-size: 32rpx;
 			
 			&::after {
-				border: none;
+				display: none;
 			}
 		}
+	}
+
+	.action-icon {
+		width: 64rpx;
+		height: 64rpx;
+		display: block;
 	}
 
 	@keyframes slideIn {
@@ -709,42 +1104,82 @@
 	}
 
 	.load-status {
+		padding: 20rpx;
 		text-align: center;
-		padding: 20rpx 0;
 		color: #999;
 		font-size: 24rpx;
-	}
-
-	.loading {
-		display: flex;
-		align-items: center;
-		justify-content: center;
 		
-		&::before {
-			content: '';
-			width: 30rpx;
-			height: 30rpx;
-			margin-right: 10rpx;
-			border: 2rpx solid #999;
-			border-top-color: transparent;
-			border-radius: 50%;
-			animation: rotate 0.8s linear infinite;
+		.loading {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			height: 80rpx;
+			
+			.loading-spinner {
+				width: 36rpx;
+				height: 36rpx;
+				margin-right: 12rpx;
+				border: 3rpx solid #4468E8;
+				border-top-color: transparent;
+				border-radius: 50%;
+				animation: rotate 0.8s linear infinite;
+			}
+			
+			text {
+				font-size: 26rpx;
+				color: #666;
+			}
+		}
+		
+		.no-more {
+			position: relative;
+			padding: 30rpx 0;
+			color: #999;
+			font-size: 26rpx;
+			
+			&::before,
+			&::after {
+				content: '';
+				position: absolute;
+				top: 50%;
+				width: 80rpx;
+				height: 1rpx;
+				background: #e5e5e5;
+			}
+			
+			&::before {
+				left: 50%;
+				margin-left: -120rpx;
+			}
+			
+			&::after {
+				right: 50%;
+				margin-right: -120rpx;
+			}
+		}
+		
+		.empty {
+			padding: 40rpx 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			
+			.empty-icon {
+				width: 200rpx;
+				height: 200rpx;
+				margin-bottom: 20rpx;
+			}
+			
+			text {
+				color: #999;
+				font-size: 28rpx;
+			}
 		}
 	}
 
 	@keyframes rotate {
-		from {
-			transform: rotate(0deg);
-		}
-		to {
-			transform: rotate(360deg);
-		}
-	}
-
-	.no-more {
-		color: #999;
-		font-size: 24rpx;
-		padding: 20rpx 0;
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
 	}
 
 	// 加底部导航样式
@@ -787,8 +1222,8 @@
 	}
 
 	.location-btn {
-		position: absolute;
-		bottom: 32vh;
+		position: fixed;
+		bottom: calc(30vh + 20rpx);
 		right: 30rpx;
 		width: 80rpx;
 		height: 80rpx;
@@ -853,5 +1288,22 @@
 			margin: 0 16rpx;
 			color: #999;
 		}
+	}
+
+	@keyframes fadeIn {
+		from {
+			opacity: 0;
+			transform: translateY(10rpx);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	// 添加下拉刷新的动画样式
+	@keyframes refreshRotate {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
 	}
 </style>

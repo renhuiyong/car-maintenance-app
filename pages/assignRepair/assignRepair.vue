@@ -95,13 +95,40 @@
 		</view>
 
 		<!-- 联系人信息 -->
-		<view class="contact-info" @click="editContact">
-			<image src="/static/images/dingwei.png" class="location-icon" mode="aspectFit"></image>
+		<view class="contact-info">
 			<view class="contact-details">
-				<view>淮北市中医院附近</view>
-				<view class="contact-name">张某某 188888888</view>
+				<view class="contact-name">
+					<input 
+						type="text" 
+						v-model="contactInfo.name" 
+						placeholder="请输入姓名" 
+						class="contact-input"
+						maxlength="6"
+						@click.stop
+					/>
+					<view class="phone-input-wrapper">
+						<input 
+							type="number" 
+							v-model="contactInfo.phone" 
+								placeholder="请输入手机号" 
+								maxlength="11"
+								class="contact-input"
+								@click.stop
+								@blur="validatePhone"
+							/>
+						<button 
+							class="get-phone-btn"
+							open-type="getPhoneNumber"
+							@getphonenumber="getPhoneNumber"
+						>快速获取</button>
+					</view>
+				</view>
+				<view class="location-text" @click="chooseLocation">
+					<image src="/static/images/dingwei.png" class="location-icon" mode="aspectFit"></image>
+					<text>{{ contactInfo.address || '点击选择地址' }}</text>
+					<image src="/static/images/youshang.png" class="arrow-right" mode="aspectFit"></image>
+				</view>
 			</view>
-			<image src="/static/images/youshang.png" class="arrow-right" mode="aspectFit"></image>
 		</view>
 
 		<!-- 底部按钮区域 -->
@@ -159,7 +186,7 @@
 				<view class="voice-status">
 					<text class="voice-tip">{{ recordTip }}</text>
 					<text class="voice-time">{{ currentSeconds }}″</text>
-					<text class="voice-cancel" :class="{ 'cancel-active': isCanceled }">上滑取消录音</text>
+					<text class="voice-cancel" :class="{ 'cancel-active': isCanceled }">上取消录音</text>
 				</view>
 			</view>
 		</view>
@@ -198,9 +225,16 @@ export default {
 			address: {
 				name: '',
 				address: '',
-				latitude: 0, // 需要填入实际的纬度
+				latitude: 0, // 要填入实际的纬度
 				longitude: 0, // 需要填入实际的经度
-			}
+			},
+			contactInfo: {
+				name: '',
+				phone: '',
+				address: '',
+				latitude: 0,
+				longitude: 0
+			},
 		}
 	},
 	onLoad(options) {
@@ -318,7 +352,7 @@ export default {
 				format: 'mp3'
 			})
 
-			// 启动定时器，每秒更新录音时长
+			// 动定时器，每秒更新录音时长
 			this.recordTimer = setInterval(() => {
 				this.currentSeconds++
 				if (this.currentSeconds >= 60) {
@@ -393,7 +427,7 @@ export default {
 		deleteImage(index) {
 			this.uploadedImages.splice(index, 1)
 		},
-		// 组件销毁时清理资源
+		// 组件销毁清理资源
 		onUnload() {
 			if (this.recordTimer) {
 				clearInterval(this.recordTimer)
@@ -421,6 +455,57 @@ export default {
 					})
 				}
 			})
+		},
+		chooseLocation() {
+			uni.chooseLocation({
+				success: (res) => {
+					// 只更新地址相关信息，不更新联系人姓名
+					this.contactInfo.address = res.address
+					this.contactInfo.latitude = res.latitude
+					this.contactInfo.longitude = res.longitude
+				},
+				fail: (err) => {
+					console.error('选择位置失败', err)
+					uni.showToast({
+						title: '选择位置失败',
+						icon: 'none'
+					})
+				}
+			})
+		},
+		getPhoneNumber(e) {
+			if (e.detail.errMsg === 'getPhoneNumber:ok') {
+				// 这里需要调用后端接口解密获取手机号
+				// 示例中直接使用假数据
+				const phone = '13888888888'
+				// 验证获取到的手机号
+				const phoneReg = /^1[3-9]\d{9}$/
+				if (phoneReg.test(phone)) {
+					this.contactInfo.phone = phone
+				} else {
+					uni.showToast({
+						title: '获取手机号失败',
+						icon: 'none'
+					})
+				}
+			} else {
+				uni.showToast({
+					title: '获取手机号失败',
+					icon: 'none'
+				})
+			}
+		},
+		validatePhone() {
+			if (this.contactInfo.phone) {
+				const phoneReg = /^1[3-9]\d{9}$/
+				if (!phoneReg.test(this.contactInfo.phone)) {
+					uni.showToast({
+						title: '请输入正确的手机号',
+						icon: 'none'
+					})
+					this.contactInfo.phone = ''
+				}
+			}
 		}
 	},
 	computed: {
@@ -564,7 +649,7 @@ export default {
 		box-sizing: border-box;
 
 		.image-item {
-			width: calc((100% - 40rpx) / 3); // 减去两个间距后平分
+			width: calc((100% - 40rpx) / 3); // 减去两距后分
 			height: 160rpx;
 			position: relative;
 			overflow: hidden;
@@ -668,7 +753,7 @@ export default {
 }
 
 .contact-info {
-	padding: 20rpx 30rpx;
+	padding: 30rpx 30rpx;
 	display: flex;
 	align-items: center;
 	background-color: #fff;
@@ -676,31 +761,71 @@ export default {
 	border-radius: 12rpx;
 	border-top: none;
 
-	.location-icon {
-		width: 46rpx;
-		height: 46rpx;
-		margin-right: 20rpx;
-	}
-
 	.contact-details {
 		flex: 1;
-		font-size: 28rpx;
-
-		view:first-child {
-			font-weight: 500;
-			color: #333;
-            font-weight: bold;
-		}
+		font-size: 32rpx;
 
 		.contact-name {
-			color: #999;
-			margin-top: 8rpx;
-		}
-	}
+			display: flex;
+			gap: 20rpx;
+			margin-bottom: 40rpx;
 
-	.arrow-right {
-		width: 28rpx;
-		height: 28rpx;
+			.contact-input {
+				font-size: 34rpx;
+				color: #333;
+				font-weight: bold;
+				padding: 0;
+				height: 44rpx;
+				margin-left: 38rpx;
+				
+				&:first-child {
+					width: 200rpx;
+				}
+				
+				&:last-child {
+					flex: 1;
+				}
+
+				&::placeholder {
+					color: #999;
+					font-weight: normal;
+				}
+			}
+		}
+
+		.location-text {
+			display: flex;
+			align-items: center;
+			color: #999;
+			font-size: 30rpx;
+			position: relative;
+			padding-right: 52rpx;
+			
+			.location-icon {
+				width: 32rpx;
+				height: 32rpx;
+				margin-right: 20rpx;
+				flex-shrink: 0;
+			}
+
+			text {
+				flex: 1;
+				max-width: 460rpx;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.arrow-right {
+				position: absolute;
+				right: 0;
+				top: 50%;
+				transform: translateY(-50%);
+				width: 32rpx;
+				height: 32rpx;
+				flex-shrink: 0;
+			}
+		}
 	}
 }
 
@@ -1130,6 +1255,38 @@ export default {
 	}
 	50% {
 		height: 20rpx;
+	}
+}
+
+.phone-input-wrapper {
+	position: relative;
+	flex: 1;
+
+	.contact-input {
+		width: 100%;
+		padding-right: 180rpx; // 增加右侧内边距，为更宽的按钮留出空间
+	}
+
+	.get-phone-btn {
+		position: absolute;
+		right: 0;
+		top: 50%;
+		transform: translateY(-50%);
+		font-size: 24rpx;
+		color: #FFAC3A;
+		background: #FFF4E5;
+		border: none;
+		border-radius: 22rpx;
+		padding: 0 30rpx; // 增加水平内边距
+		height: 44rpx;
+		line-height: 44rpx;
+		min-width: auto; // 移除最小宽度限制，让按钮宽度自适应内容
+		white-space: nowrap; // 防止文字换行
+		text-align: center;
+		
+		&::after {
+			border: none;
+		}
 	}
 }
 </style> 
