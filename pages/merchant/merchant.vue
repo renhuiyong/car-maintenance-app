@@ -34,7 +34,7 @@ export default {
   },
   data() {
     return {
-      currentTab: 0
+      currentTab: 3
     }
   },
   onShow() {

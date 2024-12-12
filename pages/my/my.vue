@@ -506,7 +506,7 @@ export default {
 			justify-content: space-between;
 			align-items: center;
 			padding: 20rpx;
-			height: 80rpx;
+			height: 90rpx;
 			position: relative;
 			border-radius: 30rpx 30rpx 0 0;
 			overflow: hidden;

@@ -136,7 +136,7 @@ export default {
 					content: '亲爱的用户，平台正在开展新一轮优惠活动，点击查看详情了解更多优惠信息。'
 				},
 				{ 
-					title: '您收���一笔推广佣金',
+					title: '您收一笔推广佣金',
 					isRead: false,
 					content: '恭喜您获得推广佣金奖励，可以在"我的资产"中查看详情。'
 				},
@@ -183,7 +183,7 @@ export default {
 		},
 		getUserProfile() {
 			uni.getUserProfile({
-				desc: '用于��善用户资料',
+				desc: '用于完善用户资料',
 				success: (res) => {
 					this.login(res.userInfo)
 				},
@@ -209,7 +209,7 @@ export default {
 				const promotionCode = uni.getStorageSync('promotionCode') || ''
 				
 				// 在登录请求中带上promotionCode
-				const res = await api.user.wxLogin({
+				const res = await api.merchant.wxMerchantLogin({
 					code: loginRes.code,
 					userInfo: userInfo,
 					promotionCode: promotionCode
@@ -249,7 +249,14 @@ export default {
 		},
 		goToEditProfile() {
 			uni.navigateTo({
-				url: '/pages/editProfile/editProfile'
+				url: '/pages/editMerchantProfile/editMerchantProfile',
+				events: {
+					// 监听编辑页面传回的数据
+					updateUserInfo: (userInfo) => {
+						this.userInfo = userInfo
+						this.isLogin = true
+					}
+				}
 			})
 		},
 		goToInvite() {
@@ -261,7 +268,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/invite/invite',
+				url: '/pages/merchantPromotion/merchantPromotion',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -346,7 +353,7 @@ export default {
 				return
 			}
 			
-			// ���消息数据存储到本地，以便在消息列表页面使用
+			// 将消息数据存储到本地，以便在消息列表页面使用
 			uni.setStorageSync('selectedMessage', JSON.stringify({
 				title: message.title,
 					content: message.content,
@@ -451,22 +458,22 @@ export default {
 							// 处理扫码结果
 							if (res.result) {
 								try {
-									// 这里以根��实际需求处理扫码结果
+									// 这里以根实际需求处理扫码结果
 									// 比如解析二维码内容，跳转到相应页面等
 									uni.showToast({
 										title: '扫描成功',
-										icon: 'success'
+											icon: 'success'
 									})
 								} catch (error) {
 									uni.showToast({
 										title: '无效的二维码',
-										icon: 'none'
+											icon: 'none'
 									})
 								}
 							} else {
 								uni.showToast({
 									title: '未识别到内容',
-									icon: 'none'
+										icon: 'none'
 								})
 							}
 						},
@@ -476,12 +483,12 @@ export default {
 							if (err.errMsg.includes('cancel')) {
 								uni.showToast({
 									title: '已取消扫码',
-									icon: 'none'
+										icon: 'none'
 								})
 							} else {
 								uni.showToast({
 									title: '扫码失败，请重试',
-									icon: 'none'
+										icon: 'none'
 								})
 							}
 						}

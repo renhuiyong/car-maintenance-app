@@ -104,7 +104,7 @@
             <view class="location-select" @tap="chooseLocation">
               <text class="location-text">{{ formData.location || '点击选择位置' }}</text>
               <view class="location-icon">
-                <image src="/static/images/location.png" mode="aspectFit"></image>
+                <image src="/static/images/weizhi.png" mode="aspectFit"></image>
               </view>
             </view>
             <textarea 
@@ -149,28 +149,60 @@
 
         <view class="form-item upload-item">
           <text class="label">上传身份证照片</text>
-          <view class="upload-list">
-            <view 
-              v-for="(img, index) in formData.idCardImages" 
-              :key="index"
-              class="upload-item-wrap"
-            >
-              <image 
-                :src="img" 
-                class="preview-image"
-                mode="aspectFill"
-                @tap="previewIdCard(index)"
-              />
-              <text class="delete-btn" @tap="deleteIdCard(index)">×</text>
+          <view class="id-card-upload">
+            <!-- 身份证正面 -->
+            <view class="id-card-side">
+              <text class="side-label">身份证正面</text>
+              <view class="upload-wrap">
+                <view v-if="formData.idCardFront" class="upload-item-wrap">
+                  <image 
+                    :src="formData.idCardFront" 
+                    class="preview-image"
+                    mode="aspectFill"
+                    @tap="previewIdCard('front')"
+                  />
+                  <text class="delete-btn" @tap="deleteIdCard('front')">×</text>
+                </view>
+                <view 
+                  v-else
+                  class="camera-icon"
+                  @tap="chooseIdCard('front')"
+                >
+                  <image 
+                    src="/static/images/xiangji.png" 
+                    mode="aspectFit"
+                  ></image>
+                </view>
+              </view>
             </view>
-            <image 
-              v-if="formData.idCardImages.length < 2"
-              src="/static/images/xiangji.png" 
-              class="camera-icon"
-              @tap="chooseIdCard"
-            />
+            
+            <!-- 身份证反面 -->
+            <view class="id-card-side">
+              <text class="side-label">身份证反面</text>
+              <view class="upload-wrap">
+                <view v-if="formData.idCardBack" class="upload-item-wrap">
+                  <image 
+                    :src="formData.idCardBack" 
+                    class="preview-image"
+                    mode="aspectFill"
+                    @tap="previewIdCard('back')"
+                  />
+                  <text class="delete-btn" @tap="deleteIdCard('back')">×</text>
+                </view>
+                <view 
+                  v-else
+                  class="camera-icon"
+                  @tap="chooseIdCard('back')"
+                >
+                  <image 
+                    src="/static/images/xiangji.png" 
+                    mode="aspectFit"
+                  ></image>
+                </view>
+              </view>
+            </view>
           </view>
-          <text class="upload-tip">上传最新身份证正反面照片</text>
+          <text class="upload-tip">请上传清晰的身份证正反面照片</text>
         </view>
       </view>
     </transition>
@@ -243,6 +275,8 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
+
 export default {
   data() {
     return {
@@ -258,7 +292,8 @@ export default {
         address: '',
         shopImages: [],
         businessLicenses: [],
-        idCardImages: [],
+        idCardFront: '',
+        idCardBack: '',
         paymentProofs: [],
         latitude: '',
         longitude: '',
@@ -325,7 +360,7 @@ export default {
       
       // 联系人验证
       if (!formData.contact.trim()) {
-        this.showToast('请输入联系人姓名')
+        this.showToast('请输入联���人姓名')
         return false
       }
       if (this.getStrLength(formData.contact.trim()) > 10) {
@@ -382,7 +417,7 @@ export default {
       return true
     },
     
-    // 计算字符串长度（中文算2个字符）
+    // 计算字符串长度（中文算2个字）
     getStrLength(str) {
       let len = 0
       for (let i = 0; i < str.length; i++) {
@@ -395,7 +430,7 @@ export default {
       return len
     },
     
-    // 修改下一步方法
+    // 修改下一步方
     nextStep() {
       if (!this.validateForm()) {
         return;
@@ -459,16 +494,16 @@ export default {
       })
     },
     
-    chooseIdCard() {
+    chooseIdCard(side) {
       uni.chooseImage({
-        count: 2 - this.formData.idCardImages.length,
+        count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
         success: (res) => {
-          this.formData.idCardImages = [...this.formData.idCardImages, ...res.tempFilePaths]
-          if (this.formData.idCardImages.length > 2) {
-            this.formData.idCardImages = this.formData.idCardImages.slice(0, 2)
-            this.showToast('最多上传2张身份证照片')
+          if(side === 'front') {
+            this.formData.idCardFront = res.tempFilePaths[0];
+          } else {
+            this.formData.idCardBack = res.tempFilePaths[0];
           }
         }
       })
@@ -481,19 +516,25 @@ export default {
       })
     },
     
-    previewIdCard(index) {
-      uni.previewImage({
-        urls: this.formData.idCardImages,
-        current: index
-      })
+    previewIdCard(side) {
+      const url = side === 'front' ? this.formData.idCardFront : this.formData.idCardBack;
+      if(url) {
+        uni.previewImage({
+          urls: [url]
+        })
+      }
     },
     
     deleteLicense(index) {
       this.formData.businessLicenses.splice(index, 1)
     },
     
-    deleteIdCard(index) {
-      this.formData.idCardImages.splice(index, 1)
+    deleteIdCard(side) {
+      if(side === 'front') {
+        this.formData.idCardFront = '';
+      } else {
+        this.formData.idCardBack = '';
+      }
     },
     
     validateQualification() {
@@ -502,8 +543,13 @@ export default {
         return false
       }
       
-      if (this.formData.idCardImages.length === 0) {
-        this.showToast('请上传身份证照片')
+      if (!this.formData.idCardFront) {
+        this.showToast('请上传身份证正面照片')
+        return false
+      }
+      
+      if (!this.formData.idCardBack) {
+        this.showToast('请上传身份证反面照片')
         return false
       }
       
@@ -519,11 +565,76 @@ export default {
         title: '提交中...',
         mask: true
       });
-      
-      setTimeout(() => {
-        this.currentTab = 2;
-        uni.hideLoading();
-      }, 1000);
+
+      // 修改上传图片数组
+      const uploadPromises = [
+        ...this.formData.shopImages.map(path => this.uploadImage(path)),
+        ...this.formData.businessLicenses.map(path => this.uploadImage(path)),
+        this.uploadImage(this.formData.idCardFront),
+        this.uploadImage(this.formData.idCardBack)
+      ];
+
+      Promise.all(uploadPromises)
+        .then(results => {
+          const [
+            ...shopImages
+          ] = results.slice(0, this.formData.shopImages.length);
+          
+          const [
+            ...businessLicenses
+          ] = results.slice(
+            this.formData.shopImages.length,
+            this.formData.shopImages.length + this.formData.businessLicenses.length
+          );
+          
+          const [idCardFront, idCardBack] = results.slice(
+            this.formData.shopImages.length + this.formData.businessLicenses.length
+          );
+
+          // 构建提交数据，移除 locationName 字段
+          const submitData = {
+            // 店铺基本信息
+            shopName: this.formData.shopName,
+            contact: this.formData.contact,
+            phone: this.formData.phone,
+            openTime: this.formData.openTime,
+            closeTime: this.formData.closeTime,
+            // 门头图片文件名，用逗号分隔
+            shopImages: shopImages.map(img => img.fileName).join(','),
+            // 位置信息
+            latitude: this.formData.locationInfo.latitude,
+            longitude: this.formData.locationInfo.longitude,
+            address: this.formData.address,
+            // 资质信息
+            businessLicenses: businessLicenses.map(img => img.fileName).join(','),
+            idCardFront: idCardFront.fileName,
+            idCardBack: idCardBack.fileName
+          };
+
+          console.log('submitData', submitData)
+          // 调用提交接口
+          return api.merchant.submitSettled(submitData);
+        })
+        .then(res => {
+            if(res.code === 200) {
+                this.currentTab = 2;
+                uni.showToast({
+                    title: '提交成功',
+                    icon: 'success'
+                });
+            } else {
+                throw new Error(res.message || '提交失败');
+            }
+        })
+        .catch(err => {
+            uni.showToast({
+                title: err.message || '网络错误，请稍后重试',
+                icon: 'none'
+            });
+        })
+        .finally(() => {
+            uni.hideLoading();
+        });
     },
     
     prevStep() {
@@ -569,7 +680,7 @@ export default {
       })
     },
     
-    // 选���付款凭证
+    // 选择付款凭证
     choosePayment() {
       uni.chooseImage({
         count: 3 - this.formData.paymentProofs.length,
@@ -614,7 +725,7 @@ export default {
           if (err.errMsg.indexOf('auth deny') !== -1) {
             uni.showModal({
               title: '提示',
-              content: '需要获取您的地理位置，请在设置中打开定位权限',
+              content: '需要获取您的地理位置请在设置中打开定位权限',
               confirmText: '去设置',
               success: (res) => {
                 if (res.confirm) {
@@ -630,6 +741,19 @@ export default {
           }
         }
       })
+    },
+    
+    // 上传单张图片的方法
+    uploadImage(filePath) {
+      return new Promise((resolve, reject) => {
+        api.merchant.uploadImage(filePath)
+          .then(res => {
+            resolve(res); // res 已包含 fileName 和 url
+          })
+          .catch(err => {
+            reject(err);
+          });
+      });
     },
   }
 }
@@ -825,8 +949,8 @@ export default {
               justify-content: center;
               
               image {
-                width: 32rpx;
-                height: 32rpx;
+                width: 42rpx;
+                height: 42rpx;
               }
             }
           }
@@ -1070,6 +1194,11 @@ export default {
         align-items: center;
         justify-content: center;
         
+        image {
+          width: 100rpx;
+          height: 100rpx;
+        }
+        
         &:active {
           background-color: #f8f8f8;
         }
@@ -1132,5 +1261,81 @@ export default {
 
 .fade-slide-enter-from.prev {
   transform: translateX(-30rpx);
+}
+
+// 修改身份证上传样式
+.id-card-upload {
+  width: 100%;
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+  
+  .id-card-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    .side-label {
+      font-size: 26rpx;
+      color: #666;
+      margin-bottom: 16rpx;
+      display: block;
+      width: 240rpx;
+      text-align: center;
+    }
+    
+    .upload-wrap {
+      width: 240rpx;
+      height: 160rpx;
+      
+      .upload-item-wrap {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        
+        .preview-image {
+          width: 240rpx;
+          height: 160rpx;
+          border-radius: 8rpx;
+          border: 2rpx solid #eee;
+        }
+        
+        .delete-btn {
+          position: absolute;
+          top: -16rpx;
+          right: -16rpx;
+          width: 32rpx;
+          height: 32rpx;
+          line-height: 32rpx;
+          text-align: center;
+          background: rgba(0,0,0,0.5);
+          color: #fff;
+          border-radius: 50%;
+          font-size: 24rpx;
+        }
+      }
+      
+      .camera-icon {
+        width: 240rpx;
+        height: 160rpx;
+        border: 4rpx dashed #ddd;
+        border-radius: 8rpx;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        image {
+          width: 100rpx;
+          height: 100rpx;
+        }
+        
+        &:active {
+          background-color: #f8f8f8;
+        }
+      }
+    }
+  }
 }
 </style> 

@@ -537,7 +537,7 @@ export default {
 				translateY: 0,
 				opacity: 1
 			},
-			isManualSwitching: false, // ���加手动切换标记
+			isManualSwitching: false, // 加手动切换标记
 			brands: [
 				{ id: 'all', name: '全部' },
 				{ id: 'aima', name: '爱玛' },
@@ -668,7 +668,7 @@ export default {
 			animate();
 		},
 		
-		// 修���滚动监听方法
+		// 修滚动监听方法
 		onProductScroll: throttle(function(e) {
 			if (this.isManualSwitching) return;
 			
@@ -709,11 +709,11 @@ export default {
 		
 		// 修改加商品购物车方法
 		addToCart(categoryIndex, productIndex) {
-			// 如果是从购物车中直接操��
+			// 如果是从购物车中直接操作
 			if (typeof categoryIndex === 'object') {
 				const item = categoryIndex;
 				categoryIndex = item.categoryIndex;
-				productIndex = item.productIndex;
+					productIndex = item.productIndex;
 			}
 
 			const product = this.categories[categoryIndex]?.items[productIndex];
@@ -819,7 +819,7 @@ export default {
 			}
 		},
 		
-		// 更物车信息
+		// 更新购物车信息
 		updateCartInfo() {
 			const cartData = uni.getStorageSync('cartData')
 			if (cartData) {
@@ -832,7 +832,7 @@ export default {
 			}
 		},
 		
-		// 显示物车
+		// 显示购物车
 		showCart() {
 			this.showCartPopup = true
 		},
@@ -858,7 +858,7 @@ export default {
 			});
 		},
 		
-		// 修改去结按钮点击事
+		// 修改去结算按钮点击事件
 		goToCheckout() {
 			if (this.cartCount === 0) {
 				uni.showToast({
@@ -897,7 +897,7 @@ export default {
 			return cartItem ? cartItem.quantity >= product.stock : false;
 		},
 		
-		// 修改索商品方法
+		// 修改搜索商品方法
 		searchProducts() {
 			if (!this.searchKeyword.trim()) {
 				this.isSearching = false;
@@ -958,12 +958,12 @@ export default {
 			}, 1000)
 		},
 		
-		// 存购车数到本地存储
+		// 存储购物车数据到本地存储
 		saveCartData() {
 			uni.setStorageSync('cartData', JSON.stringify(this.cartList))
 		},
 		
-		// 修改跳转到详页方法
+		// 修改跳转到详情页方法
 		goToDetail(item, categoryIndex, productIndex) {
 			const productInfo = this.isSearching ? item : this.categories[categoryIndex].items[productIndex];
 			
@@ -1000,7 +1000,7 @@ export default {
 		
 		// 修改 handleAddToCart 方法
 		handleAddToCart(categoryIndex, productIndex, event) {
-			// 先检查是否达到库限制
+			// 先检查是否达到库存限制
 			if (this.isStockLimit(categoryIndex, productIndex)) {
 				uni.showToast({
 					title: '已达到库存上限',
@@ -1015,7 +1015,7 @@ export default {
 				return;
 			}
 
-			// 以下是带动画效果的添商逻辑
+			// 以下是带动画效果的添加商品逻辑
 			const touch = event.touches[0];
 			
 			// 使用uni的API获取购物车图标位置
@@ -1051,7 +1051,7 @@ export default {
 			}).exec();
 		},
 		
-		// 计算高度的法也需要修改
+		// 计算高度的方法也需要修改
 		calculateHeight() {
 			let height = 0;
 			this.heightArr = [];
@@ -1088,7 +1088,7 @@ export default {
 			
 			const newQuantity = parseInt(numValue);
 			
-			// 如果输入0，直接除商品
+			// 如果输入0，直接删除商品
 			if (newQuantity === 0) {
 				const index = this.cartList.findIndex(item => 
 					item.categoryIndex === categoryIndex && 
@@ -1105,11 +1105,11 @@ export default {
 			const product = this.categories[categoryIndex].items[productIndex];
 			const stock = product.stock;
 			
-			// 限制最大量不超过库
+			// 限制最大量不超过库存
 			if (newQuantity > stock) {
 				cartItem.quantity = stock;
 				uni.showToast({
-					title: `已达到库存上���${stock}件`,
+					title: `已达到库存上限${stock}件`,
 					icon: 'none'
 				});
 			} else {
@@ -1157,7 +1157,7 @@ export default {
 		selectBrand(brandId) {
 			this.selectedBrand = brandId;
 			
-			// 如果正在搜索，新执行搜索以应用新的品筛
+			// 如果正在搜索，新执行搜索以应用新的品牌筛选
 			if (this.isSearching) {
 				this.searchProducts();
 				return;
@@ -1179,7 +1179,7 @@ export default {
 			}
 		},
 		
-		// 添加 updateCartList 方
+		// 添加 updateCartList 方法
 		updateCartList() {
 			const cartData = uni.getStorageSync('cartData')
 			if (cartData) {
@@ -1222,7 +1222,7 @@ export default {
 			this.scrollTop = 0;
 		},
 		enableScroll() {
-			// 可以根据需要加额外的滚动控制逻辑
+			// 可以根据需要添加额外的滚动控制逻辑
 		}
 	},
 	created() {
@@ -1237,7 +1237,7 @@ export default {
 			this.updateCartInfo()
 		}
 	},
-	// 添加 onPullDownRefresh 生命周期方法（与 methods 级）
+	// 添加 onPullDownRefresh 生命周期方法（与 methods 同级）
 	onPullDownRefresh() {
 		// 如果正在搜索状态，刷新搜索结果
 		if (this.isSearching) {
@@ -1262,7 +1262,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
-	padding-bottom: 110rpx;
 }
 
 .search-bar {
@@ -1315,6 +1314,7 @@ export default {
 	background: #fff;
 	height: 0;
 	visibility: visible;
+	margin-bottom: 110rpx;
 }
 
 .main-content.hidden {
@@ -1488,6 +1488,10 @@ export default {
 }
 
 .cart-bar {
+	position: fixed;
+	left: 0;
+	right: 0;
+	bottom: 0;
 	height: 110rpx;
 	background: #fff;
 	border-top: 1rpx solid #eee;
@@ -1495,6 +1499,7 @@ export default {
 	justify-content: space-between;
 	align-items: center;
 	padding: 8rpx 30rpx;
+	z-index: 100;
 }
 
 .cart-left {
@@ -1631,7 +1636,7 @@ export default {
 	pointer-events: none;
 }
 
-/* 购车弹出层样式 */
+/* 购物车弹出层样式 */
 .cart-popup {
 	position: fixed;
 	left: 0;
@@ -1776,7 +1781,7 @@ export default {
 	flex-shrink: 0;
 }
 
-/* 修改物车样式 */
+/* 修改购物车样式 */
 .cart-wrap {
     display: flex;
     flex-direction: column;
@@ -1828,7 +1833,7 @@ export default {
 	pointer-events: none;
 }
 
-/* 修改库存显���式 */
+/* 修改库存显示样式 */
 .product-stock {
 	font-size: 24rpx;
 	color: #999;
@@ -1838,7 +1843,7 @@ export default {
 	color: #ff6b6b;
 }
 
-/* 添加搜索相样 */
+/* 添加搜索相关样式 */
 .clear-icon {
 	font-size: 40rpx;
 	color: #999;
@@ -1867,7 +1872,7 @@ export default {
 	margin: 0 20rpx;
 }
 
-/* 修改动画样 */
+/* 修改动画样式 */
 .add-to-cart-animation {
 	position: fixed;
 	z-index: 999;
@@ -1882,7 +1887,7 @@ export default {
 	box-shadow: 0 0 10rpx rgba(255, 107, 107, 0.5);
 }
 
-/* 物车图标样 */
+/* 购物车图标样式 */
 .cart-icon {
 	position: relative;
 	width: 50rpx;
@@ -1929,7 +1934,7 @@ export default {
 	100% { transform: scale(1); }
 }
 
-/* 添加购物车空状态式 */
+/* 添加购物车空状态样式 */
 .cart-empty {
     display: flex;
     flex-direction: column;
@@ -1956,7 +1961,7 @@ export default {
 	box-sizing: border-box;
 }
 
-/* 修改滚动容样式 */
+/* 修改滚动容器样式 */
 ::-webkit-scrollbar {
 	width: 0;
 	height: 0;
@@ -2004,7 +2009,7 @@ export default {
     background: #007AFF;
 }
 
-/* 修改搜果中的 add-btn 样式 */
+/* 修改搜索结果中的 add-btn 样式 */
 .search-results .product-price-wrap {
     padding-right: 20rpx;
 }
@@ -2014,7 +2019,7 @@ export default {
     margin-right: 20rpx;
 }
 
-/* 搜索结为空时的样式 */
+/* 搜索结果为空时的样式 */
 .search-results:empty {
     display: none;
 }
@@ -2068,7 +2073,7 @@ export default {
 	top: 200rpx; /* 据顶部搜索栏和品牌筛选的实际高度调整 */
 	left: 0;
 	right: 0;
-	bottom: 110rpx; /* 购物车栏的高度 */
+	bottom: 110rpx; /* 与cart-bar高度保持一致 */
 	z-index: 10;
 	background: #fff;
 }
@@ -2086,6 +2091,7 @@ export default {
 	background: #fff;
 	height: 0;
 	visibility: visible;
+	margin-bottom: 110rpx; /* 添加底部间距，防止内容被cart-bar遮挡 */
 }
 
 .main-content.hidden {

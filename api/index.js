@@ -103,6 +103,34 @@ const api = {
             return request.post(`/message/read/${messageId}`)
         }
     },
+
+    // 商家相关接口
+    merchant: {
+           // 商户微信登录
+        wxMerchantLogin(data) {
+            return request.post('/wx/miniapp/merchantLogin', data)
+        },
+        // 更新商户资料
+        updateMerchantProfile(data) {
+            return request.post('/web/merchant/updateMerchantProfile', data)
+        },
+        // 提交商家入驻申请
+        submitSettled(data) {
+            return request.post('/web/merchant/settled', data)
+        },
+         // 获取推广二维码
+         getMerchantPromotionCode() {
+            return request.post('/web/merchant/getMerchantPromotionCode')
+        },
+        
+        // 上传图片
+        uploadImage(file) {
+            return request.upload('/web/user/upload', {
+                file,
+                name: 'file'
+            })
+        }
+    },
 }
 
 export default api 

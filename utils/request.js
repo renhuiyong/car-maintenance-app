@@ -19,7 +19,6 @@ const request = (options = {}) => {
         uni.request({
             ...options,
             success: (res) => {
-                console.log(res)
                 if (res.statusCode === 200) {
                     // 处理 token 无效和未能读取到有效 token 的情况
                     if (res.data.code === 401 && res.data.msg && 
@@ -92,9 +91,52 @@ export const post = (url, data = {}, options = {}) => {
     })
 }
 
+// 添加文件上传方法
+const upload = (url, options = {}) => {
+    return new Promise((resolve, reject) => {
+        uni.uploadFile({
+            url: BASE_URL + url,
+            filePath: options.file,
+            name: options.name || 'file',
+            formData: options.formData || {},
+            header: {
+                'WaAuthorization': uni.getStorageSync('token') || ''
+            },
+            success: (uploadFileRes) => {
+                console.log(uploadFileRes)
+                let result = uploadFileRes.data;
+                if (typeof result === 'string') {
+                    try {
+                        result = JSON.parse(result);
+                        console.log('result1', result)
+                    } catch (e) {
+                        reject(new Error('上传失败，返回数据格式错误'));
+                        return;
+                    }
+                }
+                console.log('result2', result)
+                if (result.code === 200) {
+                    console.log('result3', result)
+                    // 返回文件名和完整URL
+                    resolve({
+                        fileName: result.fileName,
+                        url: result.url
+                    });
+                } else {
+                    reject(new Error(result.msg || '上传失败'));
+                }
+            },
+            fail: (err) => {
+                reject(err);
+            }
+        });
+    });
+}
+
 export default {
     request,
     get,
     post,
-    BASE_URL
+    BASE_URL,
+    upload
 } 
