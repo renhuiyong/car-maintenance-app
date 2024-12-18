@@ -124,7 +124,7 @@
 				</view>
 				<view class="auth-checkbox">
 					<checkbox-group @change="handleCheckboxChange">
-						<checkbox value="1" :checked="isChecked" style="transform:scale(0.7)" color="#07c160"/>
+						<checkbox :value="isChecked" :checked="isChecked" style="transform:scale(0.7)" color="#07c160"/>
 						<text class="checkbox-text">已阅读并接受《电动车维修服务小程序隐私保护指引》</text>
 					</checkbox-group>
 				</view>
@@ -164,6 +164,7 @@
 				isMapMoving: false,
 				isRefreshing: false,
 				loadMoreThrottle: null,
+				hasLocationAuth: false,
 			}
 		},
 		computed: {
@@ -181,7 +182,7 @@
 			// 检查授权状态
 			this.checkLocationAuth()
 			
-			// 处理小程序二���码参数
+			// 处理小程序二数
 			this.handleSceneCode(query)
 		},
 		watch: {
@@ -235,6 +236,20 @@
 			},
 			
 			handleSubmit() {
+				if (!this.hasLocationAuth) {
+					uni.showModal({
+						title: '提示',
+						content: '需要获取您的位置信息才能发起报修，是否去授权？',
+						confirmText: '去授权',
+						success: (res) => {
+							if (res.confirm) {
+								this.showAuthModal = true
+							}
+						}
+					})
+					return
+				}
+
 				uni.navigateTo({
 					url: '/pages/grabOrder/grabOrder'
 				})
@@ -261,17 +276,18 @@
 					return
 				}
 				
-				// 先关闭自定义授权弹窗
+				// 先关闭自定义授权弹��
 				this.showAuthModal = false
 				
 				// 然后请求小程序位置授权
 				uni.authorize({
 					scope: 'scope.userLocation',
 					success: () => {
-						// 授权成功后获取位置
+						this.hasLocationAuth = true
 						this.getLocation()
 					},
 					fail: () => {
+						this.hasLocationAuth = false
 						uni.showModal({
 							title: '提示',
 							content: '需要获取您的位置信息，请设置中打开位置权限',
@@ -281,6 +297,7 @@
 									uni.openSetting({
 										success: (settingRes) => {
 											if (settingRes.authSetting['scope.userLocation']) {
+												this.hasLocationAuth = true
 												this.getLocation()
 											}
 										}
@@ -296,12 +313,12 @@
 				uni.getLocation({
 					type: 'gcj02',
 					isHighAccuracy: true,
-					geocode: true,
+					geocode: true, // 开启地址解析
 					success: (res) => {
 						this.latitude = res.latitude
 						this.longitude = res.longitude
 						
-						// 获取位置成功后立即加载商家列表
+						// 获取位置成功后立��加载家列表
 						this.repairShops = []
 						this.pageNum = 1
 						this.finished = false
@@ -339,6 +356,7 @@
 			checkLocationAuth() {
 				uni.getSetting({
 					success: (res) => {
+						this.hasLocationAuth = !!res.authSetting['scope.userLocation']
 						if (!res.authSetting['scope.userLocation']) {
 							// 未授权，显示授权弹窗
 							this.showAuthModal = true
@@ -411,36 +429,11 @@
 							return
 						}
 						
-						const shopsWithDistance = rows.map(shop => {
-							const distance = this.calculateDistance(
-								this.latitude,
-								this.longitude,
-								shop.latitude,
-								shop.longitude
-							)
-							
-							// 改进距离显示逻辑
-							let distanceText;
-							if (distance < 0.1) {
-								// 小于100米时显示具体米数
-								distanceText = `${Math.round(distance * 1000)}m`;
-							} else if (distance < 1) {
-								// 小于1公里时显示具体米数
-								distanceText = `${Math.round(distance * 1000)}m`;
-							} else if (distance < 10) {
-								// 小于10公里时保留一位小数
-								distanceText = `${distance.toFixed(1)}km`;
-							} else {
-								// 大于10公里时取整
-								distanceText = `${Math.round(distance)}km`;
-							}
-							
-							return {
-								...shop,
-								distance: distanceText,
-								distanceValue: distance // 保存原始距离值用于排序
-							}
-						})
+						// 使用接口返回的 distance
+						const shopsWithDistance = rows.map(shop => ({
+							...shop,
+							distanceValue: parseFloat(shop.distance) // 将距离字符串转为数字用于排序
+						}))
 						
 						// 按距离排序
 						shopsWithDistance.sort((a, b) => a.distanceValue - b.distanceValue)
@@ -471,9 +464,19 @@
 				this.scrollTop = e.detail.scrollTop
 			},
 			goToAssignRepair(shop) {
-				// 更新地图中心点到选中的商家
-				this.latitude = shop.latitude
-				this.longitude = shop.longitude
+				if (!this.hasLocationAuth) {
+					uni.showModal({
+						title: '提示',
+						content: '需要获取您的位置信息才能发起报修，是否去授权？',
+						confirmText: '去授权',
+						success: (res) => {
+							if (res.confirm) {
+								this.showAuthModal = true
+							}
+						}
+					})
+					return
+				}
 				
 				// 设置选中的商家 ID 并立即更新标记
 				this.selectedShopId = shop.id
@@ -483,7 +486,7 @@
 				this.$nextTick(() => {
 					setTimeout(() => {
 						uni.navigateTo({
-							url: `/pages/assignRepair/assignRepair?shopInfo=${encodeURIComponent(JSON.stringify(shop))}`
+							url: `/pages/merchantDetails/merchantDetails?shopId=${shop.id}&latitude=${this.latitude}&longitude=${this.longitude}`
 						})
 					}, 300)
 				})
@@ -529,7 +532,7 @@
 			},
 			
 			handleTouchMove(e) {
-				// 只有在指定报修时才允许��动
+				// 只有在指定报修时才允许动
 				if (this.tabIndex !== 1) return
 				
 				// 添加简单的节流
@@ -569,51 +572,40 @@
 					this.isExpanded = false
 				}
 			},
-			// 修改 updateMarkers 方法
+			// 更新地图标记点
 			updateMarkers(shops) {
-				if (!shops || !shops.length) return
+				if (!shops || !shops.length) {
+					this.markers = []
+					return
+				}
 				
-				this.markers = shops.map(shop => {
-					const isSelected = shop.id === this.selectedShopId
-					return {
-						id: shop.id,
-						latitude: shop.latitude,
-						longitude: shop.longitude,
-						width: isSelected ? 48 : 40,
-						height: isSelected ? 48 : 40,
-						iconPath: isSelected ? '/static/images/marker_active.png' : '/static/images/marker.png',
-						anchor: {
-							x: 0.5,
-							y: 1
-						},
-						callout: {
-							content: shop.name,
-							color: '#333333',
-							fontSize: 12,
-							borderRadius: 4,
-							bgColor: '#FFFFFF',
-							padding: 8,
-							display: isSelected ? 'ALWAYS' : 'BYCLICK',
-							textAlign: 'center',
-							borderWidth: 1,
-							borderColor: '#EEEEEE',
-							anchorY: -5
-						},
-						label: {
-							content: shop.distance,
-							color: '#666666',
-							fontSize: 10,
-							anchorX: 40,
-							anchorY: -30,
-							borderWidth: 1,
-							borderColor: '#FFFFFF',
-							borderRadius: 2,
-							bgColor: '#FFFFFF',
-							padding: 4,
-							textAlign: 'center'
-						}
+				this.markers = shops.map(shop => ({
+					id: shop.id,
+					latitude: shop.latitude,
+					longitude: shop.longitude,
+					width: 40,
+					height: 40,
+					joinCluster: true, // 支持聚合效果
+					iconPath: this.selectedShopId === shop.id ? 
+						'/static/images/marker_active.png' : 
+						'/static/images/marker.png',
+					anchor: {
+						x: 0.5,
+						y: 1
+					},
+					callout: {
+						content: shop.name,
+						color: '#333333',
+						fontSize: 12,
+						borderWidth: 1,
+						borderColor: '#FFFFFF',
+						borderRadius: 2,
+						bgColor: '#FFFFFF',
+						padding: 4,
+						display: this.selectedShopId === shop.id ? 'ALWAYS' : 'BYCLICK',
+						textAlign: 'center'
 					}
-				})
+				}))
 			},
 			// 添加标记点击事件处理
 			onMarkerTap(e) {
@@ -647,7 +639,7 @@
 					this.isMapMoving = true
 				} else if (e.type === 'end') {
 					this.isMapMoving = false
-					// 如果是指定��修且展开状态，则收起
+					// 如果是指定报修且展开状态，则收起
 					if (this.tabIndex === 1 && this.isExpanded) {
 						this.collapseBottomArea()
 					}
@@ -659,47 +651,6 @@
 				this.transitionDuration = '0.3s'
 				this.bottomAreaHeight = this.minHeight
 				this.isExpanded = false
-			},
-
-			calculateDistance(lat1, lon1, lat2, lon2) {
-				// 检查参数是否有效
-				if (!lat1 || !lon1 || !lat2 || !lon2) {
-					return 999999; // 返回一个较大值，表示无效距离
-				}
-
-				// 将字符串转换为数字
-				lat1 = Number(lat1);
-				lon1 = Number(lon1);
-				lat2 = Number(lat2);
-				lon2 = Number(lon2);
-
-				// 地球半径（单位：千米）
-				const R = 6371;
-				
-				// 将角度转换为弧度
-				const lat1Rad = this.deg2rad(lat1);
-				const lat2Rad = this.deg2rad(lat2);
-				const latDiff = this.deg2rad(lat2 - lat1);
-				const lonDiff = this.deg2rad(lon2 - lon1);
-
-				// Haversine 公式
-				const a = 
-					Math.sin(latDiff / 2) * Math.sin(latDiff / 2) +
-					Math.cos(lat1Rad) * Math.cos(lat2Rad) * 
-					Math.sin(lonDiff / 2) * Math.sin(lonDiff / 2);
-				
-				const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-				
-				// 计算距离（单位：千米）
-				let distance = R * c;
-
-				// 处理异常值
-				if (isNaN(distance) || !isFinite(distance)) {
-					return 999999;
-				}
-
-				// 限制精度，避免显示过多小数位
-				return Math.max(0, distance);
 			},
 
 			deg2rad(deg) {
@@ -724,20 +675,14 @@
 					if (res.code === 200) {
 						const { rows } = res
 						
-						const shopsWithDistance = rows.map(shop => {
-							const distance = this.calculateDistance(
-								this.latitude,
-								this.longitude,
-								shop.latitude,
-								shop.longitude
-							)
-							return {
-								...shop,
-								distance: distance < 1 ? 
-									`${(distance * 1000).toFixed(0)}m` : 
-									`${distance.toFixed(1)}km`
-							}
-						})
+						// 使用接口返回的 distance
+						const shopsWithDistance = rows.map(shop => ({
+							...shop,
+							distanceValue: parseFloat(shop.distance) // 将距离字符串转为数字用于排序
+						}))
+						
+						// 按距离排序
+						shopsWithDistance.sort((a, b) => a.distanceValue - b.distanceValue)
 						
 						// 重置数据
 						this.repairShops = shopsWithDistance
@@ -749,19 +694,22 @@
 						
 						uni.showToast({
 							title: '刷新成功',
-							icon: 'none',
+							icon: 'success',
+							duration: 1500
 						})
 					} else {
 						uni.showToast({
 							title: res.msg || '刷新失败',
-							icon: 'none'
+							icon: 'none',
+							duration: 2000
 						})
 					}
 				}).catch(error => {
 					console.error('刷新失败:', error)
 					uni.showToast({
 						title: '刷新失败',
-						icon: 'none'
+						icon: 'none',
+						duration: 2000
 					})
 				}).finally(() => {
 					this.isRefreshing = false

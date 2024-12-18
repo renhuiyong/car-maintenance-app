@@ -90,7 +90,7 @@
               <text class="delete-btn" @tap="deleteImage(index)">×</text>
             </view>
             <image 
-              v-if="formData.shopImages.length < 5"
+              v-if="formData.shopImages.length < 1"
               src="/static/images/xiangji.png" 
               class="camera-icon"
               @tap="chooseImage"
@@ -212,8 +212,11 @@
       <view class="verify-section" v-if="currentTab === 2">
         <!-- 审核中状态 -->
         <view class="verify-content" v-if="auditStatus === 0">
-          <image src="/static/images/success.png" class="verify-icon" mode="aspectFit"></image>
-          <text class="verify-title">提交成功，请等待审核验证</text>
+          <view class="success-wrapper">
+            <image src="/static/images/success.png" class="verify-icon" mode="aspectFit"></image>
+            <text class="verify-title">提交成功，请等待审核验证</text>
+            <button class="back-home-btn" @tap="backToHome">返回首页</button>
+          </view>
         </view>
         
         <!-- 审核通过状态 -->
@@ -315,15 +318,14 @@ export default {
     
     chooseImage() {
       uni.chooseImage({
-        count: 5 - this.formData.shopImages.length,
+        count: 1,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
         success: (res) => {
-          this.formData.shopImages = [...this.formData.shopImages, ...res.tempFilePaths]
-          if (this.formData.shopImages.length > 5) {
-            this.formData.shopImages = this.formData.shopImages.slice(0, 5)
+          this.formData.shopImages = [res.tempFilePaths[0]]
+          if (this.formData.shopImages.length > 1) {
             uni.showToast({
-              title: '最多上传5张图片',
+              title: '只能上传1张门头图',
               icon: 'none'
             })
           }
@@ -360,7 +362,7 @@ export default {
       
       // 联系人验证
       if (!formData.contact.trim()) {
-        this.showToast('请输入联���人姓名')
+        this.showToast('请输入联系人姓名')
         return false
       }
       if (this.getStrLength(formData.contact.trim()) > 10) {
@@ -409,8 +411,8 @@ export default {
         this.showToast('请上传门头图')
         return false
       }
-      if (formData.shopImages.length > 5) {
-        this.showToast('最多上传5张门头图')
+      if (formData.shopImages.length > 1) {
+        this.showToast('只能上传1张门头图')
         return false
       }
       
@@ -460,7 +462,7 @@ export default {
       // 验证第二位
       if (value.length === 2 && !['3','4','5','6','7','8','9'].includes(value[1])) {
         value = '1'
-        this.showToast('请输入正确的手机号')
+        this.showToast('请��入正确的手机号')
       }
       
       this.formData.phone = value
@@ -568,7 +570,7 @@ export default {
 
       // 修改上传图片数组
       const uploadPromises = [
-        ...this.formData.shopImages.map(path => this.uploadImage(path)),
+        this.uploadImage(this.formData.shopImages[0]),
         ...this.formData.businessLicenses.map(path => this.uploadImage(path)),
         this.uploadImage(this.formData.idCardFront),
         this.uploadImage(this.formData.idCardBack)
@@ -577,8 +579,8 @@ export default {
       Promise.all(uploadPromises)
         .then(results => {
           const [
-            ...shopImages
-          ] = results.slice(0, this.formData.shopImages.length);
+            shopImage
+          ] = results.slice(0, 1);
           
           const [
             ...businessLicenses
@@ -594,21 +596,35 @@ export default {
           // 构建提交数据，移除 locationName 字段
           const submitData = {
             // 店铺基本信息
+            // shopName: this.formData.shopName,
+            // contact: this.formData.contact,
+            // phone: this.formData.phone,
+            // openTime: this.formData.openTime,
+            // closeTime: this.formData.closeTime,
+            // // 门头图片文件名，用逗号分隔
+            // shopImage: shopImage.fileName,
+            // // 位置信息
+            // latitude: this.formData.locationInfo.latitude,
+            // longitude: this.formData.locationInfo.longitude,
+            // address: this.formData.address,
+            // // 资质信息
+            // businessLicenses: businessLicenses.map(img => img.fileName).join(','),
+            // idCardFront: idCardFront.fileName,
+            // idCardBack: idCardBack.fileName
             shopName: this.formData.shopName,
-            contact: this.formData.contact,
-            phone: this.formData.phone,
-            openTime: this.formData.openTime,
-            closeTime: this.formData.closeTime,
+            contacts: this.formData.contact,
+            tel: this.formData.phone,
+            businessHours: this.formData.openTime + '-' + this.formData.closeTime,
             // 门头图片文件名，用逗号分隔
-            shopImages: shopImages.map(img => img.fileName).join(','),
+            logoUrl: shopImage.fileName,
             // 位置信息
             latitude: this.formData.locationInfo.latitude,
             longitude: this.formData.locationInfo.longitude,
-            address: this.formData.address,
+            detailAddress: this.formData.address,
             // 资质信息
-            businessLicenses: businessLicenses.map(img => img.fileName).join(','),
-            idCardFront: idCardFront.fileName,
-            idCardBack: idCardBack.fileName
+            qualificationsUrl: businessLicenses.map(img => img.fileName).join(','),
+            cardFrontUrl: idCardFront.fileName,
+            cardReverseUrl: idCardBack.fileName
           };
 
           console.log('submitData', submitData)
@@ -746,7 +762,7 @@ export default {
     // 上传单张图片的方法
     uploadImage(filePath) {
       return new Promise((resolve, reject) => {
-        api.merchant.uploadImage(filePath)
+        api.common.uploadFile(filePath)
           .then(res => {
             resolve(res); // res 已包含 fileName 和 url
           })
@@ -755,6 +771,13 @@ export default {
           });
       });
     },
+    
+    // 添加返回商家首页方法
+    backToHome() {
+      uni.redirectTo({
+        url: '/pages/merchant/merchant'
+      })
+    }
   }
 }
 </script>
@@ -1079,94 +1102,44 @@ export default {
   box-sizing: border-box;
   
   .verify-content {
-    background: transparent;
-    padding: 0 30rpx;
+    background: #fff;
+    margin: 20rpx;
+    border-radius: 12rpx;
+    overflow: hidden;
     
-    .verify-header {
-      padding: 30rpx;
-      border-radius: 12rpx;
-      margin-bottom: 20rpx;
-      width: 100%;
-      box-sizing: border-box;
-      background: #fff;
+    .success-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60rpx 40rpx;
       
-      text {
-        font-size: 28rpx;
-        color: #666;
-        line-height: 1.6;
-        font-weight: 400;
-        letter-spacing: 1rpx;
-        display: block;
+      .verify-icon {
+        width: 120rpx;
+        height: 120rpx;
+        margin-bottom: 30rpx;
       }
-    }
-    
-    .upload-payment {
-      width: 100%;
-      height: auto;
-      background: #fff;
-      border-radius: 12rpx;
-      margin-top: 20rpx;
-      padding: 30rpx;
-      box-sizing: border-box;
       
-      .upload-title {
+      .verify-title {
         font-size: 32rpx;
         color: #333;
-        font-weight: bold;
-        margin-bottom: 30rpx;
-        display: block;
+        font-weight: 500;
       }
       
-      .upload-content {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20rpx;
+      .back-home-btn {
+        margin-top: 60rpx;
+        width: 240rpx;
+        height: 80rpx;
+        line-height: 80rpx;
+        text-align: center;
+        background: #ff6b00;
+        color: #fff;
+        font-size: 28rpx;
+        border-radius: 40rpx;
+        border: none;
         
-        .upload-item-wrap {
-          position: relative;
-          width: 160rpx;
-          height: 160rpx;
-          
-          .preview-image {
-            width: 100%;
-            height: 100%;
-            border-radius: 8rpx;
-            border: 2rpx solid #eee;
-          }
-          
-          .delete-btn {
-            position: absolute;
-            top: -16rpx;
-            right: -16rpx;
-            width: 32rpx;
-            height: 32rpx;
-            line-height: 32rpx;
-            text-align: center;
-            background: rgba(0,0,0,0.5);
-            color: #fff;
-            border-radius: 50%;
-            font-size: 24rpx;
-          }
-        }
-        
-        .upload-btn {
-          width: 160rpx;
-          height: 160rpx;
-          border: 2rpx dashed #ddd;
-          border-radius: 8rpx;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #fff;
-          
-          .camera-icon {
-            width: 48rpx;
-            height: 48rpx;
-          }
-          
-          &:active {
-            background-color: #f8f8f8;
-          }
+        &:active {
+          opacity: 0.8;
         }
       }
     }

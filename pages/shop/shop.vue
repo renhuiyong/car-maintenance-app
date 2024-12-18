@@ -16,10 +16,6 @@
 					@tap="clearSearch"
 				>×</text>
 			</view>
-			<view class="merchant-entry" @tap="goToMerchant">
-				<text>商家</text>
-				<image src="/static/products/fangzi.png" mode="aspectFit" class="merchant-icon"></image>
-			</view>
 		</view>
 		
 		<!-- 在搜索栏下方添加品牌筛选 -->
@@ -61,25 +57,30 @@
 							<text class="product-stock">库存{{ item.stock }}</text>
 						</view>
 						<view class="product-price-wrap">
-							<text class="price">￥{{ item.price }}/件</text>
-							<view class="quantity-control my-quantity-control" v-if="getCartQuantity(item.categoryIndex, item.productIndex)">
-								<text class="minus" @tap.stop="removeFromCart(item.categoryIndex, item.productIndex)">-</text>
-								<input 
-									class="num" 
-									type="digit" 
-									:value="getCartQuantity(item.categoryIndex, item.productIndex)"
-									@input="handleQuantityInput($event, item.categoryIndex, item.productIndex)"
-									@blur="handleQuantityBlur(item.categoryIndex, item.productIndex)"
-									@tap.stop
-								/>
-								<text class="plus" 
-									  :class="{ disabled: isStockLimit(item.categoryIndex, item.productIndex) }"
-									  @tap.stop.prevent="handleAddToCart(item.categoryIndex, item.productIndex, $event)">+</text>
-							</view>
-							<text v-else 
-								  class="add-btn"
-								  :class="{ disabled: isStockLimit(item.categoryIndex, item.productIndex) }"
-								  @tap.stop.prevent="handleAddToCart(item.categoryIndex, item.productIndex, $event)">+</text>
+							<text class="price">￥{{ item.price.toFixed(2) }}/件</text>
+							<block v-if="getCartQuantity(item.categoryIndex, item.productIndex)">
+								<view class="quantity-control my-quantity-control">
+									<text class="minus" @tap.stop="removeFromCart(item.categoryIndex, item.productIndex)">-</text>
+									<input 
+										class="num" 
+										type="digit" 
+										:value="getCartQuantity(item.categoryIndex, item.productIndex)"
+										@input="handleQuantityInput($event, item.categoryIndex, item.productIndex)"
+										@blur="handleQuantityBlur(item.categoryIndex, item.productIndex)"
+										@tap.stop
+									/>
+									<text class="plus" 
+										  :class="{ disabled: isStockLimit(item.categoryIndex, item.productIndex) }"
+										  @tap.stop.prevent="handleAddToCart(item.categoryIndex, item.productIndex, $event)">+</text>
+								</view>
+							</block>
+							<block v-else>
+								<text v-if="item.stock > 0"
+									class="add-btn"
+									:class="{ disabled: isStockLimit(item.categoryIndex, item.productIndex) }"
+									@tap.stop.prevent="handleAddToCart(item.categoryIndex, item.productIndex, $event)">+</text>
+								<text v-else class="sold-out">已售罄</text>
+							</block>
 						</view>
 					</view>
 				</view>
@@ -130,25 +131,30 @@
 									<text class="product-stock">库存{{ item.stock }}</text>
 								</view>
 								<view class="product-price-wrap">
-									<text class="price">￥{{ item.price }}/件</text>
-									<view class="quantity-control" v-if="getCartQuantity(categoryIndex, index)">
-										<text class="minus" @tap.stop="removeFromCart(categoryIndex, index)">-</text>
-										<input 
-											class="num" 
-											type="digit" 
-											:value="getCartQuantity(categoryIndex, index)"
-											@input="handleQuantityInput($event, categoryIndex, index)"
-											@blur="handleQuantityBlur(categoryIndex, index)"
-											@tap.stop
-										/>
-										<text class="plus" 
-											  :class="{ disabled: isStockLimit(categoryIndex, index) }"
-											  @tap.stop.prevent="handleAddToCart(categoryIndex, index, $event)">+</text>
-									</view>
-									<text v-else 
-										  class="add-btn my-add-btn"
-										  :class="{ disabled: isStockLimit(categoryIndex, index) }"
-										  @tap.stop.prevent="handleAddToCart(categoryIndex, index, $event)">+</text>
+									<text class="price">￥{{ item.price.toFixed(2) }}/件</text>
+									<block v-if="getCartQuantity(categoryIndex, index)">
+										<view class="quantity-control">
+											<text class="minus" @tap.stop="removeFromCart(categoryIndex, index)">-</text>
+											<input 
+												class="num" 
+												type="digit" 
+												:value="getCartQuantity(categoryIndex, index)"
+												@input="handleQuantityInput($event, categoryIndex, index)"
+												@blur="handleQuantityBlur(categoryIndex, index)"
+												@tap.stop
+											/>
+											<text class="plus" 
+												  :class="{ disabled: isStockLimit(categoryIndex, index) }"
+												  @tap.stop.prevent="handleAddToCart(categoryIndex, index, $event)">+</text>
+										</view>
+									</block>
+									<block v-else>
+										<text v-if="item.stock > 0"
+											class="add-btn my-add-btn"
+											:class="{ disabled: isStockLimit(categoryIndex, index) }"
+											@tap.stop.prevent="handleAddToCart(categoryIndex, index, $event)">+</text>
+										<text v-else class="sold-out">已售罄</text>
+									</block>
 								</view>
 							</view>
 						</view>
@@ -206,7 +212,7 @@
 						<image :src="item.image" mode="aspectFit"></image>
 						<view class="item-info">
 							<text class="item-name">{{ item.name }}</text>
-							<text class="item-price">￥{{ item.price }}</text>
+							<text class="item-price">￥{{ item.price.toFixed(2) }}</text>
 						</view>
 						<view class="quantity-control">
 							<text class="minus" @tap.stop="removeFromCart(item.categoryIndex, item.productIndex)">-</text>
@@ -242,6 +248,9 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
+import request from '@/utils/request.js'
+
 // 在 methods 外部定义节流函数
 const throttle = function(fn, delay) {
 	let timer = null;
@@ -255,275 +264,27 @@ const throttle = function(fn, delay) {
 };
 
 // 修改商品项的高度常量
-const ITEM_HEIGHT = 200; // 实际商品项度，包括内边距和框
+const ITEM_HEIGHT = 200; // 实际商品项度，包内边距和框
 
 export default {
 	data() {
 		return {
-			categories: [
-				{
-					id: 0,
-					name: '刹车系统',
-					items: [
-						{
-							id: '1001',
-							image: '/static/products/shangpin_default.png',
-							name: '电动车刹车片',
-							stock: 5,
-							price: 20,
-							brand: 'yadea',
-							detail: `<div class="detail-content">
-								<h3>产品参数</h3>
-								<p>材质：高密陶瓷复材料</p>
-								<p>适用车型：</p>
-								<p>规格：标准规格</p>
-								<p>装：1对装（2片）</p>
-								<h3>产品特点</h3>
-								<ul>
-									<li>高性能陶瓷配方，制动力强</li>
-									<li>低噪音，不伤制盘</li>
-									<li>耐高温，寿命长</li>
-									<li>安装便捷，通用性强</li>
-								</ul>
-								<h3>使用说明</h3>
-								<p>1. 检查原刹车片磨损情况</p>
-								<p>2. 更换前请清理刹车片座</p>
-								<p>3. 对准卡槽安装新刹车片</p>
-								<p>4. 测试制动效果</p>
-							</div>`
-						},
-						// ... 其他车系统商品
-					]
-				},
-				{
-					id: 1,
-					name: '传感系统',
-					items: [
-						{
-							id: '2001',
-							image: '/static/products/shangpin_default.png',
-							name: '传感系统1速度传感器',
-							stock: 50,
-							price: 45,
-							brand: 'aima',
-							detail: `<div class="detail-content">
-								<h3>产品参数</h3>
-								<p>电压：DC 12V</p>
-								<p>感应距离：3-8mm可调</p>
-								<p>防水等级：IP65</p>
-								<p>线长50cm</p>
-								<h3>产品</h3>
-								<ul>
-									<li>精准感，反应灵敏</li>
-									<li>防水防尘</li>
-									<li>安装便捷</li>
-									<li>用寿命长</li>
-								</ul>
-								<h3>适范围</h3>
-								<p>适用于各类电动车速度检测系统</p>
-							</div>`
-						}
-					]
-				},
-				// ... 其他分类
-				{
-					id: 2,
-					name: '照明系统',
-					items: [
-						{
-							id: '3001',
-							image: '/static/products/shangpin_default.png',
-							name: '照明系统LED大灯',
-							stock: 45,
-							price: 40,
-							brand: 'ninebot',
-							detail: `<div class="detail-content">
-								<h3>品参数</h3>
-								<p>功率：12W</p>
-								<p>电压：12V</p>
-								<p>亮度：1200流明</p>
-								<p>防等：IP65</p>
-								<h3>产品特点</h3>
-								<ul>
-									<li>超高亮度LED</li>
-									<li>低耗设</li>
-									<li>水防尘</li>
-									<li>寿命长达50000小时</li>
-								</ul>
-							</div>`
-						},
-						{
-							id: '3002',
-							image: '/static/products/shangpin_default.png',
-							name: '转向灯组',
-							stock: 60,
-							price: 25,
-							brand: 'tailg',
-							detail: `<div class="detail-content">
-								<h3>产品数</h3>
-								<p>电压：12V</p>
-								<p>功率：5W</p>
-								<p>颜色：琥珀色</p>
-								<h3>产品特点</h3>
-								<ul>
-									<li>高亮LED灯珠</li>
-									<li>闪烁频率稳定</li>
-									<li>装简便</li>
-								</ul>
-							</div>`
-						}
-					]
-				},
-				{
-					id: 3,
-					name: '充电系统',
-					items: [
-						{
-							id: '4001',
-							image: '/static/products/shangpin_default.png',
-							name: '快速充电器',
-							stock: 30,
-							price: 65,
-							brand: 'sunra',
-							detail: `<div class="detail-content">
-								<h3>产品数</h3>
-								<p>输入电压：220V</p>
-								<p>输出电压：48V</p>
-								<p>充电电流：2A</p>
-								<h3>产品点</h3>
-								<ul>
-									<li>智能充电保护</li>
-									<li>快速充电术</li>
-									<li>多重安全保护</li>
-								</ul>
-							</div>`
-						},
-						{
-							id: '4002',
-							image: '/static/products/shangpin_default.png',
-							name: '充电口',
-							stock: 80,
-							price: 15,
-							brand: 'luyuan',
-							detail: `<div class="detail-content">
-								<h3>产品参数</h3>
-								<p>材质：铜合金</p>
-								<p>适：通用型</p>
-								<h3>品特点</h3>
-								<ul>
-									<li>接触良好</li>
-									<li>耐用防腐</li>
-									<li>安方便</li>
-								</ul>
-							</div>`
-						}
-					]
-				},
-				{
-					id: 4,
-					name: '控制系统',
-					items: [
-						{
-							id: '5001',
-							image: '/static/products/shangpin_default.png',
-							name: '控制器',
-							stock: 40,
-							price: 120,
-							brand: 'lima',
-							detail: `<div class="detail-content">
-								<h3>参数</h3>
-								<p>工作电压：48V</p>
-								<p>大电流：30A</p>
-								<p>防水等级：IP54</p>
-								<h3>产品特点</h3>
-								<ul>
-									<li>智能控制系统</li>
-									<li>过载保护</li>
-									<li>防水设计</li>
-								</ul>
-							</div>`
-						},
-						{
-							id: '5002',
-							image: '/static/products/shangpin_default.png',
-							name: '调速器',
-							stock: 55,
-							price: 85,
-							brand: 'yadea',
-							detail: `<div class="detail-content">
-								<h3>产品参数</h3>
-								<p>调速范围：1-5档</p>
-								<p>适电压：48V</p>
-								<h3>产品特点</h3>
-								<ul>
-									<li>平稳调速</li>
-									<li>防水设计</li>
-									<li>安装便</li>
-								</ul>
-							</div>`
-						}
-					]
-				},
-				{
-					id: 5,
-					name: '车身件',
-					items: [
-						{
-							id: '6001',
-							image: '/static/products/shangpin_default.png',
-							name: '后视镜',
-							stock: 88,
-							price: 20,
-							brand: 'aima',
-							detail: `<div class="detail-content">
-								<h3>产品数</h3>
-								<p>材质：ABS+玻璃</p>
-								<p>寸：标准型</p>
-								<h3>产品特点</h3>
-								<ul>
-									<li>视野清晰</li>
-									<li>防震计</li>
-									<li>装方便</li>
-								</ul>
-							</div>`
-						},
-						{
-							id: '6002',
-							image: '/static/products/shangpin_default.png',
-							name: '泥板',
-							stock: 100,
-							price: 15,
-							brand: 'ninebot',
-							detail: `<div class="detail-content">
-								<h3>产品参数</h3>
-								<p>材质：PP塑料</p>
-								<p>颜色黑色</p>
-								<h3>品特点</h3>
-								<ul>
-									<li>防水耐用</li>
-									<li>安装简单</li>
-									<li>防泥效果好</li>
-								</ul>
-							</div>`
-						}
-					]
-				}
-			], 
+			categories: [],
 			currentCategory: 0,
-			cartList: [], // 购物车列表
-			cartCount: 0, // 购物车数量
-			totalPrice: 0, // 总价
+			cartList: [],
+			cartCount: 0,
+			totalPrice: 0,
 			scrollTop: 0,
-			heightArr: [], // 存储每个分类品列表的高度
-			showCartPopup: false, // 控制购物车弹出层显示
-			searchKeyword: '', // 搜索关键词
-			searchResults: [], // 搜结果
-			isSearching: false, // 是否在搜索状态
-			loading: false, // 加载态
-			refreshing: false, // 刷新状态
-			page: 1, // 当前页码
-			hasMore: true, // 是否有更多数据
-			animation: null, // 添加动画例
+			heightArr: [],
+			showCartPopup: false,
+			searchKeyword: '',
+			searchResults: [],
+			isSearching: false,
+			loading: false,
+			refreshing: false,
+			page: 1,
+			hasMore: true,
+			animation: null,
 			showCartAnimation: false,
 			cartAnimationStyle: {
 				left: '0px',
@@ -537,20 +298,15 @@ export default {
 				translateY: 0,
 				opacity: 1
 			},
-			isManualSwitching: false, // 加手动切换标记
+			isManualSwitching: false,
 			brands: [
-				{ id: 'all', name: '全部' },
-				{ id: 'aima', name: '爱玛' },
-				{ id: 'yadea', name: '雅迪' },
-				{ id: 'ninebot', name: '九号' },
-				{ id: 'tailg', name: '台铃' },
-				{ id: 'sunra', name: '新日' },
-				{ id: 'luyuan', name: '绿源' },
-				{ id: 'lima', name: '立马' },
+				{ id: 'all', name: '全部' }
 			],
-			selectedBrand: 'all', // 当前选中的品牌
-			shopId: '', // 添加shopId存储
-			merchantId: '' // 添加merchantId存储
+			selectedBrand: 'all',
+			shopId: '',
+			merchantId: '',
+			shopName: '',
+			repairOrderId: ''
 		}
 	},
 	computed: {
@@ -573,30 +329,56 @@ export default {
 				return this.categories;
 			}
 			
-			return this.categories.map(category => ({
-				...category,
-				items: category.items.filter(product => product.brand === this.selectedBrand)
-			})).filter(category => category.items.length > 0);
+			return this.categories.map(category => {
+				return {
+					...category,
+					items: category.items.filter(item => {
+						if (this.selectedBrand === 'all') {
+							return true
+						}
+						const brandIds = item.brand ? item.brand.split(',') : []
+						return brandIds.includes(this.selectedBrand.toString())
+					})
+				}
+			}).filter(category => category.items.length > 0)
 		}
 	},
 	onReady() {
 		this.calculateHeight()
 	},
 	onLoad(options) {
-		if (options.id) {
-			this.shopId = options.id
-			// 可以在这里获取详情，括家ID
-			this.getShopDetail()
+		console.log(options)
+		if (options.shopId) {
+			this.shopId = options.shopId
+			this.shopName = decodeURIComponent(options.shopName || '')
+			this.repairOrderId = options.repairOrderId
+			console.log(this.repairOrderId)
+			// 加载该商家的商品
+			this.loadProducts()
+		} else {
+			// 如果没有传入shopId，才从本地存储获取
+			this.shopId = uni.getStorageSync('currentShopId')
+			this.shopName = uni.getStorageSync('currentShopName')
 		}
+		
 		// 加载本地存储的购物车数据
 		const cartData = uni.getStorageSync('cartData')
 		if (cartData) {
 			this.cartList = JSON.parse(cartData)
 			this.updateCartInfo()
 		}
+		
+		// 监听商家切换事件
+		uni.$on('refreshShop', this.handleShopChange)
+		// 获取品牌列表
+		this.getBrandList()
+	},
+	onUnload() {
+		// 移除事件监听
+		uni.$off('refreshShop', this.handleShopChange)
 	},
 	methods: {
-		// 修改获取商方法
+		// 修改获取商品
 		getProducts(categoryIndex) {
 			return this.categories[categoryIndex]?.items || [];
 		},
@@ -612,13 +394,13 @@ export default {
 			let targetScrollTop = 0;
 			const pxRatio = uni.getSystemInfoSync().windowWidth / 750;
 			
-			// 更精确的高度计算
+			// 精确的高度计算
 			for (let i = 0; i < index; i++) {
 				const category = this.filteredCategories[i];
 				if (!category) continue;
 				
-				// 标题高度（不包含padding，因为padding已经包含在商品列表）
-				const titleHeight = 72 * pxRatio; // 减小标题实际占用高度
+				// 标题高度（不包含padding，为padding已经包含在商品列表）
+				const titleHeight = 72 * pxRatio; // 小标题实际占用高度
 				
 				// 商品列表高度（包含内边距）
 				const itemCount = category.items?.length || 0;
@@ -632,7 +414,7 @@ export default {
 			// 确保目标位置是整数
 			targetScrollTop = Math.floor(targetScrollTop);
 			
-			// 获取当前滚动位置
+			// 获取当前滚动置
 			const startScrollTop = this.scrollTop;
 			const distance = targetScrollTop - startScrollTop;
 			
@@ -677,7 +459,7 @@ export default {
 			let currentIndex = 0;
 			let heightSum = 0;
 			
-			// 更精确的滚动位置检测
+			// 更确的滚动位置检测
 			for (let i = 0; i < this.filteredCategories.length; i++) {
 				const category = this.filteredCategories[i];
 				if (!category) continue;
@@ -739,7 +521,7 @@ export default {
 					return;
 				}
 				
-				// 计算剩余可购买数量
+				// 计算剩余可购买
 				const remainingStock = product.stock - existItem.quantity;
 				
 				// 如果剩余可购数量小于等于3，示提示
@@ -762,9 +544,9 @@ export default {
 				
 				existItem.quantity++;
 			} else {
-				// 果库存小于等于3，显示提示
+				// 果库存小于等于3，提示
 				if (product.stock <= 3) {
-					// 如果库存为1，显示已达到库存上限
+					// 如果库存1，显示已达到库存上限
 					if (product.stock === 1) {
 						setTimeout(() => {
 							uni.showToast({
@@ -819,16 +601,19 @@ export default {
 			}
 		},
 		
-		// 更新购物车信息
+		// 更新购物信息
 		updateCartInfo() {
 			const cartData = uni.getStorageSync('cartData')
 			if (cartData) {
 				const cartList = JSON.parse(cartData)
 				this.cartCount = cartList.reduce((total, item) => total + item.quantity, 0)
-				this.totalPrice = cartList.reduce((total, item) => total + item.price * item.quantity, 0)
+				this.totalPrice = cartList.reduce((total, item) => {
+					const itemTotal = Math.round(item.price * item.quantity * 100) / 100
+					return Math.round((total + itemTotal) * 100) / 100
+				}, 0).toFixed(2)
 			} else {
 				this.cartCount = 0
-				this.totalPrice = 0
+				this.totalPrice = '0.00'
 			}
 		},
 		
@@ -858,8 +643,10 @@ export default {
 			});
 		},
 		
-		// 修改去结算按钮点击事件
+		// 修改去结算按点击事
 		goToCheckout() {
+			console.log(this.shopId)
+
 			if (this.cartCount === 0) {
 				uni.showToast({
 					title: '请先选择商品',
@@ -867,13 +654,13 @@ export default {
 				})
 				return
 			}
-			
 			const orderInfo = {
-				shopName: '电动车维修店一',  // 店铺名称
-				orderGoods: this.cartList,   // 购物车商品列表
-				totalAmount: this.totalPrice, // 商品总额
-				freight: 0,                   // 运费
-				finalAmount: this.totalPrice  // 最终金额
+				shopId: this.shopId,
+				shopName: this.shopName,
+				orderGoods: this.cartList,
+				totalAmount: this.totalPrice,
+				finalAmount: this.totalPrice,
+				repairOrderId: this.repairOrderId
 			}
 			
 			// 将订单信息存储到本地
@@ -897,7 +684,7 @@ export default {
 			return cartItem ? cartItem.quantity >= product.stock : false;
 		},
 		
-		// 修改搜索商品方法
+		// 修改搜索商法
 		searchProducts() {
 			if (!this.searchKeyword.trim()) {
 				this.isSearching = false;
@@ -948,7 +735,7 @@ export default {
 			if (this.loading || !this.hasMore) return
 			this.loading = true
 			
-			// 模拟加载更多数据
+			// 模拟加载更多据
 			setTimeout(() => {
 				this.page++
 				if (this.page >= 3) {
@@ -958,7 +745,7 @@ export default {
 			}, 1000)
 		},
 		
-		// 存储购物车数据到本地存储
+		// 储购物车数据本地储
 		saveCartData() {
 			uni.setStorageSync('cartData', JSON.stringify(this.cartList))
 		},
@@ -1000,7 +787,7 @@ export default {
 		
 		// 修改 handleAddToCart 方法
 		handleAddToCart(categoryIndex, productIndex, event) {
-			// 先检查是否达到库存限制
+			// 先检是否达到库存限
 			if (this.isStockLimit(categoryIndex, productIndex)) {
 				uni.showToast({
 					title: '已达到库存上限',
@@ -1018,7 +805,7 @@ export default {
 			// 以下是带动画效果的添加商品逻辑
 			const touch = event.touches[0];
 			
-			// 使用uni的API获取购物车图标位置
+			// 使用uni的API获取物车图标位置
 			const query = uni.createSelectorQuery();
 			query.select('.cart-icon').boundingClientRect(data => {
 				if (!data) return;
@@ -1051,7 +838,7 @@ export default {
 			}).exec();
 		},
 		
-		// 计算高度的方法也需要修改
+		// 计算度的方法也需要修改
 		calculateHeight() {
 			let height = 0;
 			this.heightArr = [];
@@ -1082,13 +869,13 @@ export default {
 			
 			// 允许输入框为空，此时不更新购物车总价和数量
 			if (numValue === '') {
-				cartItem._tempValue = '';  // 使用临时值存储空字符串
+				cartItem._tempValue = '';  // 用临时值存储空字符串
 				return;
 			}
 			
 			const newQuantity = parseInt(numValue);
 			
-			// 如果输入0，直接删除商品
+			// 如果入0，直接删除商品
 			if (newQuantity === 0) {
 				const index = this.cartList.findIndex(item => 
 					item.categoryIndex === categoryIndex && 
@@ -1143,7 +930,7 @@ export default {
 					return;
 				}
 				
-				// 清除临时
+				// 除临时
 				delete cartItem._tempValue;
 				
 				// 确保数量是有效数字
@@ -1157,15 +944,37 @@ export default {
 		selectBrand(brandId) {
 			this.selectedBrand = brandId;
 			
-			// 如果正在搜索，新执行搜索以应用新的品牌筛选
-			if (this.isSearching) {
-				this.searchProducts();
-				return;
-			}
-			
-			// 不在搜索状态时的原有逻辑
-			this.currentCategory = 0;
+			// 重置滚动位置
 			this.scrollTop = 0;
+			// 清除选中的分类
+			this.currentCategory = 0;
+		},
+		
+		// 获取品牌列表
+		getBrandList() {
+			api.shop.selectModelsList().then(res => {
+				if (res.code === 200) {
+					// 添加"全部"选项
+					this.brands = [
+						{ id: 'all', name: '全部' },
+						...res.data.map(item => ({
+							id: item.id.toString(), // 确保ID是字符串类型
+							name: item.title
+						}))
+					]
+				} else {
+					uni.showToast({
+						title: res.msg || '获取品牌列表失败',
+						icon: 'none'
+					})
+				}
+			}).catch(err => {
+				console.error('获取品牌列表失败:', err)
+				uni.showToast({
+					title: '获取品牌列表失败',
+					icon: 'none'
+				})
+			})
 		},
 		
 		// 添加 loadCartCount 方法
@@ -1204,7 +1013,7 @@ export default {
 				});
 			}, 1000);
 		},
-		// 获取店铺详情
+		// 获取铺详情
 		getShopDetail() {
 			// 这里添加获取店铺详情的接口请求
 			// 示例：
@@ -1223,10 +1032,86 @@ export default {
 		},
 		enableScroll() {
 			// 可以根据需要添加额外的滚动控制逻辑
+		},
+		handleShopChange(data) {
+			if (data.shopId) {
+				this.shopId = data.shopId
+				// 刷新商品列表
+				this.refreshProducts()
+			}
+		},
+		refreshProducts() {
+			// 重置页面状
+			this.pageNum = 1
+			this.finished = false
+			this.products = []
+			// 重新加载商品
+			this.loadProducts()
+		},
+		loadProducts() {
+			this.loading = true
+			api.shop.getProducts({
+				shopId: this.shopId,
+				pageNum: this.page,
+				pageSize: 10
+			}).then(res => {
+				if (res.code === 200) {
+					// 修改这里：使用 res.data 而不是 res.rows
+					const products = res.data || []
+					if (products.length > 0) {
+						// 将商品数据按分类组织
+						this.categories = this.organizeProducts(products)
+					}
+				} else {
+					uni.showToast({
+						title: res.msg || '获取商品列表败',
+						icon: 'none'
+					})
+				}
+			}).catch(err => {
+				console.error('获取商品列表失败:', err)
+				uni.showToast({
+					title: '获取商品列表失败',
+					icon: 'none'
+				})
+			}).finally(() => {
+				this.loading = false
+			})
+		},
+		// 修改数据组织方法
+		organizeProducts(products) {
+			const categories = []
+			const categoryMap = new Map()
+
+			products.forEach(product => {
+				const categoryId = product.categoryId
+				if (!categoryMap.has(categoryId)) {
+					categoryMap.set(categoryId, {
+						id: categoryId,
+						name: product.categoryName,
+						items: []
+					})
+					categories.push(categoryMap.get(categoryId))
+				}
+				
+				const category = categoryMap.get(categoryId)
+				category.items.push({
+					id: product.id,
+					name: product.name,
+					price: product.price,
+					stock: product.stock || 0,
+					image: product.image ? request.BASE_URL + product.image : '/static/products/shangpin_default.png',
+					brand: product.brand,
+					categoryIndex: categories.length - 1,
+					productIndex: category.items.length
+				})
+			})
+
+			return categories
 		}
 	},
 	created() {
-		// 在组件创建时应用节流
+		// 在组件建时应用节
 		this.switchCategory = throttle(this.switchCategory, 200);
 	},
 	onShow() {
@@ -1244,12 +1129,12 @@ export default {
 			this.searchProducts();
 		}
 		
-		// 延迟关闭下拉刷新
+		// 迟关闭下拉刷新
 		setTimeout(() => {
 				uni.stopPullDownRefresh();
 				uni.showToast({
 					title: '刷新成功',
-					icon: 'none'
+						icon: 'none'
 				});
 			}, 1000);
 	}
@@ -1279,7 +1164,6 @@ export default {
 	display: flex;
 	align-items: center;
 	padding: 0 30rpx;
-	margin-right: 20rpx;
 }
 
 .search-input .icon-search {
@@ -1291,20 +1175,6 @@ export default {
 .search-input input {
 	flex: 1;
 	font-size: 28rpx;
-}
-
-.merchant-entry {
-	display: flex;
-	align-items: center;
-	font-size: 32rpx;
-	color: #333;
-	gap: 10rpx;
-}
-
-.merchant-entry .merchant-icon {
-	width: 44rpx;
-	height: 44rpx;
-	margin-left: 0;
 }
 
 .main-content {
@@ -1608,7 +1478,7 @@ export default {
 	top: -2rpx;
 }
 
-/* 去除输入框聚焦时的默认样式 */
+/* 去除输框聚焦的默认样式 */
 .quantity-control .num:focus {
 	outline: none;
 }
@@ -1621,7 +1491,7 @@ export default {
 	cursor: not-allowed;
 }
 
-/* 保留一个完整的禁用状态式 */
+/* 保留一个完���的用状态式 */
 .add-btn.disabled,
 .plus.disabled {
 	background-color: transparent;
@@ -1747,7 +1617,7 @@ export default {
 	margin-top: 10rpx;
 }
 
-/* 修改购物车中的数量控制器样式 */
+/* 修改购物车中的数量控器样式 */
 .cart-item .quantity-control {
 	display: flex;
 	align-items: center;
@@ -1781,7 +1651,7 @@ export default {
 	flex-shrink: 0;
 }
 
-/* 修改购物车样式 */
+/* 修改物车样式 */
 .cart-wrap {
     display: flex;
     flex-direction: column;
@@ -1872,7 +1742,7 @@ export default {
 	margin: 0 20rpx;
 }
 
-/* 修改动画样式 */
+/* 改动画样式 */
 .add-to-cart-animation {
 	position: fixed;
 	z-index: 999;
@@ -1916,7 +1786,7 @@ export default {
 	transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* 购物车图标动画 */
+/* 购物车标动画 */
 .cart-icon {
 	position: relative;
 	width: 50rpx;
@@ -2009,7 +1879,7 @@ export default {
     background: #007AFF;
 }
 
-/* 修改搜索结果中的 add-btn 样式 */
+/* 修改搜索果中的 add-btn 样式 */
 .search-results .product-price-wrap {
     padding-right: 20rpx;
 }
@@ -2019,12 +1889,12 @@ export default {
     margin-right: 20rpx;
 }
 
-/* 搜索结果为空时的样式 */
+/* 搜索结果为空��的样式 */
 .search-results:empty {
     display: none;
 }
 
-/* 统一搜索结果中的商品项样式 */
+/* 一搜索结果中的商品项样式 */
 .search-results .product-item {
     display: flex;
     padding: 20rpx 0;
@@ -2050,7 +1920,7 @@ export default {
     z-index: 1;
     width: 100%;
     padding-right: 0; /* 移除内边距，因为已经在 product-info 中设置了 */
-    margin-bottom: 10rpx; /* 添加底部间距，使按钮对齐 */
+    margin-bottom: 10rpx; /* 添加底部间距，使钮对齐 */
 }
 
 .search-results .add-btn,
@@ -2070,7 +1940,7 @@ export default {
 
 .search-results-container {
 	position: fixed;
-	top: 200rpx; /* 据顶部搜索栏和品牌筛选的实际高度调整 */
+	top: 200rpx; /* 据顶部搜索栏和品牌筛选实际高度调整 */
 	left: 0;
 	right: 0;
 	bottom: 110rpx; /* 与cart-bar高度保持一致 */
@@ -2096,5 +1966,13 @@ export default {
 
 .main-content.hidden {
 	visibility: hidden;
+}
+
+.sold-out {
+	font-size: 24rpx;
+	color: #999;
+	padding: 6rpx 12rpx;
+	background: #f5f5f5;
+	border-radius: 4rpx;
 }
 </style> 

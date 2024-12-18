@@ -178,6 +178,8 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
+
 export default {
 	data() {
 		return {
@@ -263,11 +265,118 @@ export default {
 				phoneNumber: '18888888888'
 			})
 		},
-		submitOrder() {
-			uni.showToast({
-				title: '提交成功',
-				icon: 'success'
+		async submitOrder() {
+			// 表单验证
+			if (!this.description && !this.voicePath) {
+				uni.showToast({
+					title: '请填写问题描述或录制语音',
+					icon: 'none'
+				})
+				return
+			}
+			
+			if (!this.contactName) {
+				uni.showToast({
+					title: '请填写联系人姓名',
+					icon: 'none'
+				})
+				return
+			}
+			
+			if (!this.contactPhone) {
+				uni.showToast({
+					title: '请填写联系电话',
+					icon: 'none'
+				})
+				return
+			}
+			
+			if (!this.address) {
+				uni.showToast({
+					title: '请选择联系地址',
+					icon: 'none'
+				})
+				return
+			}
+
+			// 显示loading
+			uni.showLoading({
+				title: '提交中...',
+				mask: true
 			})
+
+			try {
+				// 上传语音文件
+				let voiceUrl = ''
+				if (this.voicePath) {
+					const voiceRes = await api.common.uploadFile(this.voicePath)
+					voiceUrl = voiceRes.fileName
+				}
+
+				// 上传图片文件
+				let imageUrls = []
+				if (this.uploadedImages.length > 0) {
+					const uploadPromises = this.uploadedImages.map(imagePath => 
+						api.common.uploadFile(imagePath)
+					)
+					const imageResults = await Promise.all(uploadPromises)
+					imageUrls = imageResults.map(res => res.fileName)
+				}
+
+				// 构造提交数据
+				const submitData = {
+					// 订单类型(2-抢单维修)
+					orderType: 2,
+					
+					// 问题描述
+					description: this.description,
+					voicePath: voiceUrl,
+					voiceDuration: this.duration,
+					images: imageUrls.join(','),
+					
+					// 托运信息
+					needTransport: this.needTransport ? 1 : 0,
+					transportFee: this.transportFee,
+					
+					// 联系人信息
+					contactName: this.contactName,
+					contactPhone: this.contactPhone,
+					contactAddress: this.address,
+					contactLatitude: this.latitude,
+					contactLongitude: this.longitude
+				}
+
+				console.log(submitData)
+
+				// 调用提交接口
+				const res = await api.repair.submitRepairOrder(submitData)
+				if (res.code === 200) {
+					uni.showToast({
+						title: '提交成功',
+						icon: 'success'
+					})
+					// 提交成功后跳转到订单详情页
+					setTimeout(() => {
+						uni.redirectTo({
+							url: `/pages/orderDetail/orderDetail?orderId=${res.data}`
+						})
+					}, 1500)
+				} else {
+					uni.showToast({
+						title: res.msg || '提交失败',
+						icon: 'none'
+					})
+				}
+			} catch (err) {
+				console.error('提交维修工单失败:', err)
+				uni.showToast({
+					title: '提交失败，请重试',
+					icon: 'none'
+				})
+			} finally {
+				// 隐藏loading
+				uni.hideLoading()
+			}
 		},
 		editTransportFee() {
 			this.tempFee = this.transportFee === 0 ? '' : this.transportFee.toString()
@@ -1072,7 +1181,7 @@ export default {
 					width: 6rpx;
 					background: #FF9500;
 					border-radius: 3rpx;
-					transition: height 0.1s ease-out; // 化过渡效果
+					transition: height 0.1s ease-out; // 化过��效果
 				}
 			}
 

@@ -10,7 +10,12 @@
 					open-type="chooseAvatar" 
 					@chooseavatar="onChooseAvatar"
 				>
-					<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
+					<image 
+						class="avatar" 
+						:src="userInfo.avatar ? 
+							(userInfo.avatar.startsWith('http') ? userInfo.avatar : request.BASE_URL + userInfo.avatar) 
+							: '/static/my/default-avatar.png'"
+					></image>
 					<image class="arrow" src="/static/images/youjiantou2.png"></image>
 				</button>
 			</view>
@@ -185,12 +190,14 @@ export default {
 					throw new Error('昵称最多32个字符')
 				}
 				
-				// 构造要提交的数据，使用正确的字段名
+				// 构造要提交的数据，添加头像为空的判断
 				const updateData = {
 					name: this.userInfo.name,
-					avatar: this.userInfo.avatar.startsWith('/profile') ? 
-						   this.userInfo.avatar : 
-						   '/profile' + this.userInfo.avatar,
+					avatar: this.userInfo.avatar ? (
+						this.userInfo.avatar.startsWith('/profile') ? 
+						this.userInfo.avatar : 
+						'/profile' + this.userInfo.avatar
+					) : '',
 					phone: this.userInfo.phone
 				}
 				

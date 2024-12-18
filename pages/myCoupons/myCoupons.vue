@@ -34,13 +34,22 @@
           <view class="coupon-left">
             <image class="bg-image" src="/static/images/youhuiquan.png" mode="aspectFill" />
             <view class="amount">
-              <text class="symbol">¥</text>
-              <text class="number">{{coupon.amount}}</text>
+              <!-- 根据优惠券类型显示不同的优惠形式 -->
+              <template v-if="coupon.type === 1">
+                <text class="symbol">¥</text>
+                <text class="number">{{coupon.amount}}</text>
+              </template>
+              <template v-else-if="coupon.type === 2">
+                <text class="number">{{coupon.amount}}</text>
+                <text class="symbol">折</text>
+              </template>
             </view>
             <view class="condition">
-              <text>满{{coupon.minAmount}}可用</text>
+              <!-- 根据优惠券类型显示不同的使用条件 -->
+              <text v-if="coupon.type === 1">满{{coupon.minAmount}}可用</text>
+              <text v-else-if="coupon.type === 2">满{{coupon.minAmount}}可用</text>
               <text v-if="fromOrder && !isCouponAvailable(coupon)" class="unavailable-text">
-                (差{{coupon.minAmount - orderAmount}}元)
+                (差{{(coupon.minAmount - orderAmount).toFixed(2)}}元)
               </text>
             </view>
           </view>
@@ -56,7 +65,7 @@
               @click="handleUseCoupon(coupon)"
             >
               {{ fromOrder && !isCouponAvailable(coupon) ? 
-                '差' + (coupon.minAmount - orderAmount) + '元' : 
+                '差' + (coupon.minAmount - orderAmount).toFixed(2) + '元' : 
                 '去使用' 
               }}
             </view>
@@ -82,19 +91,24 @@
 </template>
 
 <script>
-import { COUPON_STATUS, getCoupons } from '@/api/coupon.js'
+import api from '@/api/index'
 
 export default {
   data() {
     return {
       tabList: ['未使用', '已使用', '已过期'],
       currentTab: 0,
-      couponList: [],
+      allCoupons: [], // 存储所有优惠券
+      couponList: [], // 当前显示的优惠券
       loading: false,
       hasMore: false,
       orderAmount: 0,
       fromOrder: false
     }
+  },
+  
+  onReady() {
+    this.initPage()
   },
   
   onLoad(options) {
@@ -105,10 +119,15 @@ export default {
       const info = JSON.parse(orderInfo)
       this.orderAmount = info.totalAmount
     }
-    this.getCouponList()
   },
   
   methods: {
+    initPage() {
+      setTimeout(() => {
+        this.getCouponList()
+      }, 100)
+    },
+    
     // 判断优惠券是否可用
     isCouponAvailable(coupon) {
       return this.orderAmount >= coupon.minAmount
@@ -116,10 +135,16 @@ export default {
     
     // 获取优惠券状态文本
     getStatusText(coupon) {
-      if (this.currentTab !== 0) {
-        return this.currentTab === 1 ? '已使用' : '已过期'
+      const now = new Date().getTime()
+      const endTime = new Date(coupon.endDate.replace(/-/g, '/')).getTime()
+      
+      if (coupon.status === 1) {
+        return '已使用'
+      } else if (now > endTime) {
+        return '已过期'
       }
-      return !this.isCouponAvailable(coupon) ? `订单未满${coupon.minAmount}元` : ''
+      return !this.isCouponAvailable(coupon) ? 
+        `订单未满${coupon.minAmount}元(差${(coupon.minAmount - this.orderAmount).toFixed(2)}元)` : ''
     },
     
     // 处理优惠券使用
@@ -133,22 +158,58 @@ export default {
           return
         }
         // 使用优惠券并返回
-        uni.setStorageSync('selectedCoupon', JSON.stringify(coupon))
+        const couponInfo = {
+          ...coupon,
+          discountAmount: this.calculateDiscount(coupon)
+        }
+        uni.setStorageSync('selectedCoupon', JSON.stringify(couponInfo))
         uni.navigateBack()
       } else {
-        // 从我的优惠券进入时，跳转到商城页面
         uni.switchTab({
-          url: '/pages/shop/shop'
+          url: '/pages/index/index'
         })
       }
+    },
+    
+    // 计算优惠金额
+    calculateDiscount(coupon) {
+      if (coupon.type === 1) {
+        // 满减券直接返回优惠金额
+        return coupon.amount
+      } else if (coupon.type === 2) {
+        // 折扣券计算折扣金额
+        const discount = (100 - coupon.amount) / 100
+        return Math.floor(this.orderAmount * discount * 100) / 100
+      }
+      return 0
     },
     
     // 切换标签
     switchTab(index) {
       if (this.currentTab === index) return
       this.currentTab = index
-      this.couponList = []
-      this.getCouponList()
+      // 根据状态筛选优惠券
+      this.filterCoupons()
+    },
+    
+    // 筛选优惠券
+    filterCoupons() {
+      const now = new Date().getTime()
+      
+      this.couponList = this.allCoupons.filter(coupon => {
+        const endTime = new Date(coupon.endDate.replace(/-/g, '/')).getTime()
+        
+        switch(this.currentTab) {
+          case 0: // 未使用
+            return coupon.status === 0 && now <= endTime
+          case 1: // 已使用
+            return coupon.status === 1
+          case 2: // 已过期
+            return coupon.status === 0 && now > endTime
+          default:
+            return false
+        }
+      })
     },
     
     // 获取优惠券列表
@@ -157,8 +218,22 @@ export default {
       this.loading = true
       
       try {
-        const coupons = await getCoupons(this.currentTab)
-        this.couponList = coupons
+        const res = await api.coupon.getCouponList()
+        if (res.code === 200) {
+          // 处理日期格式，只显示日期部分
+          this.allCoupons = res.data.map(coupon => ({
+            ...coupon,
+            // startDate: coupon.startDate.split(' ')[0],
+            // endDate: coupon.endDate.split(' ')[0]
+          }))
+          // 初始筛选
+          this.filterCoupons()
+        } else {
+          uni.showToast({
+            title: res.msg || '获取优惠券列表失败',
+            icon: 'none'
+          })
+        }
       } catch (e) {
         console.error('获取优惠券列表失败:', e)
         uni.showToast({

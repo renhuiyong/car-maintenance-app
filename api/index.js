@@ -52,15 +52,28 @@ const api = {
         // 提交维修订单
         submit(data) {
             return request.post('/repair/submit', data)
-        }
+        },
+        // 提交维修工单
+        submitRepairOrder(data) {
+            return request.post('/web/repair/order/submit', data)
+        },
+        // 获取维修工单列表
+        getOrderList(params) {
+            return request.get('/web/repair/order/list', params)
+        },
+        // 获取商家回复
+        getMerchantResponse(params) {
+            return request.get('/web/repair/order/merchantResponse', params)
+        },
     },
 
     // 商城相关接口
     shop: {
         // 获取商品列表
-        getProducts(data) {
-            return request.get('/shop/products', data)
-        },
+        getProducts: (data) => request.get('/web/accessory/getList', data),
+        
+        // 获取品牌列表
+        selectModelsList: () => request.get('/web/accessory/selectModelsList'),
         
         // 获取商品详情
         getProductDetail(id) {
@@ -70,6 +83,19 @@ const api = {
         // 添加获取维修商家列表接口
         getShopList(params) {
             return request.get('/web/shop/getList', params)
+        },
+
+        // 获取商家详情
+        getShopDetail(params) {
+            return request.get('/web/shop/getShop', {
+                shopId: params.shopId,
+                latitude: params.latitude,
+                longitude: params.longitude
+            })
+        },
+        // 检查商品库存
+        checkStock(data) {
+            return request.post('/web/accessory/checkStock', data)
         }
     },
 
@@ -82,7 +108,7 @@ const api = {
         
         // 创建订单
         create(data) {
-            return request.post('/order/create', data)
+            return request.post('/web/user/shopOrder/create', data)
         },
         
         // 取消订单
@@ -93,7 +119,7 @@ const api = {
 
     // 消息相关接口
     message: {
-        // 获取消息列表
+        // 获消息列表
         getList(data) {
             return request.get('/message/list', data)
         },
@@ -116,21 +142,56 @@ const api = {
         },
         // 提交商家入驻申请
         submitSettled(data) {
-            return request.post('/web/merchant/settled', data)
+            return request.post('/web/shop/settledShop', data)
         },
          // 获取推广二维码
          getMerchantPromotionCode() {
             return request.post('/web/merchant/getMerchantPromotionCode')
-        },
-        
-        // 上传图片
-        uploadImage(file) {
+        }
+      
+    },
+    common: {
+        // 上传文件
+        uploadFile(file) {
             return request.upload('/web/user/upload', {
                 file,
                 name: 'file'
             })
         }
     },
+    // 在 api 对象中添加收藏相关接口
+    favorite: {
+        // 添加收藏
+        add(data) {
+            return request.post('/web/user/favorite/add', data)
+        },
+        
+        // 取消收藏
+        cancel(data) {
+            return request.post('/web/user/favorite/cancel', data)
+        },
+        
+        // 获取收藏列表
+        getList(params) {
+            return request.get('/web/user/favorite/list', params)
+        },
+        
+        // 检查是否已收藏
+        checkStatus(data) {
+            return request.get('/web/user/favorite/check', data)
+        }
+    },
+    // 优惠券相关接口
+    coupon: {
+        // 获取优惠券列表
+        getCouponList(query) {
+            return request.post('/web/user/coupon/getCouponList', query)
+        },
+        // 使用优惠券
+        useCoupon(data) {
+            return request.post('/web/user/coupon/use', data)
+        }
+    }
 }
 
 export default api 

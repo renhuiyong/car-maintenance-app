@@ -103,20 +103,16 @@ const upload = (url, options = {}) => {
                 'WaAuthorization': uni.getStorageSync('token') || ''
             },
             success: (uploadFileRes) => {
-                console.log(uploadFileRes)
                 let result = uploadFileRes.data;
                 if (typeof result === 'string') {
                     try {
                         result = JSON.parse(result);
-                        console.log('result1', result)
                     } catch (e) {
                         reject(new Error('上传失败，返回数据格式错误'));
                         return;
                     }
                 }
-                console.log('result2', result)
                 if (result.code === 200) {
-                    console.log('result3', result)
                     // 返回文件名和完整URL
                     resolve({
                         fileName: result.fileName,

@@ -10,7 +10,12 @@
 					open-type="chooseAvatar" 
 					@chooseavatar="onChooseAvatar"
 				>
-					<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
+					<image 
+						class="avatar" 
+						:src="userInfo.avatar ? 
+							(userInfo.avatar.startsWith('http') ? userInfo.avatar : request.BASE_URL + userInfo.avatar) 
+							: '/static/my/default-avatar.png'"
+					></image>
 					<image class="arrow" src="/static/images/youjiantou2.png"></image>
 				</button>
 			</view>
@@ -132,7 +137,7 @@ export default {
 				// 打印返回数据，方便调试
 				console.log('getPhoneNumber response:', e.detail)
 				
-				// 用户拒绝授��的情况
+				// 用户拒绝授权的情况
 				if (e.detail.errMsg && e.detail.errMsg.includes('deny')) {
 					throw new Error('用户拒绝授权')
 				}
@@ -185,18 +190,20 @@ export default {
 					throw new Error('昵称最多32个字符')
 				}
 				
-				// 构造要提交的数据，使用正确的字段名
+				// 构造要提交的数据，添加头像为空的判断
 				const updateData = {
 					name: this.userInfo.name,
-					avatar: this.userInfo.avatar.startsWith('/profile') ? 
-						   this.userInfo.avatar : 
-						   '/profile' + this.userInfo.avatar,
+					avatar: this.userInfo.avatar ? (
+						this.userInfo.avatar.startsWith('/profile') ? 
+						this.userInfo.avatar : 
+						'/profile' + this.userInfo.avatar
+					) : '',
 					phone: this.userInfo.phone
 				}
 				
 				const res = await api.merchant.updateMerchantProfile(updateData)
 				if (res.code === 200) {
-					// 更新本地存储时保持前端使用的字段名
+					// 更新���地存储时保持前端使用的字段名
 					uni.setStorageSync('userInfo', JSON.stringify(this.userInfo))
 					
 					uni.showToast({

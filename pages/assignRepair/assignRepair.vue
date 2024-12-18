@@ -194,6 +194,8 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
+
 export default {
 	data() {
 		return {
@@ -217,10 +219,12 @@ export default {
 			currentSeconds: 0, // 当前录音秒数
 			recordTimer: null, // 记录实时秒数的定时器
 			shopInfo: {
+				id: '',
 				name: '',
 				distance: '',
 				address: '',
-				businessHours: ''
+				businessHours: '',
+				phone: ''
 			},
 			address: {
 				name: '',
@@ -239,13 +243,14 @@ export default {
 	},
 	onLoad(options) {
 		if (options.shopInfo) {
-			this.shopInfo = JSON.parse(decodeURIComponent(options.shopInfo))
-			// 更新地址信息
+			const shopInfo = JSON.parse(decodeURIComponent(options.shopInfo))
+			this.shopInfo = shopInfo
+			// 确保地址信息中的经纬度为数字类型
 			this.address = {
-				name: this.shopInfo.name,
-				address: this.shopInfo.address,
-				latitude: this.shopInfo.latitude || 0,
-				longitude: this.shopInfo.longitude || 0
+				name: shopInfo.name,
+				address: shopInfo.address,
+				latitude: Number(shopInfo.latitude) || 0,
+				longitude: Number(shopInfo.longitude) || 0
 			}
 		}
 
@@ -300,15 +305,141 @@ export default {
 			// 编辑联系人信息
 		},
 		makeCall() {
-			uni.makePhoneCall({
-				phoneNumber: '18888888888'
-			})
+			if (this.shopInfo.phone) {
+				uni.makePhoneCall({
+					phoneNumber: this.shopInfo.phone,
+					fail: (err) => {
+						console.error('拨打电话失败:', err)
+						uni.showToast({
+							title: '拨打电话失败',
+							icon: 'none'
+						})
+					}
+				})
+			} else {
+				uni.showToast({
+					title: '暂无联系电话',
+					icon: 'none'
+				})
+			}
 		},
-		submitOrder() {
-			uni.showToast({
-				title: '提交成功',
-				icon: 'success'
+		async submitOrder() {
+			// 表单验证
+			if (!this.description && !this.voicePath) {
+				uni.showToast({
+					title: '请填写问题描述或录制语音',
+					icon: 'none'
+				})
+				return
+			}
+			
+			if (!this.contactInfo.name) {
+				uni.showToast({
+					title: '请填写联系人姓名',
+					icon: 'none'
+				})
+				return
+			}
+			
+			if (!this.contactInfo.phone) {
+				uni.showToast({
+					title: '请填写联系电话',
+					icon: 'none'
+				})
+				return
+			}
+			
+			if (!this.contactInfo.address) {
+				uni.showToast({
+					title: '请选择联系地址',
+					icon: 'none'
+				})
+				return
+			}
+
+			// 显示loading
+			uni.showLoading({
+				title: '提交中...',
+				mask: true
 			})
+
+			try {
+				// 上传语音文件
+				let voiceUrl = ''
+				if (this.voicePath) {
+					const voiceRes = await api.common.uploadFile(this.voicePath)
+					voiceUrl = voiceRes.fileName
+				}
+
+				// 上传图片文件
+				let imageUrls = []
+				if (this.uploadedImages.length > 0) {
+					const uploadPromises = this.uploadedImages.map(imagePath => 
+						api.common.uploadFile(imagePath)
+					)
+					const imageResults = await Promise.all(uploadPromises)
+					imageUrls = imageResults.map(res => res.fileName)
+				}
+
+				// 构造提交数据
+				const submitData = {
+					// 订单类型(1-指定维修)
+					orderType: 1,
+					
+					// 维修店铺信息
+					shopId: this.shopInfo.id,
+					shopName: this.shopInfo.name,
+					shopAddress: this.shopInfo.address,
+					
+					// 问题描述
+					description: this.description,
+					voicePath: voiceUrl,  // 现在是 fileName
+					voiceDuration: this.duration,
+					images: imageUrls.join(','),  // 现在是 fileName 数组的拼接
+					
+					// 托运信息
+					needTransport: this.needTransport ? 1 : 0,
+					transportFee: this.transportFee,
+					
+					// 联系人信息
+					contactName: this.contactInfo.name,
+					contactPhone: this.contactInfo.phone,
+					contactAddress: this.contactInfo.address,
+					contactLatitude: this.contactInfo.latitude,
+					contactLongitude: this.contactInfo.longitude
+				}
+
+				console.log(submitData)
+
+				// 调用提交接口
+				const res = await api.repair.submitRepairOrder(submitData)
+				if (res.code === 200) {
+					uni.showToast({
+						title: '提��成功',
+						icon: 'success'
+					})
+					// 提交成功后跳转到订单详情页
+					setTimeout(() => {
+						uni.redirectTo({
+							url: `/pages/orderDetail/orderDetail?orderId=${res.data}`
+						})
+					}, 1500)
+				} else {
+					uni.showToast({
+						title: res.msg || '提交失败',
+						icon: 'none'
+					})
+				}
+			} catch (err) {
+				console.error('提交维修工单失败:', err)
+				uni.showToast({
+					title: '提交失败，请重试',
+					icon: 'none'
+				})
+			} finally {
+				// 隐藏loading
+				uni.hideLoading()
+			}
 		},
 		editTransportFee() {
 			this.tempFee = this.transportFee === 0 ? '' : this.transportFee.toString()
@@ -437,15 +568,28 @@ export default {
 				this.innerAudioContext.destroy()
 			}
 		},
-		// 打开导航
+		// 打开��航
 		openLocation() {
+			// 确保经纬度为数字类型
+			const latitude = Number(this.address.latitude)
+			const longitude = Number(this.address.longitude)
+			
+			// 验证经纬度是否有效
+			if (isNaN(latitude) || isNaN(longitude)) {
+				uni.showToast({
+					title: '位置信息无效',
+					icon: 'none'
+				})
+				return
+			}
+
 			uni.openLocation({
-				latitude: this.address.latitude,
-				longitude: this.address.longitude,
+				latitude: latitude,
+				longitude: longitude,
 				name: this.address.name,
 				address: this.address.address,
 				success: () => {
-					console.log('导航打开成功')
+					console.log('导航开成功')
 				},
 				fail: (err) => {
 					console.error('导航打开失败', err)
@@ -1280,7 +1424,7 @@ export default {
 		padding: 0 30rpx; // 增加水平内边距
 		height: 44rpx;
 		line-height: 44rpx;
-		min-width: auto; // 移除最小宽度限制，让按钮宽度自适应内容
+		min-width: auto; // 移除最小宽度限制，让按���宽度自适应内容
 		white-space: nowrap; // 防止文字换行
 		text-align: center;
 		

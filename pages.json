@@ -17,8 +17,6 @@
 			"navigationBarTitleText": "店铺入驻"
 		}
 	},
-		
-		
 		{
 			"path": "pages/merchantMy/merchantMy",
 			"style": {
@@ -200,12 +198,12 @@
 				"iconPath": "/static/tabbar/repair.png",
 				"selectedIconPath": "/static/tabbar/repair-active.png"
 			},
-			{
-				"pagePath": "pages/shop/shop",
-				"text": "配件商城",
-				"iconPath": "/static/tabbar/shop.png",
-				"selectedIconPath": "/static/tabbar/shop-active.png"
-			},
+			// {
+			// 	"pagePath": "pages/shop/shop",
+			// 	"text": "配件商城",
+			// 	"iconPath": "/static/tabbar/shop.png",
+			// 	"selectedIconPath": "/static/tabbar/shop-active.png"
+			// },
 			{
 				"pagePath": "pages/my/my",
 				"text": "我的",

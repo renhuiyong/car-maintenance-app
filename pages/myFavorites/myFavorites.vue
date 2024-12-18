@@ -59,7 +59,7 @@
 
 		<!-- 空状态 -->
 		<view class="empty-state" v-if="showEmpty">
-			<image class="empty-icon" src="/static/images/empty-favorites.png"></image>
+			<image class="empty-icon" src="/static/products/empty_cart.png"></image>
 			<text class="empty-text">暂无收藏内容</text>
 		</view>
 	</view>
@@ -67,37 +67,14 @@
 
 <script>
 import api from '@/api/index.js'
+import request from '@/utils/request.js'
 
 export default {
 	data() {
 		return {
 			activeTab: 'goods', // 当前激活的标签页
-			goodsList: [
-				{
-					id: 1,
-					image: '/static/products/shangpin_default.png',
-					name: '电动车外置对灯大灯开关',
-					price: '20'
-				},
-				{
-					id: 2,
-					image: '/static/products/shangpin_default.png',
-					name: '电动车后视镜',
-					price: '20'
-				}
-			],
-			shopsList: [
-				{
-					id: 1,
-					name: '电动车维修店一',
-					address: '安徽省淮北市濉溪县濉溪镇资源路8号',
-					businessHours: '08:00 - 18:00',
-					phone: '12345678901',
-					// 如果有经纬度信息，可以添加以下字段
-					latitude: 0,
-					longitude: 0
-				}
-			],
+			goodsList: [],
+			shopsList: [],
 			loading: false
 		}
 	},
@@ -111,45 +88,57 @@ export default {
 		this.loadFavorites()
 	},
 	methods: {
-		// 切换标签页
+		// 切换标签页 - 直接切换显示，不重新加载数据
 		switchTab(tab) {
 			if (this.activeTab !== tab) {
 				this.activeTab = tab
-				this.loadFavorites()
+				// 移除 this.loadFavorites() 调用
 			}
 		},
 		
-		// 加载收藏数据
+		// 加载收藏数据 - 只在页面加载时调用一次
 		async loadFavorites() {
-			// 暂时注释掉 API 调用，使用静态数据进行测试
-			/*
 			try {
 				this.loading = true
-				const type = this.activeTab === 'goods' ? 1 : 2 // 1:商品 2:商家
-				const res = await api.user.getFavorites({ type })
+				const res = await api.favorite.getList()
 				
 				if (res.code === 200) {
-					if (this.activeTab === 'goods') {
-						this.goodsList = res.data
-					} else {
-						this.shopsList = res.data
-					}
+					const data = res.data || []
+					
+					// 处理商品数据 (type === 1)
+					this.goodsList = data
+						.filter(item => item.type === 1)
+						.map(item => ({
+							id: item.target_id,
+							name: item.NAME,
+							price: item.saleprice || 0,
+							image: item.image_url ? request.BASE_URL + item.image_url : '/static/products/shangpin_default.png'
+						}))
+					
+					// 处理店铺数据 (type === 2)
+					this.shopsList = data
+						.filter(item => item.type === 2)
+						.map(item => ({
+							id: item.target_id,
+							name: item.NAME,
+							address: item.detail_address || '',
+							businessHours: item.business_hours || '',
+							latitude: Number(item.latitude) || 0,
+							longitude: Number(item.longitude) || 0,
+							favoriteTime: item.favorite_time
+						}))
 				} else {
-					throw new Error(res.message)
+					throw new Error(res.msg)
 				}
 			} catch (err) {
 				console.error('Load favorites failed:', err)
-				uni.showToast({
-					title: '加载收藏失败',
-					icon: 'none'
-				})
+					uni.showToast({
+						title: '加载收藏失败',
+						icon: 'none'
+					})
 			} finally {
 				this.loading = false
 			}
-			*/
-			
-			// 使用静态数据，不需要做任何操作
-			this.loading = false
 		},
 		
 		// 处理电话拨打

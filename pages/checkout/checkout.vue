@@ -43,8 +43,15 @@
         <text>优惠券</text>
         <view class="coupon-right">
           <text v-if="selectedCoupon" class="discount-amount">-¥{{couponAmount}}</text>
-          <text v-else class="no-coupon">{{ hasCoupons ? '请选择优惠券' : '暂无可用优惠券' }}</text>
+          <text v-else-if="hasCoupons" class="no-coupon">{{ '请选择优惠券' }}</text>
+          <text v-else class="no-coupon">暂无可用优惠券</text>
           <image src="/static/images/youjiantou2.png" mode="aspectFit"></image>
+        </view>
+      </view>
+      <view class="amount-item no-coupon-option" @click="clearCoupon">
+        <text>不使用优惠券</text>
+        <view class="coupon-right">
+          <text :class="['check-icon', {'checked': !selectedCoupon}]"></text>
         </view>
       </view>
       <view class="amount-item total">
@@ -66,11 +73,12 @@
 </template>
 
 <script>
-import { getBestCoupon, getAvailableCoupons } from '@/api/coupon.js'
+import api from '@/api/index.js'
 
 export default {
   data() {
     return {
+      shopId: '',
       shopName: '',
       orderGoods: [],
       totalAmount: 0,
@@ -79,7 +87,8 @@ export default {
       finalAmount: 0,
       selectedCoupon: null,
       hasCoupons: false,
-      lastOrderAmount: 0
+      lastOrderAmount: 0,
+      submitting: false
     }
   },
   
@@ -95,18 +104,22 @@ export default {
     }
   },
   
-  onLoad() {
+  onLoad(options) {
     const orderInfo = uni.getStorageSync('orderInfo')
+    console.log(orderInfo)
     if (orderInfo) {
       const info = JSON.parse(orderInfo)
       this.shopName = info.shopName
+      this.shopId = info.shopId
       this.orderGoods = info.orderGoods
       this.totalAmount = info.totalAmount
       this.freight = info.freight
       this.finalAmount = info.finalAmount
       this.lastOrderAmount = info.totalAmount
-      
+      this.repairOrderId = info.repairOrderId
+
       this.checkAvailableCoupons()
+      
     }
   },
   
@@ -139,18 +152,59 @@ export default {
           }
         }
 
-        const availableCoupons = await getAvailableCoupons(this.totalAmount)
-        this.hasCoupons = availableCoupons.length > 0
+        const res = await api.coupon.getCouponList({
+          orderAmount: this.totalAmount,
+          status: 0  // 未使用的优惠券
+        })
+        
+        if (res.code === 200) {
+          // 过滤出可用且未过期的优惠券
+          const now = new Date().getTime()
+          const availableCoupons = res.data.filter(coupon => {
+            const endTime = new Date(coupon.endDate.replace(/-/g, '/')).getTime()
+            // 判断优惠券是否满足金额条件且未过期
+            return this.totalAmount >= coupon.minAmount && now <= endTime
+          })
+          
+          this.hasCoupons = availableCoupons.length > 0
 
-        if (this.hasCoupons) {
-          const bestCoupon = availableCoupons[0]
-          if (bestCoupon) {
-            this.selectedCoupon = bestCoupon
-            this.applyCoupon(bestCoupon)
-            uni.setStorageSync('selectedCoupon', JSON.stringify(bestCoupon))
+          if (this.hasCoupons) {
+            // 获取优惠金额最大的优惠券作为最优券
+            const bestCoupon = availableCoupons.reduce((best, current) => {
+              // 计算当前优惠券的优惠金额
+              let currentDiscount = 0
+              if (current.type === 1) {
+                currentDiscount = current.amount
+              } else if (current.type === 2) {
+                const discount = current.amount / 10
+                const discountedPrice = Math.round(this.totalAmount * discount * 100) / 100
+                currentDiscount = Math.round((this.totalAmount - discountedPrice) * 100) / 100
+              }
+              
+              // 计算最优优惠券的优惠金额
+              let bestDiscount = 0
+              if (best) {
+                if (best.type === 1) {
+                  bestDiscount = best.amount
+                } else if (best.type === 2) {
+                  const discount = best.amount / 10
+                  const discountedPrice = Math.round(this.totalAmount * discount * 100) / 100
+                  bestDiscount = Math.round((this.totalAmount - discountedPrice) * 100) / 100
+                }
+              }
+              
+              // 返回优惠金额更大的优惠券
+              return (!best || currentDiscount > bestDiscount) ? current : best
+            }, null)
+            
+            if (bestCoupon) {
+              this.selectedCoupon = bestCoupon
+              this.applyCoupon(bestCoupon)
+              uni.setStorageSync('selectedCoupon', JSON.stringify(bestCoupon))
+            }
+          } else {
+            this.clearCoupon()
           }
-        } else {
-          this.clearCoupon()
         }
       } catch (e) {
         console.error('查询优惠券失败:', e)
@@ -161,12 +215,23 @@ export default {
       if (!coupon) return
       
       if (this.totalAmount >= coupon.minAmount) {
-        this.couponAmount = coupon.amount
-        this.finalAmount = this.totalAmount - this.couponAmount
-        if (this.finalAmount < 0) this.finalAmount = 0
+        if (coupon.type === 1) {
+          // 满减券直接使用优惠金额
+          this.couponAmount = coupon.amount
+        } else if (coupon.type === 2) {
+          // 折扣券计算折扣金额
+          const discount = coupon.amount / 10  // 8.8 / 10 = 0.88
+          // 折扣后价格 = 原价 × 折扣率，四舍五入保留2位小数
+          const discountedPrice = Math.round(this.totalAmount * discount * 100) / 100
+          // 优惠金额 = 原价 - 折扣后价格，四舍五入保留2位小数
+          this.couponAmount = Math.round((this.totalAmount - discountedPrice) * 100) / 100
+        }
+        
+        // 计算最终金额，四舍五入保留2位小数
+        this.finalAmount = Math.round((this.totalAmount - this.couponAmount) * 100) / 100
       } else {
         uni.showToast({
-          title: `订单金额需满${coupon.minAmount}元才能使用该优惠券`,
+          title: `订单金额需满${coupon.minAmount}元才能使用优惠券`,
           icon: 'none'
         })
         this.clearCoupon()
@@ -186,11 +251,90 @@ export default {
       })
     },
 
-    goPay() {
-      uni.showToast({
-        title: '正在开发中...',
-        icon: 'none'
-      })
+    async checkStock() {
+      try {
+        console.log(this.shopId)
+        const res = await api.shop.checkStock({
+          shopId: this.shopId,
+          items: this.orderGoods.map(item => ({
+            shopId: this.shopId,
+            goodsId: item.id,
+            quantity: item.quantity
+          }))
+        })
+        return res.code === 200
+      } catch (err) {
+        console.error('库存检查失败:', err)
+        return false
+      }
+    },
+
+    async goPay() {
+      if (this.submitting) return
+      
+      try {
+        this.submitting = true
+        // 先检查库存
+        const stockValid = await this.checkStock()
+        if (!stockValid) {
+          uni.showToast({
+            title: '部分商品库存不足',
+            icon: 'none'
+          })
+          return
+        }
+
+        // 构造订单数据
+        const orderData = {
+          // 主表数据
+          shopId: this.shopId,                    // 店铺ID
+          repairOrderId: this.repairOrderId,      // 维修订单ID（如果是从维修订单过来的）
+          totalAmount: this.totalAmount,          // 订单总金额
+          couponId: this.selectedCoupon?.id,      // 优惠券ID
+          couponAmount: this.couponAmount,        // 优惠券抵扣金额
+          actualAmount: this.finalAmount,         // 实际支付金额
+
+          // 子表数据
+          orderItems: this.orderGoods.map(item => ({
+            goodsId: item.id,                     // 商品ID
+            quantity: item.quantity,              // 购买数量
+          }))
+        }
+
+        console.log(orderData)
+       
+        // 调用创建订单接口
+        const res = await api.order.create(orderData)
+        
+        if (res.code === 200) {
+          // 清空购物车
+          uni.removeStorageSync('cartData')
+          // 清空订单信息
+          uni.removeStorageSync('orderInfo')
+          // 清空选中的优惠券
+          uni.removeStorageSync('selectedCoupon')
+          
+          // 跳转���支付页面
+          uni.navigateTo({
+            url: `/pages/payment/payment?orderId=${res.data.orderId}&amount=${res.data.actualAmount}`
+          })
+        } else {
+          uni.showToast({
+            title: res.msg || '创建订单失败',
+            icon: 'none'
+          })
+        }
+      } finally {
+        this.submitting = false
+      }
+    },
+
+    onBackPress() {
+      // 如果正在提交订单，阻止返回
+      if (this.submitting) {
+        return true
+      }
+      return false
     }
   }
 }
@@ -356,6 +500,39 @@ export default {
         .total-price {
           margin-left: 20rpx;
           margin-right: 20rpx;
+        }
+      }
+    }
+    
+    .no-coupon-option {
+      .coupon-right {
+        display: flex;
+        align-items: center;
+        
+        .check-icon {
+          width: 36rpx;
+          height: 36rpx;
+          border: 2rpx solid #ddd;
+          border-radius: 50%;
+          position: relative;
+          margin-right: 20rpx;
+          
+          &.checked {
+            background: #FF6B00;
+            border-color: #FF6B00;
+            
+            &::after {
+              content: '';
+              position: absolute;
+              left: 50%;
+              top: 50%;
+              transform: translate(-50%, -50%) rotate(45deg);
+              width: 12rpx;
+              height: 20rpx;
+              border-right: 4rpx solid #fff;
+              border-bottom: 4rpx solid #fff;
+            }
+          }
         }
       }
     }

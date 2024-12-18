@@ -233,7 +233,7 @@ export default {
 			const cartData = uni.getStorageSync('cartData')
 			if (cartData) {
 				this.cartList = JSON.parse(cartData)
-				// 计算总价
+				// 计��总价
 				this.totalPrice = this.cartList.reduce((total, item) => total + item.price * item.quantity, 0)
 			}
 			this.showCartPopup = true
@@ -283,7 +283,7 @@ export default {
 			}
 		},
 
-		// 修改添加商品方法
+		// ���改添加商品方法
 		handleAddToCart(categoryIndex, productIndex) {
 			let cartData = uni.getStorageSync('cartData')
 			let cartList = cartData ? JSON.parse(cartData) : []
@@ -366,7 +366,7 @@ export default {
 			this.updateCartList();
 		},
 
-		// ���理输入框失焦
+		// 处理输入框失焦
 		handleQuantityBlur(categoryIndex, productIndex) {
 			let cartData = uni.getStorageSync('cartData')
 			let cartList = cartData ? JSON.parse(cartData) : []
@@ -399,6 +399,60 @@ export default {
 				this.cartList = JSON.parse(cartData)
 				// 更新总价
 				this.totalPrice = this.cartList.reduce((total, item) => total + item.price * item.quantity, 0)
+			}
+		},
+		
+		// 处理收藏
+		async handleFavorite() {
+			try {
+				if (this.isFavorited) {
+					// 取消收藏
+					const res = await api.favorite.cancel({
+						type: 1,
+						targetId: this.productId
+					})
+					if (res.code === 200) {
+						this.isFavorited = false
+						uni.showToast({
+							title: '已取消收藏',
+							icon: 'success'
+						})
+					}
+				} else {
+					// 添加收藏
+					const res = await api.favorite.add({
+						type: 1,
+						targetId: this.productId
+					})
+					if (res.code === 200) {
+						this.isFavorited = true
+						uni.showToast({
+							title: '收藏成功',
+							icon: 'success'
+						})
+					}
+				}
+			} catch (err) {
+				console.error('收藏操作失败:', err)
+				uni.showToast({
+					title: '操作失败，请重试',
+					icon: 'none'
+				})
+			}
+		},
+		
+		// 检查收藏状态
+		async checkFavoriteStatus() {
+			try {
+				const res = await api.favorite.checkStatus({
+					type: 1,
+					targetId: this.productId
+				})
+				if (res.code === 200) {
+					this.isFavorited = res.data
+				}
+			} catch (err) {
+				console.error('检查收藏状态失败:', err)
 			}
 		}
 	},
