@@ -1440,6 +1440,7 @@ export default {
 	transform: translateZ(0);
 	-webkit-tap-highlight-color: transparent;
 	padding-top: 4rpx;
+	margin-left: 30rpx;
 }
 
 .quantity-control .minus,
@@ -1931,7 +1932,7 @@ export default {
 }
 
 .my-quantity-control {
-	right: 15rpx !important
+	right: -36rpx !important
 }
 
 .my-add-btn {

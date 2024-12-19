@@ -191,6 +191,7 @@ export default {
 				})
 				
 				if (res.code === 200) {
+					uni.clearStorageSync()
 					const userData = {
 						name: res.data.nickname,
 						phone: res.data.phone || '',
@@ -200,6 +201,7 @@ export default {
 					
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
 					uni.setStorageSync('token', res.data.token)
+					uni.setStorageSync('roleFlag', 1)
 					
 					// 登录成功后清除promotionCode
 					uni.removeStorageSync('promotionCode')

@@ -1,15 +1,15 @@
 {
 	"pages": [{
-		"path": "pages/my/my",
-		"style": {
-			"navigationBarTitleText": "我的"
-		}
-	},{
 		"path": "pages/merchant/merchant",
 		"style": {
 			"navigationBarTitleText": "商家中心",
 			"enablePullDownRefresh": false,
 			"disableScroll": true
+		}
+	},{
+		"path": "pages/my/my",
+		"style": {
+			"navigationBarTitleText": "我的"
 		}
 	},{
 		"path": "pages/merchantSettled/merchantSettled",
@@ -78,6 +78,14 @@
 		},
 		{
 			"path": "pages/productDetail/productDetail",
+			"style": {
+				"navigationBarTitleText": "商品详情",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/merchantProductDetail/merchantProductDetail",
 			"style": {
 				"navigationBarTitleText": "商品详情",
 				"navigationBarBackgroundColor": "#ffffff",
@@ -172,6 +180,49 @@
 				"navigationBarBackgroundColor": "#FFFFFF",
 				"navigationBarTextStyle": "black"
 			}
+		},
+		{
+			"path": "pages/orderGrabbingHall/orderGrabbingHall",
+			"style": {
+				"navigationBarTitleText": "抢单大厅",
+				"enablePullDownRefresh": true,
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/merchantShop/merchantShop",
+			"style": {
+				"navigationBarTitleText": "配件商城",
+				"enablePullDownRefresh": true,
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/merchantRepairOrder/merchantRepairOrder",
+			"style": {
+				"navigationBarTitleText": "维修订单",
+				"enablePullDownRefresh": true,
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/merchantOrderReply/merchantOrderReply",
+			"style": {
+				"navigationBarTitleText": "回复客户",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/merchantShopSelect/merchantShopSelect",
+			"style": {
+				"navigationBarTitleText": "选择配件",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
 		}
 	],
 	"globalStyle": {
@@ -198,12 +249,6 @@
 				"iconPath": "/static/tabbar/repair.png",
 				"selectedIconPath": "/static/tabbar/repair-active.png"
 			},
-			// {
-			// 	"pagePath": "pages/shop/shop",
-			// 	"text": "配件商城",
-			// 	"iconPath": "/static/tabbar/shop.png",
-			// 	"selectedIconPath": "/static/tabbar/shop-active.png"
-			// },
 			{
 				"pagePath": "pages/my/my",
 				"text": "我的",

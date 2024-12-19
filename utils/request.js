@@ -37,9 +37,18 @@ const request = (options = {}) => {
                         
                         // 延迟执行跳转和reject
                         setTimeout(() => {
-                            uni.switchTab({
-                                url: '/pages/my/my'
-                            })
+                            const roleFlag = uni.getStorageSync('roleFlag')
+                            if (roleFlag === 1) {
+                                uni.clearStorageSync()
+                                uni.switchTab({
+                                     url: '/pages/my/my'
+                                })
+                            } else if (roleFlag === 2) {
+                                uni.clearStorageSync()
+                                uni.reLaunch({
+                                    url: '/pages/merchant/merchant'
+                                })
+                            }
                             reject(res.data)
                         }, 1500)
                         return

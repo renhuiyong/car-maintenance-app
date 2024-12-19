@@ -1,74 +1,121 @@
 <template>
     <view class="merchant-details">
-      <!-- 商家详情信息 -->
-      <view class="merchant-info">
-        <image class="bg-image" src="/static/images/beijing.png" mode="aspectFill"></image>
+      <!-- 骨架屏 -->
+      <view v-if="loading" class="skeleton">
+        <view class="merchant-info skeleton-box">
+          <view class="info-content">
+            <view class="header">
+              <view class="skeleton-text-lg"></view>
+              <view class="skeleton-text-sm"></view>
+            </view>
+            <view class="skeleton-text"></view>
+            <view class="skeleton-text"></view>
+            <view class="skeleton-text"></view>
+          </view>
+        </view>
         
-        <view class="info-content">
-          <!-- 店铺名称和距离 -->
-          <view class="header">
-            <text class="shop-name">{{ merchantInfo.name }}</text>
-            <text class="distance">{{ merchantInfo.distance }}</text>
+        <view class="shop-info skeleton-box">
+          <view class="skeleton-title"></view>
+          <view class="skeleton-text"></view>
+          <view class="skeleton-images">
+            <view class="skeleton-image" v-for="i in 3" :key="i"></view>
           </view>
-          <view class="address">{{ merchantInfo.address }}</view>
-          <view class="info-row">
-            <text>营业时间：{{ merchantInfo.businessHours }}</text>
+        </view>
+        
+        <view class="shop-qualification skeleton-box">
+          <view class="skeleton-title"></view>
+          <view class="skeleton-images">
+            <view class="skeleton-image-lg" v-for="i in 2" :key="i"></view>
           </view>
-          <view class="info-row">
-            <text>联系电话：{{ merchantInfo.phone }}</text>
-          </view>
+        </view>
+      </view>
+
+      <!-- 实际内容 -->
+      <template v-else>
+        <!-- 商家详情信息 -->
+        <view class="merchant-info">
+          <image class="bg-image" src="/static/images/beijing.png" mode="aspectFill"></image>
           
-          <!-- 添加固定定位的图标 -->
-          <view class="fixed-icons">
-            <view class="icon-item" @click="openLocation">
-              <image src="/static/images/youshang.png" mode="aspectFit"></image>
+          <view class="info-content">
+            <!-- 店铺名称和距离 -->
+            <view class="header">
+              <text class="shop-name">{{ merchantInfo.shopName }}</text>
+              <text class="distance">{{ merchantInfo.distance }}</text>
             </view>
-            <view class="icon-item" @click="makePhoneCall">
-              <image src="/static/images/dianhua.png" mode="aspectFit"></image>
+            <view class="address">{{ merchantInfo.address }}</view>
+            <view class="info-row">
+              <text>营业时间：{{ merchantInfo.businessHours }}</text>
+            </view>
+            <view class="info-row">
+              <text>联系电话：{{ merchantInfo.phone }}</text>
+            </view>
+            
+            <!-- 添加固定定位的图标 -->
+            <view class="fixed-icons">
+              <view class="icon-item" @click="openLocation">
+                <image src="/static/images/youshang.png" mode="aspectFit"></image>
+              </view>
+              <view class="icon-item" @click="makePhoneCall">
+                <image src="/static/images/dianhua.png" mode="aspectFit"></image>
+              </view>
             </view>
           </view>
         </view>
-      </view>
-  
-      <!-- 店铺详 -->
-      <view class="shop-info">
-        <view class="title">店铺详情</view>
-        <view class="shop-description">
-          {{ merchantInfo.description }}
+    
+        <!-- 店铺门头 -->
+        <view class="shop-info">
+          <view class="title">店铺门头</view>
+          <view class="shop-description">
+            {{ merchantInfo.description }}
+          </view>
+          <scroll-view class="image-list" scroll-x="true" show-scrollbar="false">
+            <view class="image-wrapper">
+              <image v-for="(img, index) in merchantInfo.shopImgs" 
+                     :key="index" 
+                     :src="img" 
+                     mode="aspectFill"
+                     class="shop-image"></image>
+            </view>
+          </scroll-view>
         </view>
-        <scroll-view class="image-list" scroll-x="true" show-scrollbar="false">
-          <view class="image-wrapper">
-            <view class="image-placeholder" v-for="i in 6" :key="i"></view>
-          </view>
-        </scroll-view>
-      </view>
-  
-      <!-- 店铺资质 -->
-      <view class="shop-qualification">
-        <view class="title">店铺资质</view>
-        <scroll-view class="qualification-list" scroll-x="true" show-scrollbar="false">
-          <view class="qualification-wrapper">
-            <view class="qualification-placeholder" v-for="i in 4" :key="i"></view>
-          </view>
-        </scroll-view>
-      </view>
+    
+        <!-- 店铺资质 -->
+        <view class="shop-qualification">
+          <view class="title">店铺资质</view>
+          <scroll-view class="qualification-list" scroll-x="true" show-scrollbar="false">
+            <view class="qualification-wrapper">
+              <image v-for="(cert, index) in merchantInfo.qualificationImgs" 
+                     :key="index" 
+                     :src="cert" 
+                     mode="aspectFill"
+                     class="qualification-image"></image>
+            </view>
+          </scroll-view>
+        </view>
+      </template>
     </view>
   </template>
   
   <script>
+  import api from '../../api/index.js'
+  import request from '../../utils/request.js'
+  
   export default {
     data() {
       return {
+        loading: true,
         merchantId: '',
         merchantInfo: {
-          name: '电动车维修店一',
-          distance: '0.6KM',
-          address: '安徽省淮北市惠泉路泉城浦淮北路88号',
-          businessHours: '08：00 - 18：00',
-          phone: '18888888888',
-          description: '电动车维修店一详细介绍安徽省淮北市惠泉路泉城浦淮北路88',
-          images: [],
-          qualifications: []
+          shopName: '',
+          distance: '',
+          address: '',
+          businessHours: '',
+          phone: '',
+          description: '',
+          shopImgs: [],
+          qualificationImgs: [],
+          latitude: 0,
+          longitude: 0
         },
         shareConfig: {
           title: '',
@@ -77,47 +124,99 @@
         }
       }
     },
+    created() {
+      console.log('myShop created')
+      this.getMerchantDetails()
+    },
+    mounted() {
+      console.log('myShop mounted')
+    },
     onLoad(options) {
-      if (options.id) {
-        this.merchantId = options.id
-        this.getMerchantDetails()
-      }
+      console.log('myShop onLoad', options)
       this.initShareConfig()
     },
     methods: {
       // 获取商家详情
-      getMerchantDetails() {
-        // 这里添加获取商家详情的接口请求
-        // 示例：
-        // uni.request({
-        //   url: '/api/merchant/detail',
-        //   data: { id: this.merchantId },
-        //   success: (res) => {
-        //     this.merchantInfo = res.data
-        //   }
-        // })
+      async getMerchantDetails() {
+        console.log('开始获取店铺信息')
+        this.loading = true
+        try {
+          const res = await api.merchant.getShopSelf()
+          console.log('获取店铺信息成功：', res)
+          if (res.code === 200) {
+            const shopData = res.data
+            // 处理店铺图片
+            const shopImgs = shopData.images ? 
+              shopData.images.split(',').map(img => request.BASE_URL + img.trim()) : []
+            
+            // 处理资质图片
+            const qualificationImgs = shopData.qualifications ? 
+              shopData.qualifications.split(',').map(img => request.BASE_URL + img.trim()) : []
+            
+            this.merchantInfo = {
+              shopName: shopData.name,
+              distance: '',
+              address: shopData.address,
+              businessHours: shopData.businessHours,
+              phone: shopData.phone,
+              description: shopData.description || '',
+              shopImgs,
+              qualificationImgs,
+              latitude: Number(shopData.latitude),
+              longitude: Number(shopData.longitude)
+            }
+            this.merchantId = shopData.id
+            this.initShareConfig()
+          } else {
+            uni.showToast({
+              title: res.msg || '获取店铺信息失败',
+              icon: 'none'
+            })
+          }
+        } catch (err) {
+          console.error('获取店铺信息失败：', err)
+          uni.showToast({
+            title: '网络请求失败',
+            icon: 'none'
+          })
+        } finally {
+          this.loading = false
+        }
       },
       // 打电话
       makePhoneCall() {
-        uni.makePhoneCall({
-          phoneNumber: this.merchantInfo.phone
-        })
+        if (this.merchantInfo.phone) {
+          uni.makePhoneCall({
+            phoneNumber: this.merchantInfo.phone
+          })
+        } else {
+          uni.showToast({
+            title: '暂无联系电话',
+            icon: 'none'
+          })
+        }
       },
       // 导航
       openLocation() {
-        // 这里要后端返回经纬度信息
-        uni.openLocation({
-          latitude: 0,
-          longitude: 0,
-          name: this.merchantInfo.name,
-          address: this.merchantInfo.address
-        })
+        if (this.merchantInfo.latitude && this.merchantInfo.longitude) {
+          uni.openLocation({
+            latitude: this.merchantInfo.latitude,
+            longitude: this.merchantInfo.longitude,
+            name: this.merchantInfo.shopName,
+            address: this.merchantInfo.address
+          })
+        } else {
+          uni.showToast({
+            title: '暂无位置信息',
+            icon: 'none'
+          })
+        }
       },
       initShareConfig() {
         this.shareConfig = {
-          title: this.merchantInfo.name,
+          title: this.merchantInfo.shopName,
           path: `/pages/merchantDetails/merchantDetails?id=${this.merchantId}`,
-          imageUrl: this.merchantInfo.images?.[0]
+          imageUrl: this.merchantInfo.shopImgs?.[0]
         }
       },
       handleShare() {
@@ -161,6 +260,95 @@
     min-height: 100vh;
     background-color: #f5f6fa;
     padding-bottom: 0;
+  
+    // 骨架屏样式
+    .skeleton {
+      .skeleton-box {
+        background-color: #fff;
+        padding: 30rpx;
+        margin-bottom: 20rpx;
+      }
+      
+      .skeleton-text-lg {
+        height: 40rpx;
+        width: 200rpx;
+        background: #f0f0f0;
+        border-radius: 4rpx;
+        margin-bottom: 20rpx;
+      }
+      
+      .skeleton-text-sm {
+        height: 32rpx;
+        width: 100rpx;
+        background: #f0f0f0;
+        border-radius: 4rpx;
+      }
+      
+      .skeleton-text {
+        height: 32rpx;
+        width: 300rpx;
+        background: #f0f0f0;
+        border-radius: 4rpx;
+        margin-bottom: 16rpx;
+      }
+      
+      .skeleton-title {
+        height: 36rpx;
+        width: 160rpx;
+        background: #f0f0f0;
+        border-radius: 4rpx;
+        margin-bottom: 20rpx;
+      }
+      
+      .skeleton-images {
+        display: flex;
+        overflow-x: auto;
+        margin-top: 20rpx;
+        
+        .skeleton-image {
+          flex-shrink: 0;
+          width: 220rpx;
+          height: 160rpx;
+          background: #f0f0f0;
+          border-radius: 8rpx;
+          margin-right: 20rpx;
+        }
+        
+        .skeleton-image-lg {
+          flex-shrink: 0;
+          width: 340rpx;
+          height: 180rpx;
+          background: #f0f0f0;
+          border-radius: 8rpx;
+          margin-right: 20rpx;
+        }
+      }
+      
+      @keyframes skeleton-loading {
+        0% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0 50%;
+        }
+      }
+      
+      .skeleton-text-lg,
+      .skeleton-text-sm,
+      .skeleton-text,
+      .skeleton-title,
+      .skeleton-image,
+      .skeleton-image-lg {
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #f8f8f8 37%,
+          #f0f0f0 63%
+        );
+        background-size: 400% 100%;
+        animation: skeleton-loading 1.4s ease infinite;
+      }
+    }
   
     .merchant-info {
       position: relative;
@@ -263,11 +451,10 @@
         .image-wrapper {
           display: inline-flex;
           
-          .image-placeholder {
+          .shop-image {
             flex-shrink: 0;
             width: 220rpx;
             height: 160rpx;
-            background-color: #f0f0f0;
             border-radius: 8rpx;
             margin-right: 20rpx;
   
@@ -287,11 +474,10 @@
         .qualification-wrapper {
           display: inline-flex;
           
-          .qualification-placeholder {
+          .qualification-image {
             flex-shrink: 0;
             width: 340rpx;
             height: 180rpx;
-            background-color: #f0f0f0;
             border-radius: 8rpx;
             margin-right: 20rpx;
   

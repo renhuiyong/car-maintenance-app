@@ -3,8 +3,8 @@
     <!-- 页面内容区域 -->
     <view class="content-wrapper">
       <my-shop v-if="currentTab === 0" />
-      <shop v-if="currentTab === 1" />
-      <grab-order v-if="currentTab === 2" />
+      <merchant-shop v-if="currentTab === 1" />
+      <order-grabbing-hall v-if="currentTab === 2" />
       <merchant-my v-if="currentTab === 3" />
     </view>
     
@@ -18,8 +18,8 @@
 
 <script>
 import MyShop from '../myShop/myShop.vue'
-import Shop from '../shop/shop.vue'
-import GrabOrder from '../grabOrder/grabOrder.vue'
+import MerchantShop from '../merchantShop/merchantShop.vue'
+import OrderGrabbingHall from '../orderGrabbingHall/orderGrabbingHall.vue'
 import MerchantMy from '../merchantMy/merchantMy.vue'
 import MerchantTabbar from '../../components/merchant-tabbar/merchant-tabbar.vue'
 
@@ -27,8 +27,8 @@ export default {
   name: 'merchant',
   components: {
     MyShop,
-    Shop,
-    GrabOrder,
+    MerchantShop,
+    OrderGrabbingHall,
     MerchantMy,
     MerchantTabbar
   },
@@ -37,9 +37,18 @@ export default {
       currentTab: 3
     }
   },
+  created() {
+    console.log('merchant created')
+  },
+  mounted() {
+    console.log('merchant mounted')
+  },
+  onLoad() {
+    console.log('merchant page loaded, currentTab:', this.currentTab)
+  },
   onShow() {
     // 每次显示页面时检查当前tab
-    console.log('当前tab:', this.currentTab)
+    console.log('merchant onShow, currentTab:', this.currentTab)
   },
   methods: {
     handleChange(index) {

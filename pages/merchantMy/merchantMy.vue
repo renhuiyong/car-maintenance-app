@@ -128,7 +128,7 @@ export default {
 				{ 
 					title: '您的订单未付款',
 					isRead: false,
-					content: '您的维修订单尚未支付，请及时完成支付，以免订单自动取消。'
+					content: '您的维修订单尚未支付，请及时完成���付，以免订单自动取消。'
 				},
 				{ 
 					title: '最新活动通知，请查看活动详情',
@@ -136,7 +136,7 @@ export default {
 					content: '亲爱的用户，平台正在开展新一轮优惠活动，点击查看详情了解更多优惠信息。'
 				},
 				{ 
-					title: '您收一笔推广佣金',
+					title: '您收到一笔推广佣金',
 					isRead: false,
 					content: '恭喜您获得推广佣金奖励，可以在"我的资产"中查看详情。'
 				},
@@ -168,11 +168,26 @@ export default {
 	},
 	methods: {
 		checkLoginStatus() {
-			const userInfo = uni.getStorageSync('userInfo')
-			if (userInfo) {
-				this.isLogin = true
-				this.userInfo = JSON.parse(userInfo)
-			} else {
+			try {
+				const token = uni.getStorageSync('token')
+				const userInfo = uni.getStorageSync('userInfo')
+				
+				if (token && userInfo) {
+					this.isLogin = true
+					this.userInfo = JSON.parse(userInfo)
+					
+					// 如果已登录，获取最新的用户信息
+					this.getUserInfo()
+				} else {
+					this.isLogin = false
+					this.userInfo = {
+						name: '',
+						phone: '',
+						avatar: ''
+					}
+				}
+			} catch (err) {
+				console.error('Check login status error:', err)
 				this.isLogin = false
 				this.userInfo = {
 					name: '',
@@ -183,7 +198,7 @@ export default {
 		},
 		getUserProfile() {
 			uni.getUserProfile({
-				desc: '用于完善用户资料',
+				desc: '用于完用户资料',
 				success: (res) => {
 					this.login(res.userInfo)
 				},
@@ -216,6 +231,7 @@ export default {
 				})
 				
 				if (res.code === 200) {
+					uni.clearStorageSync()
 					const userData = {
 						name: res.data.nickname,
 						phone: res.data.phone || '',
@@ -225,6 +241,8 @@ export default {
 					
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
 					uni.setStorageSync('token', res.data.token)
+					uni.setStorageSync('roleFlag', 2)
+
 					
 					// 登录成功后清除promotionCode
 					uni.removeStorageSync('promotionCode')
@@ -378,7 +396,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myOrders/myOrders',
+				url: '/pages/merchantRepairOrder/merchantRepairOrder',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -407,7 +425,7 @@ export default {
 			let newLeft = e.touches[0].clientX - this.startPosition.x
 			let newTop = e.touches[0].clientY - this.startPosition.y
 			
-			// 限制按钮不超出屏幕边界
+			// 限��按钮不超出屏幕边界
 			newLeft = Math.max(0, Math.min(newLeft, systemInfo.windowWidth - buttonSize))
 			newTop = Math.max(0, Math.min(newTop, systemInfo.windowHeight - buttonSize))
 			
@@ -512,6 +530,25 @@ export default {
 					})
 				}
 			})
+		},
+		// 添加获取用户信息的方法
+		async getUserInfo() {
+			try {
+				const res = await api.merchant.getMerchantInfo()
+				if (res.code === 200) {
+					const userData = {
+						name: res.data.nickname || res.data.name,
+						phone: res.data.phone || '',
+						avatar: res.data.avatar
+					}
+					
+					// 更新本地存储
+					uni.setStorageSync('userInfo', JSON.stringify(userData))
+					this.userInfo = userData
+				}
+			} catch (err) {
+				console.error('Get user info error:', err)
+			}
 		}
 	}
 }

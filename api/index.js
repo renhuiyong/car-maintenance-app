@@ -75,6 +75,12 @@ const api = {
         // 获取品牌列表
         selectModelsList: () => request.get('/web/accessory/selectModelsList'),
         
+        // 获取配件分类列表
+        selectTypesList: () => request.get('/web/accessory/selectTypesList'),
+        
+        // 获取配件详情
+        getAccessory: (data) => request.get('/web/accessory/getAccessory', data),
+        
         // 获取商品详情
         getProductDetail(id) {
             return request.get(`/shop/product/${id}`)
@@ -147,6 +153,10 @@ const api = {
          // 获取推广二维码
          getMerchantPromotionCode() {
             return request.post('/web/merchant/getMerchantPromotionCode')
+        },
+        // 获取商家自身信息
+        getShopSelf() {
+            return request.get('/web/shop/getShopSelf')
         }
       
     },
