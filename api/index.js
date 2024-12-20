@@ -157,6 +157,10 @@ const api = {
         // 获取商家自身信息
         getShopSelf() {
             return request.get('/web/shop/getShopSelf')
+        },
+        // 获取商家订单列表
+        getOrderList(params) {
+            return request.get('/web/merchant/order/list', params)
         }
       
     },

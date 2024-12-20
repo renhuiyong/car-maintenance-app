@@ -158,6 +158,9 @@ export default {
 			}
 		}
 	},
+	created() {
+		this.checkLoginStatus()
+	},
 	onShow() {
 		this.checkLoginStatus()
 		// 获取本地存储的消息列表
@@ -175,9 +178,7 @@ export default {
 				if (token && userInfo) {
 					this.isLogin = true
 					this.userInfo = JSON.parse(userInfo)
-					
-					// 如果已登录，获取最新的用户信息
-					this.getUserInfo()
+
 				} else {
 					this.isLogin = false
 					this.userInfo = {
@@ -531,25 +532,7 @@ export default {
 				}
 			})
 		},
-		// 添加获取用户信息的方法
-		async getUserInfo() {
-			try {
-				const res = await api.merchant.getMerchantInfo()
-				if (res.code === 200) {
-					const userData = {
-						name: res.data.nickname || res.data.name,
-						phone: res.data.phone || '',
-						avatar: res.data.avatar
-					}
-					
-					// 更新本地存储
-					uni.setStorageSync('userInfo', JSON.stringify(userData))
-					this.userInfo = userData
-				}
-			} catch (err) {
-				console.error('Get user info error:', err)
-			}
-		}
+	
 	}
 }
 </script>

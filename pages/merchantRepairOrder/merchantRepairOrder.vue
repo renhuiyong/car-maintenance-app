@@ -23,19 +23,30 @@
 				<block v-for="(order, index) in currentOrderList" :key="order.orderId">
 					<view class="order-item">
 						<view class="order-header">
-							<text class="status">{{order.status}}</text>
-							<text class="distance">{{order.distance}}</text>
+							<text class="status">{{getStatusText(order.status)}}</text>
+							<text class="distance">{{formatDistance(order.distance)}}</text>
 						</view>
 						<view class="order-time">{{order.time}}</view>
 						<view class="order-location">
 							<image class="location-icon" src="/static/images/location_icon.png"></image>
 							<text>{{order.location}}</text>
 						</view>
-						<view class="order-issue">{{order.issue}}</view>
+						<view class="order-issue">
+							<text>{{order.issue}}</text>
+							<view v-if="order.voice" class="voice-message" @tap="playVoice(order.voice)">
+								<view class="voice-waves" :class="{ 'playing': playingVoiceId === order.voice }">
+									<view class="wave"></view>
+									<view class="wave"></view>
+									<view class="wave"></view>
+								</view>
+								<text class="voice-duration">{{order.voiceDuration}}s</text>
+							</view>
+						</view>
 						<view class="order-footer">
 							<view class="fee-info">
 								<text class="fee-label">托运金额</text>
-								<text class="fee-amount">¥{{order.fee}}</text>
+								<text v-if="order.needTransport" class="fee-amount">¥{{order.transportFee.toFixed(2)}}</text>
+								<text v-else class="fee-amount">不需要托运</text>
 							</view>
 							<button class="btn-reply" @tap="handleReply(order)">回复客户</button>
 						</view>
@@ -47,96 +58,44 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
+
 export default {
 	data() {
 		return {
 			currentTab: 'ongoing',
 			isRefreshing: false,
-			
-			ongoingList: [
-				{
-					orderId: 'on1',
-					status: '待维修',
-					distance: '0.6KM',
-					time: '24-08-08 11:00',
-					location: '淮北市中医院附近',
-					issue: '车辆故障无法移动',
-					fee: 10
-				},
-				{
-					orderId: 'on2',
-					status: '待接单',
-					distance: '1.2KM',
-					time: '24-08-08 10:30',
-					location: '淮北市人民广场东门',
-					issue: '轮胎漏气需要更换',
-					fee: 15
-				},
-				{
-					orderId: 'on3',
-					status: '维修中',
-					distance: '2.5KM',
-					time: '24-08-08 09:45',
-					location: '淮北市第一中学',
-					issue: '发动机启动困难需要检查',
-					fee: 20
+			orderList: [],
+			statusMap: {
+				'0': '待接单',
+				'1': '已完成',
+				'2': '已取消'
+			},
+			playingVoiceId: '',
+			currentLocation: {
+				latitude: null,
+				longitude: null
+			}
+		}
+	},
+	computed: {
+		currentOrderList() {
+			return this.orderList.filter(order => {
+				if (this.currentTab === 'ongoing') {
+					return order.status === '0'
+				} else {
+					return order.status !== '0'
 				}
-			],
-			completedList: [
-				{
-					orderId: 'cp1',
-					status: '已完成',
-					distance: '3.1KM',
-					time: '24-08-08 09:15',
-					location: '淮北市火车站北广场',
-					issue: '车辆电瓶没电需要救援',
-					fee: 25
-				},
-				{
-					orderId: 'cp2',
-					status: '已完成',
-					distance: '1.8KM',
-					time: '24-08-07 16:30',
-					location: '淮北市政府大楼',
-					issue: '更换机油和机油滤芯',
-					fee: 30
-				}
-			]
+			})
 		}
 	},
 	onPullDownRefresh() {
 		if (this.isRefreshing) return
 		this.isRefreshing = true
 		
-		console.log('刷新订单列表...')
-		// 模拟获取最新订单数据
-		setTimeout(() => {
-			// TODO: 这里添加实际的数据刷新逻辑
-			// 示例：在进行中列表前面添加一个新订单
-			if (this.currentTab === 'ongoing') {
-				const newOrder = {
-					orderId: 'on' + (this.ongoingList.length + 1),
-					status: '待接单',
-					distance: '0.8KM',
-					time: '24-08-08 11:30',
-					location: '淮北市第二人民医院',
-					issue: '车辆无法启动',
-					fee: 35
-				}
-				this.ongoingList.unshift(newOrder)
-			}
-			
-			this.isRefreshing = false
-			uni.stopPullDownRefresh()
-			uni.showToast({
-				title: '刷新成功',
-				icon: 'success',
-				duration: 1000
-			})
-		}, 1000)
+		this.fetchOrderList()
 	},
-	// 页面配置
-	onLoad() {
+	async onLoad() {
 		// 设置下拉刷新的样式（仅小程序有效）
 		const pages = getCurrentPages()
 		const page = pages[pages.length - 1]
@@ -149,21 +108,155 @@ export default {
 				}
 			})
 		}
-	},
-	computed: {
-		currentOrderList() {
-			return this.currentTab === 'ongoing' ? this.ongoingList : this.completedList
-		}
+		
+		// 获取当前位置
+		await this.getCurrentLocation()
+		// 初始加载数据
+		this.fetchOrderList()
 	},
 	methods: {
+		// 获取当前位置
+		async getCurrentLocation() {
+			try {
+				const res = await new Promise((resolve, reject) => {
+					uni.getLocation({
+						type: 'gcj02',
+						success: resolve,
+						fail: reject
+					})
+				})
+				
+				this.currentLocation = {
+					latitude: res.latitude,
+					longitude: res.longitude
+				}
+			} catch (error) {
+				console.error('获取位置失败:', error)
+				uni.showToast({
+					title: '获取位置失败',
+					icon: 'none'
+				})
+			}
+		},
+		
+		// 计算两点之间的距离（使用Haversine公式）
+		calculateDistance(lat1, lon1, lat2, lon2) {
+			if (!lat1 || !lon1 || !lat2 || !lon2) return null
+			
+			const R = 6371 // 地球半径，单位km
+			const dLat = this.toRad(lat2 - lat1)
+			const dLon = this.toRad(lon2 - lon1)
+			const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+					Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) * 
+					Math.sin(dLon/2) * Math.sin(dLon/2)
+			const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+			return R * c
+		},
+		
+		// 角度转弧度
+		toRad(value) {
+			return value * Math.PI / 180
+		},
+		
+		async fetchOrderList() {
+			try {
+				const res = await api.merchant.getOrderList()
+				
+				if (res.code === 200) {
+					const formattedData = res.data.map(order => {
+						// 计算距离
+						const distance = this.calculateDistance(
+							this.currentLocation.latitude,
+							this.currentLocation.longitude,
+							order.contactLatitude,
+							order.contactLongitude
+						)
+						
+						return {
+							...order,
+							transportFee: parseFloat(order.transportFee) || 0,
+							distance: distance
+						}
+					})
+					
+					this.orderList = formattedData
+				} else {
+					uni.showToast({
+						title: res.msg || '获取订单列表失败',
+						icon: 'none'
+					})
+				}
+			} catch (error) {
+				console.error('获取订单列表失败:', error)
+				uni.showToast({
+					title: '获取订单列表失败',
+					icon: 'none'
+				})
+			} finally {
+				this.isRefreshing = false
+				uni.stopPullDownRefresh()
+			}
+		},
 		switchTab(tab) {
 			this.currentTab = tab
-			// 切换标签时也刷新数据
-			uni.startPullDownRefresh()
 		},
 		handleReply(order) {
+			// 将对象转为字符串传递
+			const params = encodeURIComponent(JSON.stringify({
+				orderId: order.orderId,
+				createTime: order.time,
+				description: order.issue,
+				images: order.images || '',
+				voicePath: order.voice || '',
+				voiceDuration: order.voiceDuration || 0
+			}))
 			uni.navigateTo({
-				url: `/pages/merchantOrderReply/merchantOrderReply?orderId=${order.orderId}`
+				url: `/pages/merchantOrderReply/merchantOrderReply?params=${params}`
+			})
+		},
+		getStatusText(status) {
+			return this.statusMap[status] || '未知状态'
+		},
+		formatDistance(distance) {
+			if (typeof distance !== 'number') return '未知距离'
+			if (distance < 1) {
+				return (distance * 1000).toFixed(0) + 'm'
+			}
+			return distance.toFixed(1) + 'km'
+		},
+		playVoice(voiceUrl) {
+			if (!voiceUrl) return
+			
+			if (this.playingVoiceId === voiceUrl) {
+				if (this.audioContext) {
+					this.audioContext.stop()
+					this.audioContext = null
+				}
+				this.playingVoiceId = ''
+				return
+			}
+			
+			if (this.audioContext) {
+				this.audioContext.stop()
+			}
+			
+			this.audioContext = uni.createInnerAudioContext()
+			this.audioContext.src = voiceUrl
+			this.audioContext.play()
+			this.playingVoiceId = voiceUrl
+			
+			this.audioContext.onEnded(() => {
+				this.playingVoiceId = ''
+				this.audioContext = null
+			})
+			
+			this.audioContext.onError(() => {
+				uni.showToast({
+					title: '语音播放失败',
+					icon: 'none'
+				})
+				this.playingVoiceId = ''
+				this.audioContext = null
 			})
 		}
 	}
@@ -174,7 +267,7 @@ export default {
 .container {
 	min-height: 100vh;
 	height: 100vh;
-	background: #F6F6F6;
+	background: #F8F9FC;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -184,23 +277,23 @@ export default {
 .tab-bar {
 	display: flex;
 	background: #FFFFFF;
-	padding: 20rpx 32rpx;
+	padding: 24rpx 32rpx 32rpx;
 	position: fixed;
 	top: 0;
 	left: 0;
 	right: 0;
 	z-index: 1;
-	box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+	box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
 }
 
 .tab-item {
 	flex: 1;
-	height: 72rpx;
+	height: 80rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 30rpx;
-	color: #999;
+	font-size: 32rpx;
+	color: #666;
 	position: relative;
 	transition: all 0.3s ease;
 	margin: 0 20rpx;
@@ -213,10 +306,10 @@ export default {
 
 .tab-line {
 	position: absolute;
-	bottom: -20rpx;
+	bottom: -16rpx;
 	left: 50%;
 	transform: translateX(-50%);
-	width: 60rpx;
+	width: 48rpx;
 	height: 6rpx;
 	background: #FF9500;
 	border-radius: 6rpx;
@@ -226,7 +319,7 @@ export default {
 .order-list {
 	flex: 1;
 	padding: 24rpx;
-	padding-top: 132rpx;
+	padding-top: 148rpx;
 	padding-bottom: 24rpx;
 	box-sizing: border-box;
 	overflow-y: auto;
@@ -237,9 +330,10 @@ export default {
 .order-item {
 	background: #FFFFFF;
 	border-radius: 16rpx;
-	padding: 32rpx;
-	box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.05);
+	padding: 28rpx;
+	box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
 	margin-bottom: 24rpx;
+	border: 1px solid rgba(0, 0, 0, 0.02);
 }
 
 .order-item:last-child {
@@ -252,7 +346,7 @@ export default {
 	align-items: center;
 	margin-bottom: 24rpx;
 	padding-bottom: 24rpx;
-	border-bottom: 1px solid #EEEEEE;
+	border-bottom: 1px solid #F0F2F5;
 }
 
 .status {
@@ -262,45 +356,124 @@ export default {
 }
 
 .distance {
-	font-size: 28rpx;
+	font-size: 26rpx;
 	color: #666;
 	background: #F8F9FC;
-	padding: 4rpx 16rpx;
+	padding: 8rpx 20rpx;
 	border-radius: 20rpx;
+	border: 1px solid #F0F2F5;
 }
 
 .order-time {
-	font-size: 28rpx;
+	font-size: 26rpx;
 	color: #666;
 	margin-bottom: 24rpx;
 }
 
 .order-location {
 	display: flex;
-	align-items: center;
+	align-items: flex-start;
 	margin-bottom: 24rpx;
-	padding: 16rpx 0;
+	padding: 0;
 }
 
 .location-icon {
 	width: 28rpx;
 	height: 28rpx;
 	margin-right: 12rpx;
+	margin-top: 8rpx;
 }
 
 .order-location text {
 	font-size: 28rpx;
 	color: #333;
 	flex: 1;
+	line-height: 1.4;
 }
 
 .order-issue {
 	background: #F8F9FC;
 	padding: 24rpx;
 	border-radius: 12rpx;
+	margin-bottom: 24rpx;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12rpx;
+	border: 1px solid #F0F2F5;
+}
+
+.order-issue text {
+	flex: 1;
 	font-size: 28rpx;
 	color: #333;
-	margin-bottom: 0;
+	line-height: 1.4;
+}
+
+.voice-message {
+	display: flex;
+	align-items: center;
+	padding: 6rpx 12rpx;
+	border-radius: 20rpx;
+	cursor: pointer;
+	background: #FFFFFF;
+	flex-shrink: 0;
+	min-width: 90rpx;
+	border: 1px solid #F0F2F5;
+	transition: all 0.3s ease;
+}
+
+.voice-message:active {
+	background: #F8F9FC;
+}
+
+.voice-waves {
+	display: flex;
+	align-items: center;
+	gap: 3rpx;
+	margin-right: 8rpx;
+	height: 24rpx;
+}
+
+.wave {
+	width: 3rpx;
+	height: 12rpx;
+	background-color: #999;
+	border-radius: 3rpx;
+}
+
+.wave:nth-child(2) {
+	height: 16rpx;
+}
+
+.wave:nth-child(3) {
+	height: 10rpx;
+}
+
+.playing .wave {
+	animation: waveAnimation 1s ease-in-out infinite;
+	background-color: #FF9500;
+}
+
+.playing .wave:nth-child(1) {
+	animation-delay: 0s;
+}
+
+.playing .wave:nth-child(2) {
+	animation-delay: 0.2s;
+}
+
+.playing .wave:nth-child(3) {
+	animation-delay: 0.4s;
+}
+
+@keyframes waveAnimation {
+	0%, 100% {
+		height: 12rpx;
+	}
+	50% {
+		height: 24rpx;
+	}
 }
 
 .order-footer {
@@ -309,19 +482,19 @@ export default {
 	align-items: center;
 	width: 100%;
 	padding-top: 24rpx;
-	margin-top: 24rpx;
-	border-top: 1px solid #EEEEEE;
+	margin-top: 0;
+	border-top: 1px solid #F0F2F5;
 }
 
 .fee-info {
 	display: flex;
 	align-items: center;
-	gap: 12rpx;
+	gap: 8rpx;
 	flex: 1;
 }
 
 .fee-label {
-	font-size: 28rpx;
+	font-size: 26rpx;
 	color: #666;
 }
 
@@ -334,15 +507,16 @@ export default {
 .btn-reply {
 	background: transparent;
 	color: #FF9500;
-	font-size: 28rpx;
-	padding: 6rpx 30rpx;
-	border-radius: 20rpx;
+	font-size: 26rpx;
+	padding: 10rpx 28rpx;
+	border-radius: 24rpx;
 	border: 1px solid #FF9500;
-	transition: all 0.3s;
+	transition: all 0.3s ease;
 }
 
 .btn-reply:active {
-	background: rgba(255, 149, 0, 0.1);
+	background: rgba(255, 149, 0, 0.08);
+	transform: scale(0.98);
 }
 
 .btn-reply::after {

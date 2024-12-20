@@ -106,43 +106,31 @@ export default {
   },
 
   onLoad(options) {
-    if (options.orderId) {
-      this.orderId = options.orderId
-      this.getOrderDetail()
+    if (options.params) {
+      try {
+        const params = JSON.parse(decodeURIComponent(options.params))
+        this.orderId = params.orderId
+        this.orderTime = params.createTime
+        this.problemContent = params.description
+        this.images = params.images
+        this.voicePath = params.voicePath
+        this.voiceDuration = params.voiceDuration
+
+        // 初始化音频播放器
+        if (this.voicePath) {
+          this.audioContext = uni.createInnerAudioContext()
+        }
+      } catch (error) {
+        console.error('解析参数失败:', error)
+        uni.showToast({
+          title: '参数错误',
+          icon: 'none'
+        })
+      }
     }
   },
 
   methods: {
-    // 获取订单详情
-    async getOrderDetail() {
-      // 使用测试数据
-      const mockOrderInfo = {
-        orderId: this.orderId,
-        createTime: '2024-01-18 15:30:00',
-        description: '车辆故障无法移动',
-        images: 'http://rhyme.nat300.top/profile/upload/2024/12/12/qSJdgum3jvud86fabb80f94a75c09d9c61721e260345_20241212182224A005.jpg,http://rhyme.nat300.top/profile/upload/2024/12/12/qSJdgum3jvud86fabb80f94a75c09d9c61721e260345_20241212182224A005.jpg,http://rhyme.nat300.top/profile/upload/2024/12/12/qSJdgum3jvud86fabb80f94a75c09d9c61721e260345_20241212182224A005.jpg',
-        voicePath: '/static/test/test.mp3',
-        voiceDuration: 15,
-        response: '' // 假设这是从数据库获取的回复内容
-      }
-      
-      this.orderTime = mockOrderInfo.createTime
-      this.problemContent = mockOrderInfo.description
-      this.images = mockOrderInfo.images
-      this.voicePath = mockOrderInfo.voicePath
-      this.voiceDuration = mockOrderInfo.voiceDuration
-
-      // 如果有回复内容，将HTML换行标签转换回换行符
-      if (mockOrderInfo.response) {
-        this.replyContent = mockOrderInfo.response.replace(/<br>/g, '\n');
-      }
-
-      // 初始化音频播放器
-      if (this.voicePath) {
-        this.audioContext = uni.createInnerAudioContext()
-      }
-    },
-
     // 处理图片列表
     getImageList(images) {
       if (!images) return []
