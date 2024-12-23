@@ -54,7 +54,7 @@
 
     <!-- 底部按钮区域 -->
     <view class="bottom-btns">
-      <button class="submit-btn" @tap="submitReply">发送</button>
+      <button class="submit-btn" @tap="submitReply">回复</button>
       <button class="mall-btn" @tap="goToSelectParts">{{ hasSelectedParts ? '重新选择' : '选配件' }}</button>
     </view>
   </view>
@@ -183,9 +183,9 @@ export default {
         // 将回复内容中的换行符转换为HTML换行标签
         const formattedContent = this.replyContent.replace(/\n/g, '<br>');
         
-        const res = await api.repair.submitMerchantResponse({
+        const res = await api.merchant.merchantToResponse({
           orderId: this.orderId,
-          response: formattedContent
+          replyContent: formattedContent
         })
 
         if (res.code === 200) {
@@ -193,14 +193,30 @@ export default {
             title: '回复成功',
             icon: 'success'
           })
+          
+          // 获取页面实例
+          const pages = getCurrentPages()
+          // 获取上一页实例
+          const prevPage = pages[pages.length - 2]
+          // 调用上一页的onLoad方法刷新数据
+          if (prevPage && prevPage.onLoad) {
+            prevPage.onLoad(prevPage.options)
+          }
+          
           setTimeout(() => {
             uni.navigateBack()
           }, 1500)
+        } else {
+          uni.showToast({
+            title: res.msg || '回复失败',
+            icon: 'none'
+          })
         }
       } catch (err) {
         console.error('提交回复失败:', err)
+        const errMsg = err.response?.data?.msg || err.msg || '提交回复失败'
         uni.showToast({
-          title: '提交回复失败',
+          title: errMsg,
           icon: 'none'
         })
       }

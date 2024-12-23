@@ -23,7 +23,7 @@
 				<block v-for="(order, index) in currentOrderList" :key="order.orderId">
 					<view class="order-item">
 						<view class="order-header">
-							<text class="status">{{getStatusText(order.status)}}</text>
+							<text class="status">{{getStatusText(order.status, order)}}</text>
 							<text class="distance">{{formatDistance(order.distance)}}</text>
 						</view>
 						<view class="order-time">{{order.time}}</view>
@@ -42,13 +42,17 @@
 								<text class="voice-duration">{{order.voiceDuration}}s</text>
 							</view>
 						</view>
+						<view class="merchant-response" v-if="order.merchantResponse">
+							<view class="response-title">商家回复</view>
+							<view class="response-content" v-html="order.merchantResponse"></view>
+						</view>
 						<view class="order-footer">
 							<view class="fee-info">
 								<text class="fee-label">托运金额</text>
 								<text v-if="order.needTransport" class="fee-amount">¥{{order.transportFee.toFixed(2)}}</text>
 								<text v-else class="fee-amount">不需要托运</text>
 							</view>
-							<button class="btn-reply" @tap="handleReply(order)">回复客户</button>
+							<button class="btn-reply" v-if="!order.merchantResponse" @tap="handleReply(order)">回复客户</button>
 						</view>
 					</view>
 				</block>
@@ -214,7 +218,11 @@ export default {
 				url: `/pages/merchantOrderReply/merchantOrderReply?params=${params}`
 			})
 		},
-		getStatusText(status) {
+		getStatusText(status, order) {
+			// 如果有商家回复且状态是待接单，显示为待购买配件
+			if (status === '0' && order.merchantResponse) {
+				return '待用户购买配件'
+			}
 			return this.statusMap[status] || '未知状态'
 		},
 		formatDistance(distance) {
@@ -526,5 +534,26 @@ export default {
 .order-wrapper {
 	min-height: 200rpx;
 	padding-bottom: 24rpx;
+}
+
+.merchant-response {
+	margin-top: 24rpx;
+	padding: 24rpx;
+	border-radius: 12rpx;
+	background: #F8F9FC;
+	border: 1px solid #F0F2F5;
+}
+
+.response-title {
+	font-size: 26rpx;
+	font-weight: 600;
+	color: #666;
+	margin-bottom: 12rpx;
+}
+
+.response-content {
+	font-size: 28rpx;
+	color: #333;
+	line-height: 1.4;
 }
 </style> 

@@ -30,7 +30,7 @@
     <view class="merchant-section">
       <view class="merchant-name">{{merchantName}}</view>
       <view class="section-title">商家回复</view>
-      <view class="merchant-desc">{{merchantResponse}}</view>
+      <view class="merchant-desc" v-html="merchantResponse"></view>
     </view>
     
     <!-- 进入商城按钮 -->
@@ -55,7 +55,8 @@ export default {
       audioContext: null,
       orderId: '',
       shopId: '',
-      repairOrderId: ''
+      repairOrderId: '',
+      shopName: ''
     }
   },
   
@@ -72,13 +73,15 @@ export default {
         this.orderId = orderInfo.orderId
         this.shopId = orderInfo.shopId
         this.repairOrderId = orderInfo.repairOrderId
+        this.shopName = orderInfo.shopName
         
+        console.log('orderInfo:', orderInfo)
         // 初始化音频播放器
         this.audioContext = uni.createInnerAudioContext()
       } catch (err) {
         console.error('解析订单信息失败:', err)
         uni.showToast({
-          title: '获取订��信息失败',
+          title: '获取订单信息失败',
           icon: 'none'
         })
       }

@@ -161,6 +161,10 @@ const api = {
         // 获取商家订单列表
         getOrderList(params) {
             return request.get('/web/merchant/order/list', params)
+        },
+        // 商家回复订单
+        merchantToResponse(data) {
+            return request.post('/web/merchant/order/merchantToResponse', data)
         }
       
     },
