@@ -1,30 +1,46 @@
 {
 	"pages": [{
-		"path": "pages/my/my",
+		"path": "pages/supplyChain/supplyChain",
 		"style": {
-			"navigationBarTitleText": "我的"
-		}
-	},{
-		"path": "pages/merchant/merchant",
-		"style": {
-			"navigationBarTitleText": "商家中心",
+			"navigationBarTitleText": "供应商",
 			"enablePullDownRefresh": false,
 			"disableScroll": true
 		}
-	},{
-		"path": "pages/merchantSettled/merchantSettled",
-		"style": {
-			"navigationBarTitleText": "店铺入驻"
-		}
-	},
-		{
+		},{
+			"path": "pages/supplyChainEntry/supplyChainEntry",
+			"style": {
+				"navigationBarTitleText": "供应商入驻",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		},{
+			"path": "pages/my/my",
+			"style": {
+				"navigationBarTitleText": "我的"
+			}
+		},{
+			"path": "pages/supplyChainMy/supplyChainMy",
+			"style": {
+				"navigationBarTitleText": "我的"
+			}
+		},{
+			"path": "pages/merchant/merchant",
+			"style": {
+				"navigationBarTitleText": "商家中心",
+				"enablePullDownRefresh": false,
+				"disableScroll": true
+			}
+		},{
 			"path": "pages/merchantMy/merchantMy",
 			"style": {
 				"navigationBarTitleText": "我的"
 			}
+		},{
+			"path": "pages/merchantSettled/merchantSettled",
+			"style": {
+				"navigationBarTitleText": "店铺入驻"
+			}
 		},
-		
-		
 		{
 			"path": "pages/index/index",
 			"style": {
@@ -61,6 +77,12 @@
 			}
 		},
 		{
+			"path": "pages/supplyChainEditProfile/supplyChainEditProfile",
+			"style": {
+				"navigationBarTitleText": "编辑资料"
+			}
+		},
+		{
 			"path": "pages/grabOrder/grabOrder",
 			"style": {
 				"navigationBarTitleText": "抢单报修",
@@ -78,6 +100,13 @@
 		},
 		{
 			"path": "pages/productDetail/productDetail",
+			"style": {
+				"navigationBarTitleText": "商品详情",
+				"navigationBarBackgroundColor": "#ffffff",
+				"navigationBarTextStyle": "black"
+			}
+		},{
+			"path": "pages/supplyChainProductDetail/supplyChainProductDetail",
 			"style": {
 				"navigationBarTitleText": "商品详情",
 				"navigationBarBackgroundColor": "#ffffff",
@@ -173,6 +202,12 @@
 			}
 		},
 		{
+			"path": "pages/supplyChainIndex/supplyChainIndex",
+			"style": {
+				"navigationBarTitleText": "我的店铺"
+			}
+		},
+		{
 			"path": "pages/merchantPromotion/merchantPromotion",
 			"style": {
 				"navigationBarTitleText": "商家推广",
@@ -199,6 +234,16 @@
 			}
 		},
 		{
+			"path": "pages/supplyChainShop/supplyChainShop",
+			"style": {
+				"navigationBarTitleText": "我的配件",
+				"enablePullDownRefresh": true,
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		
+		{
 			"path": "pages/merchantRepairOrder/merchantRepairOrder",
 			"style": {
 				"navigationBarTitleText": "维修订单",
@@ -222,7 +267,27 @@
 				"navigationBarBackgroundColor": "#FFFFFF",
 				"navigationBarTextStyle": "black"
 			}
+		},
+		{
+			"path": "pages/supplyChainShopAccessoryAdd/supplyChainShopAccessoryAdd",
+			"style": {
+				"navigationBarTitleText": "添加配件",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black"
+			}
+		},
+		{
+			"path": "pages/richTextEditor/richTextEditor",
+			"style": {
+				"navigationBarTitleText": "编辑商品详情",
+				"navigationBarBackgroundColor": "#FFFFFF",
+				"navigationBarTextStyle": "black",
+				"app-plus": {
+					"softinputMode": "adjustResize"
+				}
+			}
 		}
+		
 	],
 	"globalStyle": {
 		"navigationBarTextStyle": "black",

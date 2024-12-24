@@ -209,6 +209,33 @@ const api = {
         useCoupon(data) {
             return request.post('/web/user/coupon/use', data)
         }
+    },
+    // 供应链相关接口
+    supplyChain: {
+        // 提交供应链入驻申请
+        settledSupplyChain(data) {
+            return request.post('/web/supplyChain/settledSupplyChain', data)
+        },
+        // 供应链微信登录
+        wxSupplyChainLogin(data) {
+            return request.post('/wx/miniapp/supplyChainLogin', data)
+        },
+        // 更新供应链资料
+        updateSupplyChainProfile(data) {
+            return request.post('/web/supplyChain/updateMerchantProfile', data)
+        },
+        // 获取供应商状态
+        getSupplyChainStatus() {
+            return request.get('/web/supplyChain/getSupplyChainStatus')
+        },
+        // 获取供应商详情
+        getSupplyChainDetail() {
+            return request.get('/web/supplyChain/getSupplyChainInfo')
+        },
+        // 我的配件
+        getMyAccessoryList: (data) => request.get('/web/supplyChain/getAccessoryList', data),
+        // 添加配件
+        addAccessory: (data) => request.post('/web/supplyChain/addAccessory', data)
     }
 }
 

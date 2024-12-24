@@ -48,6 +48,11 @@ const request = (options = {}) => {
                                 uni.reLaunch({
                                     url: '/pages/merchant/merchant'
                                 })
+                            } else if (roleFlag === 3) {
+                                uni.clearStorageSync()
+                                uni.reLaunch({
+                                    url: '/pages/supplyChainMy/supplyChainMy'
+                                })
                             }
                             reject(res.data)
                         }, 1500)
