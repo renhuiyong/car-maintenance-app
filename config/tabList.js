@@ -33,7 +33,7 @@ export const merchantTabList = [
       path: '/pages/supplyChainIndex/supplyChainIndex'
     },
     {
-      text: '配件商城',
+      text: '我的配件',
       icon: '/static/tabbar/shop.png',
       selectedIcon: '/static/tabbar/shop-active.png',
       path: '/pages/supplyChainShop/supplyChainShop'

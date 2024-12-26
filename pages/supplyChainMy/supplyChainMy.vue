@@ -1,5 +1,6 @@
 <template>
 	<view class="container">
+		<loading-animation :show="isLoading"></loading-animation>
 		<image class="bg-image" src="/static/images/my_bg.png" mode="aspectFill"></image>
 		<!-- 用户信息区域 -->
 		<view class="user-info">
@@ -42,11 +43,6 @@
 		
 		<!-- 功能菜单 -->
 		<view class="menu-grid">
-			<view class="menu-item" @click="goToMyOrders">
-				<image class="menu-icon" src="/static/images/wddd.png"></image>
-				<text>我的配件</text>
-			</view>
-			<image class="divider" src="/static/images/shuxian.png"></image>
 			<view class="menu-item" @click="goToMyFavorites">
 				<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
 				<text>进货订单</text>
@@ -95,8 +91,12 @@
 <script>
 import api from '../../api/index.js'
 import request from '../../utils/request.js'
+import loadingAnimation from '../../components/loading-animation/loading-animation.vue'
 
 export default {
+	components: {
+		loadingAnimation
+	},
 	data() {
 		return {
 			isLogin: false,
@@ -125,7 +125,7 @@ export default {
 				{ 
 					title: '您收到一笔推广佣金',
 					isRead: false,
-					content: '恭喜您获得推广佣金奖励，可以在"我的资产"中查看详情。'
+					content: '恭您获得推广佣金奖励，可以在"我的资产"中查看详情。'
 				},
 				{ 
 					title: '您的维修订单已完成',
@@ -142,7 +142,8 @@ export default {
 			startPosition: {
 				x: 0,
 				y: 0
-			}
+			},
+			isLoading: false
 		}
 	},
 	created() {
@@ -185,14 +186,16 @@ export default {
 			}
 		},
 		getUserProfile() {
+			this.isLoading = true
 			uni.getUserProfile({
 				desc: '用于完用户资料',
 				success: (res) => {
 					this.login(res.userInfo)
 				},
 				fail: (err) => {
+					this.isLoading = false
 					uni.showToast({
-						title: '��取用户信息失败',
+						title: '获取用户信息失败',
 						icon: 'none'
 					})
 				}
@@ -207,7 +210,6 @@ export default {
 						fail: reject
 					})
 				})
-
 				
 				const res = await api.supplyChain.wxSupplyChainLogin({
 					code: loginRes.code,
@@ -226,14 +228,13 @@ export default {
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
 					uni.setStorageSync('token', res.data.token)
 					uni.setStorageSync('roleFlag', 3)
-
 					
 					this.isLogin = true
 					this.userInfo = userData
 					
 					uni.showToast({
 						title: '登录成功',
-						icon: 'success'
+							icon: 'success'
 					})
 				} else {
 					throw new Error(res.message || '登录失败')
@@ -242,8 +243,10 @@ export default {
 				console.error('Login error:', err)
 				uni.showToast({
 					title: JSON.stringify(err),
-					icon: 'none'
+						icon: 'none'
 				})
+			} finally {
+				this.isLoading = false
 			}
 		},
 		goToEditProfile() {
@@ -347,25 +350,6 @@ export default {
 			// 跳转到消息列表页面
 			uni.navigateTo({
 				url: '/pages/myMessage/myMessage?autoOpen=true'
-			})
-		},
-		goToMyOrders() {
-			if (!this.isLogin) {
-				uni.showToast({
-					title: '请先登录',
-					icon: 'none'
-				})
-				return
-			}
-			uni.navigateTo({
-				url: '/pages/merchantRepairOrder/merchantRepairOrder',
-				fail: (err) => {
-					console.error('Navigation failed:', err)
-					uni.showToast({
-						title: '页面跳转失败',
-						icon: 'none'
-					})
-				}
 			})
 		},
 		// 添加供应商入驻跳转方法

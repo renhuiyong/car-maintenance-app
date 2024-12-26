@@ -6,11 +6,13 @@
 			<view class="info-content">
 				<view class="info-header">
 					<view class="info-left">
-						<view class="title">{{ product.name }}</view>
+						<view class="title-wrapper">
+							<text class="title">{{ product.name }}</text>
+							<text v-if="Number(product.status) === 0" class="status-tag">待审核</text>
+						</view>
 						<view class="price">¥{{ product.price }}/件</view>
 					</view>
-					<view class="info-right">
-						<text class="stock">库存{{ product.stock }}</text>
+					<view class="info-right" v-if="Number(product.status) === 0">
 						<button class="share-btn" @click="handleEdit">
 							<image class="share-icon" src="/static/images/edit.png" mode="aspectFit"></image>
 						</button>
@@ -56,15 +58,21 @@ export default {
 				price: 0,
 				image: '',
 				details: '',
-				stock: 0,
 				model: '',
 				parameter: '',
-				brand: ''
+				brand: '',
+				status: 0
 			},
 			brandList: [],
 			brandNames: '',
 			categories: [],
 			brands: []
+		}
+	},
+	onShow() {
+		// 如果有商品ID，则刷新商品详情
+		if (this.product.id) {
+			this.getProductDetail(this.product.id);
 		}
 	},
 	onLoad(options) {
@@ -124,7 +132,7 @@ export default {
 				title: '加载中...'
 			});
 			
-			api.shop.getAccessory({
+			api.supplyChain.getAccessoryDetail({
 				id: id
 			}).then(res => {
 				if (res.code === 200) {
@@ -132,7 +140,7 @@ export default {
 					// 处理商品详情中的图片路径
 					let processedDetails = data.details;
 					if (processedDetails) {
-						// 使用正则表达式替换图片src中的相对路径
+						// 使用正则表达式替换图片src中的���对路径
 						processedDetails = processedDetails.replace(/src="(\/profile\/upload\/[^"]+)"/g, (match, p1) => {
 							return `src="${request.BASE_URL}${p1}"`;
 						});
@@ -144,10 +152,10 @@ export default {
 						price: data.price,
 						image: data.image ? request.BASE_URL + data.image : '/static/products/shangpin_default.png',
 						details: processedDetails || '暂无商品详情',
-						stock: data.stock || 0,
 						model: data.model || '暂无型号',
 						parameter: data.parameter || '暂无参数',
-						brand: data.brand || ''
+						brand: data.brand || '',
+						status: Number(data.status || 0)
 					};
 					// 更新品牌名称
 					this.updateBrandNames();
@@ -348,5 +356,24 @@ export default {
 .share-icon {
 	width: 56rpx;
 	height: 56rpx;
+}
+
+.title-wrapper {
+	display: flex;
+	align-items: center;
+	margin-bottom: 16rpx;
+}
+
+.status-tag {
+	display: inline-block;
+	font-size: 24rpx;
+	color: #FF9933;
+	background-color: rgba(255, 153, 51, 0.1);
+	padding: 2rpx 8rpx;
+	border-radius: 4rpx;
+	margin-left: 12rpx;
+	line-height: 1.2;
+	white-space: nowrap;
+	width: fit-content;
 }
 </style> 

@@ -62,10 +62,10 @@
     "quickapp" : {},
     /* 小程序特有相关 */
     "mp-weixin" : {
-        "appid" : "wx88724dfca19f3aa3",
+        "appid" : "wx6617688e14e74a23",
         "setting" : {
             "urlCheck" : false,
-            "checkSiteMap": false
+            "checkSiteMap" : false
         },
         "usingComponents" : true,
         "uniStatistics" : {
@@ -76,11 +76,8 @@
                 "desc" : "你的位置信息将用于选择维修地点"
             }
         },
-        "lazyCodeLoading": "requiredComponents",
-        "requiredPrivateInfos": [
-            "getLocation",
-            "chooseLocation"
-        ]
+        "lazyCodeLoading" : "requiredComponents",
+        "requiredPrivateInfos" : [ "getLocation", "chooseLocation" ]
     },
     "mp-alipay" : {
         "usingComponents" : true,
@@ -112,7 +109,7 @@
         "sdkConfigs" : {
             "maps" : {
                 "qqmap" : {
-                    "key" : "你申请的腾讯地图key"
+                    "key" : "F3BBZ-53LE7-XZVXL-PFRPE-5PP3Z-GUBTU"
                 }
             }
         }

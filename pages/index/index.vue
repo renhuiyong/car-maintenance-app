@@ -165,6 +165,7 @@
 				isRefreshing: false,
 				loadMoreThrottle: null,
 				hasLocationAuth: false,
+				isLogin: false,
 			}
 		},
 		computed: {
@@ -192,6 +193,10 @@
 				},
 				immediate: true
 			}
+		},
+		onShow() {
+			// 检查登录状态
+			this.checkLoginStatus()
 		},
 		methods: {
 			switchTab(index) {
@@ -235,7 +240,30 @@
 				}
 			},
 			
+			checkLoginStatus() {
+				const token = uni.getStorageSync('token')
+				const userInfo = uni.getStorageSync('userInfo')
+				this.isLogin = !!(token && userInfo)
+			},
+			
 			handleSubmit() {
+				// 先检查登录状态
+				if (!this.isLogin) {
+					uni.showModal({
+						title: '提示',
+						content: '请先登录后再发起报修',
+						confirmText: '去登录',
+						success: (res) => {
+							if (res.confirm) {
+								uni.switchTab({
+									url: '/pages/my/my'
+								})
+							}
+						}
+					})
+					return
+				}
+
 				if (!this.hasLocationAuth) {
 					uni.showModal({
 						title: '提示',
@@ -276,7 +304,7 @@
 					return
 				}
 				
-				// 先关闭自定义授权弹��
+				// 先关闭自定义授权弹窗
 				this.showAuthModal = false
 				
 				// 然后请求小程序位置授权
@@ -318,7 +346,7 @@
 						this.latitude = res.latitude
 						this.longitude = res.longitude
 						
-						// 获取位置成功后立��加载家列表
+						// 获取��置成功后立即加载家列表
 						this.repairShops = []
 						this.pageNum = 1
 						this.finished = false
@@ -464,6 +492,23 @@
 				this.scrollTop = e.detail.scrollTop
 			},
 			goToAssignRepair(shop) {
+				// 先检查登录状态
+				if (!this.isLogin) {
+					uni.showModal({
+						title: '提示',
+						content: '请先登录后再查看商家详情',
+						confirmText: '去登录',
+						success: (res) => {
+							if (res.confirm) {
+								uni.switchTab({
+									url: '/pages/my/my'
+								})
+							}
+						}
+					})
+					return
+				}
+
 				if (!this.hasLocationAuth) {
 					uni.showModal({
 						title: '提示',

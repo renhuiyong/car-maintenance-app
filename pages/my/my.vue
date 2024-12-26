@@ -1,5 +1,6 @@
 <template>
 	<view class="container">
+		<loading-animation :show="isLoading"></loading-animation>
 		<image class="bg-image" src="/static/images/my_bg.png" mode="aspectFill"></image>
 		<!-- 用户信息区域 -->
 		<view class="user-info">
@@ -93,8 +94,12 @@
 <script>
 import api from '../../api/index.js'
 import request from '../../utils/request.js'
+import loadingAnimation from '../../components/loading-animation/loading-animation.vue'
 
 export default {
+	components: {
+		loadingAnimation
+	},
 	data() {
 		return {
 			isLogin: false,
@@ -103,6 +108,7 @@ export default {
 				phone: '',
 				avatar: ''
 			},
+			
 			request,
 			messageList: [
 				{ 
@@ -130,7 +136,8 @@ export default {
 					isRead: true,
 					content: '您的维修订单已完成服务，如对服务不满意，请及时反馈。'
 				}
-			]
+			],
+			isLoading: false
 		}
 	},
 	onShow() {
@@ -157,12 +164,14 @@ export default {
 			}
 		},
 		getUserProfile() {
+			this.isLoading = true
 			uni.getUserProfile({
 				desc: '用于完善用户资料',
 				success: (res) => {
 					this.login(res.userInfo)
 				},
 				fail: (err) => {
+					this.isLoading = false
 					uni.showToast({
 						title: '获取用户信息失败',
 						icon: 'none'
@@ -222,6 +231,8 @@ export default {
 					title: JSON.stringify(err),
 					icon: 'none'
 				})
+			} finally {
+				this.isLoading = false
 			}
 		},
 		goToEditProfile() {
@@ -307,7 +318,7 @@ export default {
 				return
 			}
 			
-			// 将当前��息列表保存到本地存储
+			// 将当前消息列表保存到本地存储
 			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
 			
 			uni.navigateTo({

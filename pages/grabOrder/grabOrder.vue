@@ -89,7 +89,7 @@
 							type="number" 
 							v-model="contactPhone" 
 							placeholder="请输入手机号"
-							class="phone-input"
+							class="phone-input my-input1"
 							maxlength="11"
 							@click.stop
 							@input="validatePhone"
@@ -98,8 +98,7 @@
 							class="get-phone-btn"
 							open-type="getPhoneNumber"
 							@getphonenumber="getPhoneNumber"
-							:disabled="!contactPhone"
-						>快速获取</button>
+						>{{ contactPhone ? '重新获取' : '快速获取' }}</button>
 					</view>
 				</view>
 				<view class="address-wrapper">
@@ -539,19 +538,24 @@ export default {
 				}
 			})
 		},
-		getPhoneNumber(e) {
+		async getPhoneNumber(e) {
 			if (e.detail.errMsg === 'getPhoneNumber:ok') {
-				const encryptedData = e.detail.encryptedData
-				const iv = e.detail.iv
-				// 这里模拟解密后的手机号验证
-				const phoneNumber = '18888888888' // 实际应该是解密后的手机号
-				const phoneReg = /^1[3-9]\d{9}$/
-				
-				if (phoneReg.test(phoneNumber)) {
-					this.contactPhone = phoneNumber
-				} else {
+				try {
+					const res = await api.common.decryptPhoneNumber({
+						code: e.detail.code
+					})
+					if (res.code === 200) {
+						this.contactPhone = res.msg  // 从msg字段获取手机号
+					} else {
+						uni.showToast({
+							title: res.msg || '获取手机号失败',
+							icon: 'none'
+						})
+					}
+				} catch (err) {
+					console.error('获取手机号失败:', err)
 					uni.showToast({
-						title: '获取到的手机号格式错误',
+						title: '获取手机号失败',
 						icon: 'none'
 					})
 				}
@@ -833,7 +837,6 @@ export default {
 
 					&:active {
 						background: rgba(255, 149, 0, 0.2);
-						transform: translateZ(0) scale(0.98);
 					}
 				}
 			}
@@ -1181,7 +1184,7 @@ export default {
 					width: 6rpx;
 					background: #FF9500;
 					border-radius: 3rpx;
-					transition: height 0.1s ease-out; // 化过��效果
+					transition: height 0.1s ease-out; // 化过渡效果
 				}
 			}
 
@@ -1298,5 +1301,9 @@ export default {
 	50% {
 		height: 20rpx;
 	}
+}
+.my-input1{
+	margin-left: 30rpx !important;
+	width: 220rpx !important;
 }
 </style> 

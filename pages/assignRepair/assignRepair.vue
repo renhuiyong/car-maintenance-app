@@ -112,7 +112,7 @@
 							v-model="contactInfo.phone" 
 								placeholder="请输入手机号" 
 								maxlength="11"
-								class="contact-input"
+								class="contact-input my-input1"
 								@click.stop
 								@blur="validatePhone"
 							/>
@@ -120,7 +120,7 @@
 							class="get-phone-btn"
 							open-type="getPhoneNumber"
 							@getphonenumber="getPhoneNumber"
-						>快速获取</button>
+						>{{ contactInfo.phone ? '重新获取' : '快速获取' }}</button>
 					</view>
 				</view>
 				<view class="location-text" @click="chooseLocation">
@@ -415,7 +415,7 @@ export default {
 				const res = await api.repair.submitRepairOrder(submitData)
 				if (res.code === 200) {
 					uni.showToast({
-						title: '提��成功',
+						title: '提交成功',
 						icon: 'success'
 					})
 					// 提交成功后跳转到订单详情页
@@ -483,7 +483,7 @@ export default {
 				format: 'mp3'
 			})
 
-			// 动定时器，每秒更新录音时长
+			// ��定时器，秒更新录音时长
 			this.recordTimer = setInterval(() => {
 				this.currentSeconds++
 				if (this.currentSeconds >= 60) {
@@ -568,7 +568,7 @@ export default {
 				this.innerAudioContext.destroy()
 			}
 		},
-		// 打开��航
+		// 打开导航
 		openLocation() {
 			// 确保经纬度为数字类型
 			const latitude = Number(this.address.latitude)
@@ -617,16 +617,22 @@ export default {
 				}
 			})
 		},
-		getPhoneNumber(e) {
+		async getPhoneNumber(e) {
 			if (e.detail.errMsg === 'getPhoneNumber:ok') {
-				// 这里需要调用后端接口解密获取手机号
-				// 示例中直接使用假数据
-				const phone = '13888888888'
-				// 验证获取到的手机号
-				const phoneReg = /^1[3-9]\d{9}$/
-				if (phoneReg.test(phone)) {
-					this.contactInfo.phone = phone
-				} else {
+				try {
+					const res = await api.common.decryptPhoneNumber({
+						code: e.detail.code
+					})
+					if (res.code === 200) {
+						this.contactInfo.phone = res.msg  // 从msg字段获取手机号
+					} else {
+						uni.showToast({
+							title: res.msg || '获取手机号失败',
+							icon: 'none'
+						})
+					}
+				} catch (err) {
+					console.error('获取手机号失败:', err)
 					uni.showToast({
 						title: '获取手机号失败',
 						icon: 'none'
@@ -911,7 +917,6 @@ export default {
 
 		.contact-name {
 			display: flex;
-			gap: 20rpx;
 			margin-bottom: 40rpx;
 
 			.contact-input {
@@ -923,7 +928,7 @@ export default {
 				margin-left: 38rpx;
 				
 				&:first-child {
-					width: 200rpx;
+					width: 196rpx;
 				}
 				
 				&:last-child {
@@ -1424,7 +1429,7 @@ export default {
 		padding: 0 30rpx; // 增加水平内边距
 		height: 44rpx;
 		line-height: 44rpx;
-		min-width: auto; // 移除最小宽度限制，让按���宽度自适应内容
+		min-width: auto; // 移除最小宽度限制，让按钮宽度自适应内容
 		white-space: nowrap; // 防止文字换行
 		text-align: center;
 		
@@ -1432,5 +1437,9 @@ export default {
 			border: none;
 		}
 	}
+}
+.my-input1{
+	margin-left: 0rpx !important;
+	width: 220rpx !important;
 }
 </style> 

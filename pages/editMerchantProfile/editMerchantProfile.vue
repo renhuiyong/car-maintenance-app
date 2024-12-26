@@ -54,7 +54,15 @@
 				>
 					绑定手机号
 				</button>
-				<image v-else class="arrow" src="/static/images/youjiantou2.png"></image>
+				<button 
+					v-if="userInfo.phone" 
+					class="bind-btn" 
+					open-type="getPhoneNumber" 
+					@getphonenumber="getPhoneNumber"
+				>
+					重新获取
+				</button>
+				<image v-if="userInfo.phone" class="arrow" src="/static/images/youjiantou2.png"></image>
 			</view>
 		</view>
 		
@@ -134,7 +142,7 @@ export default {
 		
 		async getPhoneNumber(e) {
 			try {
-				// 打印返回数据，方便调试
+				// 打���返回数据，方便调试
 				console.log('getPhoneNumber response:', e.detail)
 				
 				// 用户拒绝授权的情况
@@ -148,19 +156,15 @@ export default {
 				}
 				
 				// 调用后端接口绑定手机号
-				const res = await api.user.bindPhone({
-					phoneCode: e.detail.code
+				const res = await api.common.decryptPhoneNumber({
+					code: e.detail.code
 				})
 				
 				if (res.code === 200) {
 					// 更新本地用户信息
-					this.userInfo.phone = res.data.phone
+					this.userInfo.phone = res.msg
 					uni.setStorageSync('userInfo', JSON.stringify(this.userInfo))
-					
-					uni.showToast({
-						title: '手机号绑定成功',
-						icon: 'success'
-					})
+
 				} else {
 					throw new Error(res.msg || '绑定失败')
 				}
@@ -203,7 +207,7 @@ export default {
 				
 				const res = await api.merchant.updateMerchantProfile(updateData)
 				if (res.code === 200) {
-					// 更新���地存储时保持前端使用的字段名
+					// 更新本地存储时���持前端使用的字段名
 					uni.setStorageSync('userInfo', JSON.stringify(this.userInfo))
 					
 					uni.showToast({

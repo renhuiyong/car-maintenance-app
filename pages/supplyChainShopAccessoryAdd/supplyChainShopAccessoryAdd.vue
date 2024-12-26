@@ -101,7 +101,9 @@
 				brands: [],
 				currentCategoryId: '',
 				currentBrandId: '',
-				selectedBrands: []
+				selectedBrands: [],
+				isEdit: false,
+				editId: ''
 			}
 		},
 		onLoad(options) {
@@ -127,8 +129,15 @@
 				this.currentCategoryId = options.currentCategoryId || ''
 				this.currentBrandId = options.currentBrandId || ''
 				
-				// 设置选中状态
-				this.setInitialSelection()
+				// 检查是否是编辑模式
+				if (options.id) {
+					this.isEdit = true
+					this.editId = options.id
+					this.fetchProductDetail(options.id)
+				} else {
+					// 如果是新增模式，设置初始选中状态
+					this.setInitialSelection()
+				}
 				
 			} catch (error) {
 				console.error('解析参数出错:', error)
@@ -267,30 +276,46 @@
 					imageUrl: this.formData.image
 				}
 
+				// 如果是编辑模式，添加ID
+				if (this.isEdit) {
+					submitData.id = this.editId
+				}
+
 				console.log('准备提交的数据:', submitData)
 				
-				// TODO: 调用后台API
-				api.supplyChain.addAccessory(submitData).then(res => {
-				    if (res.code === 200) {
-				        uni.showToast({
-				            title: '添加成功',
-				            icon: 'success'
-				        })
-				        setTimeout(() => {
-				            uni.navigateBack()
-				        }, 1500)
-				    } else {
-				        uni.showToast({
-				            title: res.msg || '添加失败',
-				            icon: 'none'
-				        })
-				    }
+				// 根据是否是编辑模式调用不同的接口
+				const apiCall = this.isEdit ? 
+					api.supplyChain.updateAccessory(submitData) : 
+					api.supplyChain.addAccessory(submitData)
+				
+				apiCall.then(res => {
+					if (res.code === 200) {
+						uni.showToast({
+							title: this.isEdit ? '修改成功' : '添加成功',
+							icon: 'success'
+						})
+						setTimeout(() => {
+							if (this.isEdit) {
+								// 如果是修改，直接返回上一页
+								uni.navigateBack()
+							} else {
+								// 如果是新增，发送刷新事件并返回
+								uni.$emit('refreshShopList')
+								uni.navigateBack()
+							}
+						}, 1500)
+					} else {
+						uni.showToast({
+							title: res.msg || (this.isEdit ? '修改失败' : '添加失败'),
+							icon: 'none'
+						})
+					}
 				}).catch(err => {
-				    console.error('添加配件失败:', err)
-				    uni.showToast({
-				        title: '添加失败',
-				        icon: 'none'
-				    })
+					console.error(this.isEdit ? '修改配件失败:' : '添加配件失败:', err)
+					uni.showToast({
+						title: this.isEdit ? '修改失败' : '添加失败',
+						icon: 'none'
+					})
 				})
 			},
 			// 跳转到富文本编辑页面
@@ -304,6 +329,55 @@
 			updateDescription(content) {
 				console.log('接收到富文本内容:', content)
 				this.formData.details = content
+			},
+			// 获取商品详情
+			fetchProductDetail(id) {
+				uni.showLoading({
+					title: '加载中...'
+				})
+				
+				api.supplyChain.getAccessoryDetail({
+					id: id
+				}).then(res => {
+					if (res.code === 200) {
+						const data = res.data
+						
+						// ��置表单数据
+						this.formData.name = data.name
+						this.formData.param = data.parameter || ''
+						this.formData.model = data.model || ''
+						this.formData.price = data.price || ''
+						this.formData.details = data.details || ''
+						this.formData.image = data.image || ''
+						
+						// 设置分类
+						const categoryIndex = this.categories.findIndex(cat => cat.id === data.categoryId)
+						if (categoryIndex !== -1) {
+							this.formData.categoryIndex = categoryIndex
+						}
+						
+						// 设置品牌
+						if (data.brand) {
+							const brandIds = data.brand.split(',')
+							this.selectedBrands = brandIds
+							this.formData.selectedBrands = brandIds
+						}
+						
+					} else {
+						uni.showToast({
+							title: res.msg || '获取商品详情失败',
+							icon: 'none'
+						})
+					}
+				}).catch(err => {
+					console.error('获取商品详情失败:', err)
+					uni.showToast({
+						title: '获取商品详情失败',
+						icon: 'none'
+					})
+				}).finally(() => {
+					uni.hideLoading()
+				})
 			}
 		}
 	}

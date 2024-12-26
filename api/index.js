@@ -175,7 +175,11 @@ const api = {
                 file,
                 name: 'file'
             })
-        }
+        },
+         // 供应链微信登录
+         decryptPhoneNumber(data) {
+            return request.post('/wx/miniapp/decryptPhoneNumber', data)
+        },
     },
     // 在 api 对象中添加收藏相关接口
     favorite: {
@@ -235,7 +239,15 @@ const api = {
         // 我的配件
         getMyAccessoryList: (data) => request.get('/web/supplyChain/getAccessoryList', data),
         // 添加配件
-        addAccessory: (data) => request.post('/web/supplyChain/addAccessory', data)
+        addAccessory: (data) => request.post('/web/supplyChain/addAccessory', data),
+        // 获取配件详情
+        getAccessoryDetail(data) {
+            return request.get('/web/supplyChain/getAccessory', data)
+        },
+        // 修改配件
+        updateAccessory(data) {
+            return request.post('/web/supplyChain/updateAccessory', data)
+        }
     }
 }
 

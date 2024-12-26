@@ -54,7 +54,7 @@
 					<view class="product-info">
 						<view class="product-info-top">
 							<text class="product-name">{{ item.name }}</text>
-							<text class="product-stock">库存{{ item.stock }}</text>
+							<text v-if="item.status === 0" class="status-tag">待审核</text>
 						</view>
 						<view class="product-price-wrap">
 							<text class="price">￥{{ item.price.toFixed(2) }}/件</text>
@@ -130,7 +130,7 @@
 							<view class="product-info">
 								<view class="product-info-top">
 									<text class="product-name">{{ item.name }}</text>
-									<text class="product-stock">库存{{ item.stock }}</text>
+									<text v-if="item.status === 0" class="status-tag">待审核</text>
 								</view>
 								<view class="product-price-wrap">
 									<text class="price">￥{{ item.price.toFixed(2) }}/件</text>
@@ -246,6 +246,9 @@ export default {
 		// 设置初始位置在右下角，使用与吸附相同的距离
 		this.buttonLeft = this.windowWidth - 60
 		this.buttonTop = this.windowHeight - 180 // 确保在tabbar上方
+
+		// 添加刷新事件监听
+		uni.$on('refreshShopList', this.loadProducts)
 	},
 	mounted() {
 		console.log('merchantShop mounted')
@@ -259,7 +262,7 @@ export default {
 	},
 	onUnload() {
 		// 移除事件监听
-		uni.$off('refreshShop', this.handleShopChange)
+		uni.$off('refreshShopList', this.loadProducts)
 	},
 	methods: {
 		// 计算高度的方法
@@ -283,7 +286,7 @@ export default {
 			return this.categories[categoryIndex]?.items || [];
 		},
 
-		// 在 methods 中修改 switchCategory 方法
+		// 在 methods 中��改 switchCategory 方法
 		switchCategory(index) {
 			if (this.currentCategory === index) return;
 			
@@ -359,7 +362,7 @@ export default {
 			let currentIndex = 0;
 			let heightSum = 0;
 			
-			// 更确的动位置测
+			// 更确的位置
 			for (let i = 0; i < this.filteredCategories.length; i++) {
 				const category = this.filteredCategories[i];
 				if (!category) continue;
@@ -389,7 +392,7 @@ export default {
 			})
 		},
 		
-		// 修改搜索商法
+		// 修改搜索商品方法
 		searchProducts() {
 			if (!this.searchKeyword.trim()) {
 				this.isSearching = false;
@@ -407,14 +410,15 @@ export default {
 				const filteredItems = category.items.filter(product => {
 					// 同时满足搜索关键词和品牌筛选条件
 					const matchesKeyword = product.name.toLowerCase().includes(this.searchKeyword.toLowerCase());
-					const matchesBrand = this.selectedBrand === 'all' || product.brand === this.selectedBrand;
+					const matchesBrand = this.selectedBrand === 'all' || 
+						(product.brand && product.brand.split(',').includes(this.selectedBrand.toString()));
 					return matchesKeyword && matchesBrand;
 				});
 
-				const results = filteredItems.map((product, productIndex) => ({
+				const results = filteredItems.map(product => ({
 					...product,
 					categoryIndex,
-					productIndex
+					productIndex: category.items.findIndex(item => item.id === product.id)
 				}));
 				this.searchResults.push(...results);
 			});
@@ -451,10 +455,8 @@ export default {
 		},
 		
 		// 修改跳转到详情页方法
-		goToDetail(item, categoryIndex, productIndex) {
-			const productInfo = this.isSearching ? item : this.categories[categoryIndex].items[productIndex];
-			
-			if (!productInfo) {
+		goToDetail(item) {
+			if (!item || !item.id) {
 				uni.showToast({
 					title: '商品信息不完整',
 					icon: 'none'
@@ -464,8 +466,7 @@ export default {
 			
 			// 构建查询参数，添加分类和品牌数组
 			const query = {
-				id: productInfo.id,
-				stock: productInfo.stock || 0,
+				id: item.id,
 				categories: encodeURIComponent(JSON.stringify(this.categories.map(cat => ({
 					id: cat.id,
 					name: cat.name
@@ -485,6 +486,11 @@ export default {
 		// 修改品牌选择方法
 		selectBrand(brandId) {
 			this.selectedBrand = brandId;
+			
+			// 如果正在搜索，重新执行搜索
+			if (this.isSearching && this.searchKeyword) {
+				this.searchProducts();
+			}
 			
 			// 重置滚动位置
 			this.scrollTop = 0;
@@ -622,9 +628,9 @@ export default {
 					id: product.id,
 					name: product.name,
 					price: product.price,
-					stock: product.stock || 0,
 					image: product.image ? request.BASE_URL + product.image : '/static/products/shangpin_default.png',
 					brand: product.brand,
+					status: product.status,
 					categoryIndex: categories.length - 1,
 					productIndex: category.items.length
 				})
@@ -662,7 +668,7 @@ export default {
 		
 		// 添加触摸结束事件处理
 		touchEnd(e) {
-			// 如果是拖动操作才执行吸附逻辑
+			// 如果是拖动作才执行吸附逻辑
 			if (this.isDragging) {
 				e.stopPropagation()
 				
@@ -714,7 +720,7 @@ export default {
 			})
 		}
 	},
-	// 添加 onPullDownRefresh 生命周期方法（与 methods 同级）
+	// 添加 onPullDownRefresh 生命周期方法（与 methods 同级
 	onPullDownRefresh() {
 		// 如果正在搜索状态，刷新搜索结果
 		if (this.isSearching) {
@@ -1180,5 +1186,18 @@ export default {
 
 .float-btn:active {
 	transform: scale(0.95);
+}
+
+.status-tag {
+	display: inline-block;
+	font-size: 24rpx;
+	color: #FF9933;
+	background-color: rgba(255, 153, 51, 0.1);
+	padding: 2rpx 8rpx;
+	border-radius: 4rpx;
+	margin-left: 12rpx;
+	line-height: 1.2;
+	white-space: nowrap;
+	width: fit-content;
 }
 </style> 

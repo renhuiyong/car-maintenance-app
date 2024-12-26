@@ -1,5 +1,5 @@
 <template>
-	<view class="container">
+	<scroll-view scroll-y class="container">
 		<!-- 商品详情 -->
 		<view class="product-info">
 			<image class="product-image" :src="product.image" mode="aspectFit" @error="handleImageError"></image>
@@ -40,7 +40,7 @@
 				<rich-text :nodes="product.details || '暂无商品详情'" :style="{wordBreak: 'break-all'}"></rich-text>
 			</view>
 		</view>
-	</view>
+	</scroll-view>
 </template>
 
 <script>
@@ -75,7 +75,7 @@ export default {
 	},
 	onLoad(options) {
 		console.log('接收到的参数：', options);
-		// 先获取品牌列��
+		// 先获取品牌列表
 		this.getBrandList();
 		if (options.id) {
 			this.getProductDetail(options.id);
@@ -123,12 +123,21 @@ export default {
 			}).then(res => {
 				if (res.code === 200) {
 					const data = res.data;
+					// 处理商品详情中的图片路径
+					let processedDetails = data.details;
+					if (processedDetails) {
+						// 使用正则表达式替换图片src中的相对路径
+						processedDetails = processedDetails.replace(/src="(\/profile\/upload\/[^"]+)"/g, (match, p1) => {
+							return `src="${request.BASE_URL}${p1}"`;
+						});
+					}
+					
 					this.product = {
 						id: data.id,
 						name: data.name,
 						price: data.price,
 						image: data.image ? request.BASE_URL + data.image : '/static/products/shangpin_default.png',
-						details: data.details || '暂无商品详情',
+						details: processedDetails || '暂无商品详情',
 						stock: data.stock || 0,
 						model: data.model || '暂无型号',
 						parameter: data.parameter || '暂无参数',
@@ -163,9 +172,8 @@ export default {
 
 <style>
 .container {
-	padding-bottom: 20rpx;
+	height: 100vh;
 	background-color: #F6F6F6;
-	min-height: 100vh;
 }
 
 .product-info {

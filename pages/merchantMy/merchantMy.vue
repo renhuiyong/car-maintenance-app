@@ -1,5 +1,6 @@
 <template>
 	<view class="container">
+		<loading-animation :show="isLoading"></loading-animation>
 		<image class="bg-image" src="/static/images/my_bg.png" mode="aspectFill"></image>
 		<!-- 用户信息区域 -->
 		<view class="user-info">
@@ -108,8 +109,12 @@
 <script>
 import api from '../../api/index.js'
 import request from '../../utils/request.js'
+import loadingAnimation from '../../components/loading-animation/loading-animation.vue'
 
 export default {
+	components: {
+		loadingAnimation
+	},
 	data() {
 		return {
 			isLogin: false,
@@ -128,7 +133,7 @@ export default {
 				{ 
 					title: '您的订单未付款',
 					isRead: false,
-					content: '您的维修订单尚未支付，请及时完成���付，以免订单自动取消。'
+					content: '您的维修订单尚未支付，请及时完成支付，以免订单自动取消。'
 				},
 				{ 
 					title: '最新活动通知，请查看活动详情',
@@ -155,7 +160,8 @@ export default {
 			startPosition: {
 				x: 0,
 				y: 0
-			}
+			},
+			isLoading: false
 		}
 	},
 	created() {
@@ -198,12 +204,14 @@ export default {
 			}
 		},
 		getUserProfile() {
+			this.isLoading = true
 			uni.getUserProfile({
 				desc: '用于完用户资料',
 				success: (res) => {
 					this.login(res.userInfo)
 				},
 				fail: (err) => {
+					this.isLoading = false
 					uni.showToast({
 						title: '获取用户信息失败',
 						icon: 'none'
@@ -243,7 +251,6 @@ export default {
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
 					uni.setStorageSync('token', res.data.token)
 					uni.setStorageSync('roleFlag', 2)
-
 					
 					// 登录成功后清除promotionCode
 					uni.removeStorageSync('promotionCode')
@@ -264,6 +271,8 @@ export default {
 					title: JSON.stringify(err),
 					icon: 'none'
 				})
+			} finally {
+				this.isLoading = false
 			}
 		},
 		goToEditProfile() {
@@ -426,7 +435,7 @@ export default {
 			let newLeft = e.touches[0].clientX - this.startPosition.x
 			let newTop = e.touches[0].clientY - this.startPosition.y
 			
-			// 限��按钮不超出屏幕边界
+			// 限按钮不超出屏幕边界
 			newLeft = Math.max(0, Math.min(newLeft, systemInfo.windowWidth - buttonSize))
 			newTop = Math.max(0, Math.min(newTop, systemInfo.windowHeight - buttonSize))
 			

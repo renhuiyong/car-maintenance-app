@@ -540,7 +540,7 @@ export default {
 				pageNum: this.page,
 				pageSize: 10
 			}).then(res => {
-				console.log('获取商品列表响应:', res)
+				console.log('获取商品列表���应:', res)
 				if (res.code === 200) {
 					const products = res.data || []
 					if (products.length > 0) {
@@ -555,7 +555,7 @@ export default {
 					})
 				}
 			}).catch(err => {
-				console.error('���取商品列表失败:', err)
+				console.error('获取商品列表失败:', err)
 				uni.showToast({
 					title: '获取商品列表失败',
 					icon: 'none'
@@ -599,7 +599,7 @@ export default {
 	},
 	// 添加 onPullDownRefresh 生命周期方法（与 methods 同级）
 	onPullDownRefresh() {
-		// 如��正在搜索状态，刷新搜索结果
+		// 如果正在搜索状态，刷新搜索结果
 		if (this.isSearching) {
 			this.searchProducts();
 		}
@@ -622,6 +622,8 @@ export default {
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
+	padding-bottom: calc(100rpx + env(safe-area-inset-bottom));
+	box-sizing: border-box;
 }
 
 .search-bar {
@@ -898,7 +900,7 @@ export default {
 	top: 200rpx;
 	left: 0;
 	right: 0;
-	bottom: 0;
+	bottom: calc(100rpx + env(safe-area-inset-bottom));
 	z-index: 10;
 	background: #fff;
 }
