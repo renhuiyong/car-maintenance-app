@@ -172,6 +172,7 @@ export default {
 			isLoading: false,
 			hasCheckedSubscription: false, // 添加标记，避免重复检查
 			needSubscription: false,
+			messageTimer: null, // 添加定时器变量
 		}
 	},
 	created() {
@@ -180,6 +181,8 @@ export default {
 			this.checkShopExamineStatus()
 			this.checkSubscriptionStatus()
 			this.getMessageList()
+			// 启动定时器
+			this.startMessageTimer()
 		}
 	},
 	onShow() {
@@ -187,7 +190,17 @@ export default {
 		if (this.isLogin) {
 			this.checkShopExamineStatus()
 			this.getMessageList()
+			// 确保定时器在页面显示时启动
+			this.startMessageTimer()
 		}
+	},
+	onHide() {
+		// 页面隐藏时清除定时器
+		this.clearMessageTimer()
+	},
+	onUnload() {
+		// 页面卸载时清除定时器
+		this.clearMessageTimer()
 	},
 	methods: {
 		checkLoginStatus() {
@@ -299,13 +312,20 @@ export default {
 		},
 		goToEditProfile() {
 			uni.navigateTo({
-				url: '/pages/editMerchantProfile/editMerchantProfile',
+				url: '/packageMerchant/pages/editMerchantProfile/editMerchantProfile',
 				events: {
 					// 监听编辑页面传回的数据
 					updateUserInfo: (userInfo) => {
 						this.userInfo = userInfo
 						this.isLogin = true
 					}
+				},
+				fail: (err) => {
+					console.error('Navigation failed:', err)
+					uni.showToast({
+						title: '页面跳转失败',
+						icon: 'none'
+					})
 				}
 			})
 		},
@@ -318,7 +338,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/merchantPromotion/merchantPromotion',
+				url: '/packageMerchant/pages/merchantPromotion/merchantPromotion',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -337,7 +357,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myFavorites/myFavorites',
+				url: '/packageUser/pages/myFavorites/myFavorites',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -356,7 +376,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myCoupons/myCoupons',
+				url: '/packageUser/pages/myCoupons/myCoupons',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -375,7 +395,14 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myAssets/myAssets'
+				url: '/packageUser/pages/myAssets/myAssets',
+				fail: (err) => {
+					console.error('Navigation failed:', err)
+					uni.showToast({
+						title: '页面跳转失败',
+						icon: 'none'
+					})
+				}
 			})
 		},
 		goToMyMessage() {
@@ -388,7 +415,7 @@ export default {
 			}
 			
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage',
+				url: '/packageUser/pages/myMessage/myMessage',
 				events: {
 					// 监听消息页面返回时的刷新事件
 					refreshMessages: () => {
@@ -438,7 +465,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/merchantRepairOrder/merchantRepairOrder',
+				url: '/packageMerchant/pages/merchantRepairOrder/merchantRepairOrder',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -575,7 +602,14 @@ export default {
 		},
 		goToMerchantSettled() {
 			uni.navigateTo({
-				url: '/pages/merchantSettled/merchantSettled'
+				url: '/packageMerchant/pages/merchantSettled/merchantSettled',
+				fail: (err) => {
+					console.error('Navigation failed:', err)
+					uni.showToast({
+						title: '页面跳转失败',
+						icon: 'none'
+					})
+				}
 			})
 		},
 		async checkShopExamineStatus() {
@@ -652,6 +686,24 @@ export default {
 			} catch (err) {
 				console.error('Get message list error:', err)
 				this.messageList = []
+			}
+		},
+		// 添加启动定时器的方法
+		startMessageTimer() {
+			// 先清除可能存在的定时器
+			this.clearMessageTimer()
+			// 设置新的定时器，每10秒执行一次
+			this.messageTimer = setInterval(() => {
+				if (this.isLogin) {
+					this.getMessageList()
+				}
+			}, 10000)
+		},
+		// 添加清除定时器的方法
+		clearMessageTimer() {
+			if (this.messageTimer) {
+				clearInterval(this.messageTimer)
+				this.messageTimer = null
 			}
 		},
 	},

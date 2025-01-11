@@ -251,7 +251,7 @@ export default {
 		},
 		goToEditProfile() {
 			uni.navigateTo({
-				url: '/pages/supplyChainEditProfile/supplyChainEditProfile',
+				url: '/packageSupplyChain/pages/supplyChainEditProfile/supplyChainEditProfile',
 				events: {
 					// 监听编辑页面传回的数据
 					updateUserInfo: (userInfo) => {
@@ -324,7 +324,7 @@ export default {
 			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
 			
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage'
+				url: '/packageUser/pages/myMessage/myMessage'
 			})
 		},
 		goToMessageDetail(message) {
@@ -349,7 +349,7 @@ export default {
 			
 			// 跳转到消息列表页面
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage?autoOpen=true'
+				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true'
 			})
 		},
 		// 添加供应商入驻跳转方法
@@ -362,7 +362,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/supplyChainEntry/supplyChainEntry',
+				url: '/packageSupplyChain/pages/supplyChainEntry/supplyChainEntry',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({

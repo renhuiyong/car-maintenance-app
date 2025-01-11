@@ -114,14 +114,22 @@ export default {
 			
 			request,
 			messageList: [],
-			isLoading: false
+			isLoading: false,
+			messageTimer: null
 		}
 	},
 	onShow() {
 		this.checkLoginStatus()
 		if (this.isLogin) {
 			this.getMessageList()
+			this.startMessageTimer()
 		}
+	},
+	onHide() {
+		this.clearMessageTimer()
+	},
+	onUnload() {
+		this.clearMessageTimer()
 	},
 	methods: {
 		checkLoginStatus() {
@@ -193,6 +201,10 @@ export default {
 					this.isLogin = true
 					this.userInfo = userData
 					
+					// 登录成功后获取消息列表并启动定时器
+					this.getMessageList()
+					this.startMessageTimer()
+					
 					uni.showToast({
 						title: '登录成功',
 						icon: 'success'
@@ -212,7 +224,7 @@ export default {
 		},
 		goToEditProfile() {
 			uni.navigateTo({
-				url: '/pages/editProfile/editProfile'
+				url: '/packageUser/pages/editProfile/editProfile'
 			})
 		},
 		goToInvite() {
@@ -224,7 +236,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/invite/invite',
+				url: '/packageUser/pages/invite/invite',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -243,7 +255,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myFavorites/myFavorites',
+				url: '/packageUser/pages/myFavorites/myFavorites',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -262,7 +274,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myCoupons/myCoupons',
+				url: '/packageUser/pages/myCoupons/myCoupons',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -281,7 +293,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myAssets/myAssets'
+				url: '/packageUser/pages/myAssets/myAssets'
 			})
 		},
 		goToMyMessage() {
@@ -292,15 +304,8 @@ export default {
 				})
 				return
 			}
-			
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage?type=0',
-				events: {
-					// 监听消息页面返回时的刷新事件
-					refreshMessages: () => {
-						this.getMessageList()
-					}
-				}
+				url: '/packageUser/pages/myMessage/myMessage'
 			})
 		},
 		goToMessageDetail(message) {
@@ -317,22 +322,12 @@ export default {
 				title: message.title,
 				content: message.content,
 				time: message.time,
-				isRead: message.status === 1,
-				id: message.id,
-				businessId: message.businessId,
-				businessType: message.businessType,
-				status: message.status
+				isRead: message.isRead
 			}))
 			
 			// 跳转到消息列表页面
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage?autoOpen=true&type=0',
-				events: {
-					// 监听消息页面返回时的刷新事件
-					refreshMessages: () => {
-						this.getMessageList()
-					}
-				}
+				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true'
 			})
 		},
 		goToMyOrders() {
@@ -344,7 +339,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myOrders/myOrders',
+				url: '/packageOrder/pages/myOrders/myOrders',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -375,6 +370,20 @@ export default {
 			} catch (err) {
 				console.error('Get message list error:', err)
 				this.messageList = []
+			}
+		},
+		startMessageTimer() {
+			this.clearMessageTimer()
+			this.messageTimer = setInterval(() => {
+				if (this.isLogin) {
+					this.getMessageList()
+				}
+			}, 10000)
+		},
+		clearMessageTimer() {
+			if (this.messageTimer) {
+				clearInterval(this.messageTimer)
+				this.messageTimer = null
 			}
 		}
 	}

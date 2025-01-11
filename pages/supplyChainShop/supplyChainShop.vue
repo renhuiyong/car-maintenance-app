@@ -286,7 +286,7 @@ export default {
 			return this.categories[categoryIndex]?.items || [];
 		},
 
-		// 在 methods 中��改 switchCategory 方法
+		// 在 methods 中改 switchCategory 方法
 		switchCategory(index) {
 			if (this.currentCategory === index) return;
 			
@@ -388,7 +388,7 @@ export default {
 		
 		goToMerchant() {
 			uni.navigateTo({
-				url: `/pages/merchantDetails/merchantDetails?merchantId=${this.merchantId}`
+				url: `/packageMerchant/pages/merchantDetails/merchantDetails?merchantId=${this.merchantId}`
 			})
 		},
 		
@@ -479,7 +479,7 @@ export default {
 				.join('&');
 			
 			uni.navigateTo({
-				url: `/pages/supplyChainProductDetail/supplyChainProductDetail?${queryString}`
+				url: `/packageSupplyChain/pages/supplyChainProductDetail/supplyChainProductDetail?${queryString}`
 			});
 		},
 		
@@ -716,7 +716,7 @@ export default {
 				.join('&')
 			
 			uni.navigateTo({
-				url: `/pages/supplyChainShopAccessoryAdd/supplyChainShopAccessoryAdd?${query}`
+				url: `/packageSupplyChain/pages/supplyChainShopAccessoryAdd/supplyChainShopAccessoryAdd?${query}`
 			})
 		}
 	},

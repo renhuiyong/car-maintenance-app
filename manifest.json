@@ -77,7 +77,14 @@
             }
         },
         "lazyCodeLoading" : "requiredComponents",
-        "requiredPrivateInfos" : [ "getLocation", "chooseLocation" ]
+        "requiredPrivateInfos" : [ "getLocation", "chooseLocation" ],
+        "sdkConfigs": {
+            "maps": {
+                "qqmap": {
+                    "key": "F3BBZ-53LE7-XZVXL-PFRPE-5PP3Z-GUBTU"
+                }
+            }
+        }
     },
     "mp-alipay" : {
         "usingComponents" : true,

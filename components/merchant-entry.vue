@@ -16,7 +16,7 @@ export default {
   methods: {
     goToMerchantDetails() {
       uni.navigateTo({
-        url: `/pages/merchantDetails/merchantDetails?id=${this.merchantId}`
+        url: `/packageMerchant/pages/merchantDetails/merchantDetails?id=${this.merchantId}`
       })
     }
   }

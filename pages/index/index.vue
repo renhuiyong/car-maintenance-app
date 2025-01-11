@@ -531,7 +531,7 @@
 				this.$nextTick(() => {
 					setTimeout(() => {
 						uni.navigateTo({
-							url: `/pages/merchantDetails/merchantDetails?shopId=${shop.id}&latitude=${this.latitude}&longitude=${this.longitude}`
+							url: `/packageMerchant/pages/merchantDetails/merchantDetails?shopId=${shop.id}&latitude=${this.latitude}&longitude=${this.longitude}`
 						})
 					}, 300)
 				})

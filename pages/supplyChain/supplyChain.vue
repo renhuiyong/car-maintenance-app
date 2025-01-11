@@ -16,9 +16,9 @@
   </template>
   
   <script>
-  import SupplyChainIndex from '../supplyChainIndex/supplyChainIndex.vue'
-  import SupplyChainShop from '../supplyChainShop/supplyChainShop.vue'
-  import SupplyChainMy from '../supplyChainMy/supplyChainMy.vue'
+  import SupplyChainIndex from '../../pages/supplyChainIndex/supplyChainIndex.vue'
+  import SupplyChainShop from '../../pages/supplyChainShop/supplyChainShop.vue'
+  import SupplyChainMy from '../../pages/supplyChainMy/supplyChainMy.vue'
   import SupplyChainTabbar from '../../components/supply-chain-tabbar/supply-chain-tabbar.vue'
   
   export default {

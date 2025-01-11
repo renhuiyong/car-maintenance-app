@@ -141,7 +141,7 @@
       initShareConfig() {
         this.shareConfig = {
           title: this.merchantInfo.shopName,
-          path: `/pages/merchantDetails/merchantDetails?id=${this.merchantId}`,
+          path: `/packageMerchant/pages/merchantDetails/merchantDetails?id=${this.merchantId}`,
           imageUrl: ''
         }
       },

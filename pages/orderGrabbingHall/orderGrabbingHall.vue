@@ -10,38 +10,57 @@
 			:refresher-triggered="isRefreshing" 
 			@refresherrefresh="onRefresh"
 		>
-			<view class="order-item" v-for="(item, index) in orderList" :key="index">
-				<view class="time-distance">
-					<text class="time">{{ item.time }}</text>
-					<text class="distance">{{ item.distance }}</text>
-				</view>
-				<view class="location">
-					<text>{{ item.location }}</text>
-				</view>
-				<view class="description">
-					<text>{{ item.description }}</text>
-				</view>
-				<view class="price-action">
-					<view class="price-wrapper">
-						<text class="label">托运金额  </text>
-						<text class="price">¥{{ item.price }}</text>
+			<!-- 骨架屏 -->
+			<template v-if="loading">
+				<view class="skeleton-item" v-for="i in 3" :key="i">
+					<view class="skeleton-header">
+						<view class="skeleton-time"></view>
+						<view class="skeleton-distance"></view>
 					</view>
-					<button class="grab-btn" @tap="grabOrder(item)" :style="{ opacity: item.grabbed ? 0.5 : 1 }">
-						{{ item.grabbed ? '已抢单' : '马上抢' }}
-					</button>
+					<view class="skeleton-location"></view>
+					<view class="skeleton-description"></view>
+					<view class="skeleton-footer">
+						<view class="skeleton-price"></view>
+						<view class="skeleton-button"></view>
+					</view>
 				</view>
-			</view>
-			
-			<!-- 加载更多 -->
-			<view class="loading-more" v-if="orderList.length > 0">
-				{{ hasMore ? '加载中...' : '没有更多了' }}
-			</view>
-			
-			<!-- 空状态 -->
-			<view class="empty-state" v-if="orderList.length === 0">
-				<image src="/static/images/empty.png" mode="aspectFit"></image>
-				<text>暂无可抢订单</text>
-			</view>
+			</template>
+
+			<!-- 订单列表内容 -->
+			<template v-else>
+				<view class="order-item" v-for="(item, index) in orderList" :key="index" @tap="goToDetail(item)">
+					<view class="time-distance">
+						<text class="time">{{ item.createTime }}</text>
+						<text class="distance">{{ formatDistance(item.distance) }}</text>
+					</view>
+					<view class="location">
+						<text>{{ item.contactAddress }}</text>
+					</view>
+					<view class="description">
+						<text>{{ item.description }}</text>
+					</view>
+					<view class="price-action">
+						<view class="price-wrapper">
+							<text class="label">是否托运  </text>
+							<text class="price">{{ item.needTransport === 1 ? '需要' : '不需要' }}</text>
+						</view>
+						<button class="grab-btn" @tap.stop="grabOrder(item)" :style="{ opacity: item.grabStatus === 1 ? 0.5 : 1 }">
+							{{ item.grabStatus === 1 ? '已抢单' : '马上抢' }}
+						</button>
+					</view>
+				</view>
+				
+				<!-- 加载更多 -->
+				<view class="loading-more" v-if="orderList.length > 0">
+					{{ hasMore ? '加载中...' : '没有更多了' }}
+				</view>
+				
+				<!-- 空状态 -->
+				<view class="empty-state" v-if="orderList.length === 0">
+					<image src="/static/images/empty.png" mode="aspectFit"></image>
+					<text>暂无可抢订单</text>
+				</view>
+			</template>
 		</scroll-view>
 		
 		<!-- 未通过审核时的状态页面 -->
@@ -53,74 +72,105 @@
 </template>
 
 <script>
-	import api from '@/api/index.js'
+	import api from '../../api/index.js'
+	import request from '../../utils/request.js'
 	
 	export default {
 		data() {
 			return {
-				orderList: [
-					{
-						id: 1,
-						time: '24-08-08 11:00',
-						location: '淮北市中医院附近',
-						distance: '0.6KM',
-						description: '车辆无法启动，需要现场维修',
-						price: '180',
-						grabbed: false
-					},
-					{
-						id: 2,
-						time: '24-08-08 10:45',
-						location: '淮北市人民医院东门',
-						distance: '1.2KM',
-						description: '轮胎漏气，需要更换备胎',
-						price: '120',
-						grabbed: false
-					},
-					{
-						id: 3,
-						time: '24-08-08 10:30',
-						location: '淮北市第一中学',
-						distance: '2.1KM',
-						description: '发动机故障灯亮起，需要检查',
-						price: '150',
-						grabbed: true
-					},
-					{
-						id: 4,
-						time: '24-08-08 10:15',
-						location: '淮北市政府大楼',
-						distance: '2.8KM',
-						description: '空调不制冷，需要加制冷剂',
-						price: '200',
-						grabbed: false
-					},
-					{
-						id: 5,
-						time: '24-08-08 10:00',
-						location: '淮北火车站',
-						distance: '3.5KM',
-						description: '刹车系统异响，需要检查维修',
-						price: '160',
-						grabbed: false
-					}
-				],
+				orderList: [],
 				page: 1,
 				hasMore: true,
 				isRefreshing: false,
 				examineStatus: null,
-				showContent: false
+				showContent: true,
+				latitude: '',
+				longitude: '',
+				loading: true
 			}
 		},
 		created() {
-			this.checkShopStatus()
+			// 先检查位置权限
+			this.checkLocationAuth()
 		},
 		onLoad() {
-			if (this.showContent) {
-				this.loadOrders()
-			}
+			// 移除这里的加载，统一由checkShopStatus来控制
 		},
 		methods: {
+			// 检查位置权限
+			checkLocationAuth() {
+				uni.getSetting({
+					success: (res) => {
+						if (!res.authSetting['scope.userLocation']) {
+							// 未授权，显示授权弹窗
+							uni.authorize({
+								scope: 'scope.userLocation',
+								success: () => {
+									// 授权成功，获取位置并检查商家状态
+									this.getLocation().then(() => {
+										this.checkShopStatus()
+									})
+								},
+								fail: () => {
+									// 拒绝授权，引导用户去设置页面开启
+									uni.showModal({
+										title: '提示',
+										content: '需要获取您的位置信息，请在设置中打开位置权限',
+										confirmText: '去设置',
+										success: (res) => {
+											if (res.confirm) {
+												uni.openSetting({
+													success: (settingRes) => {
+														if (settingRes.authSetting['scope.userLocation']) {
+															// 设置页面开启后，获取位置并检查商家状态
+															this.getLocation().then(() => {
+																this.checkShopStatus()
+															})
+														} else {
+															uni.showToast({
+																title: '获取位置权限失败',
+																icon: 'none',
+																duration: 2000
+															})
+															setTimeout(() => {
+																uni.navigateBack()
+															}, 2000)
+														}
+													}
+												})
+											} else {
+												uni.showToast({
+													title: '需要位置权限才能抢单',
+													icon: 'none',
+													duration: 2000
+												})
+												setTimeout(() => {
+													uni.navigateBack()
+												}, 2000)
+											}
+										}
+									})
+								}
+							})
+						} else {
+							// 已授权，直接获取位置并检查商家状态
+							this.getLocation().then(() => {
+								this.checkShopStatus()
+							})
+						}
+					},
+					fail: () => {
+						uni.showToast({
+							title: '获取授权信息失败',
+							icon: 'none',
+							duration: 2000
+						})
+						setTimeout(() => {
+							uni.navigateBack()
+						}, 2000)
+					}
+				})
+			},
 			// 检查商家状态
 			async checkShopStatus() {
 				try {
@@ -170,29 +220,84 @@
 					setTimeout(() => {
 							uni.navigateBack()
 					}, 2000)
+				} finally {
+					// 如果不是已通过状态，关闭loading
+					if (this.examineStatus !== 3) {
+						this.loading = false
+					}
 				}
+			},
+			// 获取当前位置
+			getLocation() {
+				return new Promise((resolve, reject) => {
+					uni.getLocation({
+						type: 'gcj02',
+						success: (res) => {
+							this.latitude = res.latitude
+							this.longitude = res.longitude
+							resolve()
+						},
+						fail: (err) => {
+							uni.showToast({
+								title: '获取位置失败，请检查定位权限',
+								icon: 'none',
+								duration: 2000
+							})
+							reject(err)
+						}
+					})
+				})
 			},
 			// 加载订单列表
 			async loadOrders() {
+				// 如果没有经纬度，重新获取位置
+				if (!this.latitude || !this.longitude) {
+					try {
+						await this.getLocation()
+					} catch (e) {
+						uni.showToast({
+							title: '无法获取位置信息，请检查定位权限',
+							icon: 'none',
+							duration: 2000
+						})
+						return
+					}
+				}
+				
+				// 第一页时显示骨架屏
+				if (this.page === 1) {
+					this.loading = true
+				}
+				
 				try {
-					// TODO: 调用后端接口获取订单列表
-					const res = await api.repair.getOrderList({
-						page: this.page,
-						pageSize: 10
+					const res = await api.merchant.getGrabOrderList({
+						pageNum: this.page,
+						pageSize: 10,
+						latitude: this.latitude,
+						longitude: this.longitude
 					})
 					
-					if (this.page === 1) {
-						this.orderList = res.data.rows || this.orderList
+					if (res.code === 200) {
+						if (this.page === 1) {
+							this.orderList = res.data || []
+						} else {
+							this.orderList = [...this.orderList, ...(res.data || [])]
+						}
+						
+						this.hasMore = res.data?.length === 10
 					} else {
-						this.orderList = [...this.orderList, ...(res.data.rows || [])]
+						uni.showToast({
+							title: res.msg || '加载失败',
+							icon: 'none'
+						})
 					}
-					
-					this.hasMore = res.data.rows?.length === 10
 				} catch (e) {
 					uni.showToast({
 						title: '加载失败',
 						icon: 'none'
 					})
+				} finally {
+					this.loading = false
 				}
 			},
 			
@@ -201,6 +306,18 @@
 				if (!this.hasMore) return
 				this.page++
 				this.loadOrders()
+			},
+			
+			// 格式化距离显示
+			formatDistance(distance) {
+				const meters = distance * 1000;
+				if (meters >= 1000) {
+					// 大于等于1000米时显示千米，保留一位小数
+					return `${(meters / 1000).toFixed(1)}km`;
+				} else {
+					// 小于1000米时显示米，不带小数
+					return `${Math.round(meters)}m`;
+				}
 			},
 			
 			// 下拉刷新
@@ -213,7 +330,7 @@
 			
 			// 抢单
 			async grabOrder(item) {
-				if (item.grabbed) {
+				if (item.grabStatus === 1) {
 					uni.showToast({
 						title: '该订单已被抢',
 						icon: 'none'
@@ -221,27 +338,48 @@
 					return
 				}
 				
-				try {
-					await api.repair.submit({
-						orderId: item.id
-					})
-					
-					// 更新本地状态
-					const index = this.orderList.findIndex(order => order.id === item.id)
-					if (index !== -1) {
-						this.orderList[index].grabbed = true
+				// 显示确认弹窗
+				uni.showModal({
+					title: '确认抢单',
+					content: '确定要抢这个订单吗？',
+					success: async (res) => {
+						if (res.confirm) {
+							try {
+								const res = await api.merchant.grabOrder({
+									orderId: item.orderId
+								})
+								
+								if (res.code === 200) {
+									// 更新本地状态
+									const index = this.orderList.findIndex(order => order.orderId === item.orderId)
+									if (index !== -1) {
+										this.orderList[index].grabStatus = 1
+									}
+									
+									uni.showToast({
+										title: '抢单成功',
+										icon: 'success'
+									})
+								} else if (res.code === 500) {
+									uni.showToast({
+										title: res.msg ,
+										icon: 'none'
+									})
+								} else {
+									uni.showToast({
+										title: res.msg || '抢单失败',
+										icon: 'none'
+									})
+								}
+							} catch (e) {
+								uni.showToast({
+									title: e.msg || e.message || '抢单失败',
+									icon: 'none'
+								})
+							}
+						}
 					}
-					
-					uni.showToast({
-						title: '抢单成功',
-						icon: 'success'
-					})
-				} catch (e) {
-					uni.showToast({
-						title: e.message || '抢单失败',
-						icon: 'none'
-					})
-				}
+				})
 			},
 			
 			// 获取状态信息
@@ -260,6 +398,13 @@
 					default:
 						return '暂时无法抢单'
 				}
+			},
+			
+			// 跳转到详情页
+			goToDetail(item) {
+				uni.navigateTo({
+					url: `/pages/orderGrabbingHallDetail/orderGrabbingHallDetail?orderId=${item.orderId}`
+				})
 			},
 		}
 	}
@@ -281,32 +426,45 @@
 				background-color: #fff;
 				border-radius: 16rpx;
 				box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+				position: relative;
+				
+				&:active {
+					opacity: 0.7;
+				}
 				
 				.time-distance {
 					display: flex;
 					justify-content: space-between;
+					align-items: center;
 					margin-bottom: 20rpx;
 					
 					.time {
 						font-size: 28rpx;
 						color: #333;
 						font-weight: 500;
+						line-height: 40rpx;
 					}
 					
 					.distance {
 						font-size: 28rpx;
 						color: #999;
+						line-height: 40rpx;
 					}
 				}
 				
 				.location {
 					margin-bottom: 20rpx;
+					display: flex;
+					align-items: center;
 					
 					text {
 						font-size: 28rpx;
 						color: #666;
 						position: relative;
 						padding-left: 24rpx;
+						line-height: 40rpx;
+						display: flex;
+						align-items: center;
 						
 						&::before {
 							content: '';
@@ -327,11 +485,13 @@
 					padding: 24rpx;
 					background-color: #F8F9FC;
 					border-radius: 12rpx;
+					display: flex;
+					align-items: center;
 					
 					text {
 						font-size: 28rpx;
 						color: #666;
-						line-height: 1.5;
+						line-height: 40rpx;
 					}
 				}
 				
@@ -348,26 +508,29 @@
 							font-size: 26rpx;
 							color: #999;
 							margin-right: 16rpx;
-							line-height: 1;
+							line-height: 40rpx;
 						}
 						
 						.price {
 							font-size: 32rpx;
 							color: #333;
 							font-weight: bold;
-							line-height: 1;
+							line-height: 40rpx;
 						}
 					}
 					
 					.grab-btn {
 						margin: 0;
-						padding: 16rpx 48rpx;
+						padding: 0 48rpx;
+						height: 72rpx;
 						background-color: #FF6B00;
 						color: #fff;
 						font-size: 28rpx;
-						border-radius: 30rpx;
+						border-radius: 36rpx;
 						border: none;
-						line-height: 1.5;
+						display: flex;
+						align-items: center;
+						justify-content: center;
 						transition: all 0.3s ease;
 						
 						&::after {
@@ -387,11 +550,16 @@
 				font-size: 24rpx;
 				color: #999;
 				padding: 30rpx 0;
+				line-height: 40rpx;
 			}
 			
 			.empty-state {
 				padding-top: 200rpx;
 				text-align: center;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
 				
 				image {
 					width: 240rpx;
@@ -402,6 +570,85 @@
 				text {
 					font-size: 28rpx;
 					color: #999;
+					line-height: 40rpx;
+				}
+			}
+			
+			// 骨架屏样式
+			.skeleton-item {
+				margin-bottom: 20rpx;
+				padding: 30rpx;
+				background-color: #fff;
+				border-radius: 16rpx;
+				box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.04);
+				
+				.skeleton-header {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					margin-bottom: 20rpx;
+					
+					.skeleton-time {
+						width: 200rpx;
+						height: 32rpx;
+						background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+						background-size: 400% 100%;
+						animation: skeleton-loading 1.4s ease infinite;
+						border-radius: 4rpx;
+					}
+					
+					.skeleton-distance {
+						width: 100rpx;
+						height: 32rpx;
+						background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+						background-size: 400% 100%;
+						animation: skeleton-loading 1.4s ease infinite;
+						border-radius: 4rpx;
+					}
+				}
+				
+				.skeleton-location {
+					width: 60%;
+					height: 32rpx;
+					background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+						background-size: 400% 100%;
+						animation: skeleton-loading 1.4s ease infinite;
+						margin-bottom: 20rpx;
+						border-radius: 4rpx;
+				}
+				
+				.skeleton-description {
+					width: 100%;
+					height: 120rpx;
+					background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+					background-size: 400% 100%;
+					animation: skeleton-loading 1.4s ease infinite;
+					margin-bottom: 24rpx;
+					border-radius: 12rpx;
+				}
+				
+				.skeleton-footer {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					
+					.skeleton-price {
+						width: 200rpx;
+						height: 32rpx;
+						background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+						background-size: 400% 100%;
+						animation: skeleton-loading 1.4s ease infinite;
+						border-radius: 4rpx;
+					}
+					
+					.skeleton-button {
+						width: 160rpx;
+						height: 72rpx;
+						background: linear-gradient(90deg, #f2f2f2 25%, #e6e6e6 37%, #f2f2f2 63%);
+						background-size: 400% 100%;
+						animation: skeleton-loading 1.4s ease infinite;
+						border-radius: 36rpx;
+					}
 				}
 			}
 		}
@@ -426,23 +673,18 @@
 				font-size: 32rpx;
 				color: #666;
 				text-align: center;
+				line-height: 40rpx;
 				margin-bottom: 60rpx;
 			}
-			
-			.apply-btn {
-				width: 80%;
-				height: 88rpx;
-				line-height: 88rpx;
-				background: #FF6B00;
-				color: #fff;
-				font-size: 32rpx;
-				border-radius: 44rpx;
-				border: none;
-				
-				&:active {
-					opacity: 0.8;
-				}
-			}
+		}
+	}
+	
+	@keyframes skeleton-loading {
+		0% {
+			background-position: 100% 50%;
+		}
+		100% {
+			background-position: 0 50%;
 		}
 	}
 </style> 

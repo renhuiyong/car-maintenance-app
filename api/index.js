@@ -137,6 +137,11 @@ const api = {
         // 获取商品订单列表
         getShopOrderList(params) {
             return request.get('/web/user/shopOrder/getShopOrderList', params)
+        },
+
+        // 检查是否第一次购买维修配件
+        checkFirstPurchase(repairOrderId) {
+            return request.get(`/web/user/shopOrder/checkFirstPurchase/${repairOrderId}`)
         }
     },
 
@@ -202,7 +207,32 @@ const api = {
         // 阅读通知
         readNotification(id) {
             return request.post(`/web/merchant/order/readNotification/${id}`)
-        }
+        },
+          // 获取商品订单列表
+          getMerchantShopOrderList(params) {
+            return request.get('/web/merchant/order/getMerchantShopOrderList', params)
+        },
+        // 取消商品订单
+        cancelOrder(data) {
+            return request.post('/web/merchant/order/merchantCancelShopOrder', data)
+        },
+        // 取消维修订单
+        merchantCancelRepairOrder(data) {
+            return request.post('/web/merchant/order/merchantCancelRepairOrder', data)
+        },
+        // 获取抢单大厅列表
+        getGrabOrderList(params) {
+            return request.post('/web/merchant/order/getGrabOrderList', params)
+        },
+        // 商家抢单
+        grabOrder(data) {
+            return request.post(`/web/merchant/order/grabOrder/${data.orderId}`)
+        },
+        // 获取抢单详情
+        getGrabOrderDetail(data) {
+            return request.get(`/web/merchant/order/grabOrderDetail/${data.orderId}`)
+        },
+
       
     },
     common: {

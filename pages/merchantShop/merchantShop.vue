@@ -145,8 +145,8 @@
 </template>
 
 <script>
-import api from '@/api/index.js'
-import request from '@/utils/request.js'
+import api from '../../api/index.js'
+import request from '../../utils/request.js'
 
 // 在 methods 外部定义节流函数
 const throttle = function(fn, delay) {
@@ -420,7 +420,7 @@ export default {
 		
 		goToMerchant() {
 			uni.navigateTo({
-				url: `/pages/merchantDetails/merchantDetails?merchantId=${this.merchantId}`
+				url: `/packageMerchant/pages/merchantDetails/merchantDetails?merchantId=${this.merchantId}`
 			})
 		},
 		
@@ -508,7 +508,7 @@ export default {
 				.join('&');
 			
 			uni.navigateTo({
-				url: `/pages/merchantProductDetail/merchantProductDetail?${queryString}`
+				url: `/packageMerchant/pages/merchantProductDetail/merchantProductDetail?${queryString}`
 			});
 		},
 		
