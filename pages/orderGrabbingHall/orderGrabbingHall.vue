@@ -2,6 +2,7 @@
 	<view class="order-grabbing-hall">
 		<!-- 订单列表 -->
 		<scroll-view 
+			v-if="showContent"
 			scroll-y 
 			class="order-list" 
 			@scrolltolower="loadMore" 
@@ -42,10 +43,18 @@
 				<text>暂无可抢订单</text>
 			</view>
 		</scroll-view>
+		
+		<!-- 未通过审核时的状态页面 -->
+		<view v-else class="status-page">
+			<image class="status-icon" src="/static/images/empty.png" mode="aspectFit"></image>
+			<text class="status-text">{{ getStatusMessage() }}</text>
+		</view>
 	</view>
 </template>
 
 <script>
+	import api from '@/api/index.js'
+	
 	export default {
 		data() {
 			return {
@@ -98,22 +107,78 @@
 				],
 				page: 1,
 				hasMore: true,
-				isRefreshing: false
+				isRefreshing: false,
+				examineStatus: null,
+				showContent: false
 			}
 		},
+		created() {
+			this.checkShopStatus()
+		},
 		onLoad() {
-			this.loadOrders()
+			if (this.showContent) {
+				this.loadOrders()
+			}
 		},
 		methods: {
+			// 检查商家状态
+			async checkShopStatus() {
+				try {
+					const res = await api.merchant.getShopSelfExamineStatus()
+					if (res.code === 200) {
+						const status = res.data.examineStatus
+						this.examineStatus = status
+						this.showContent = status === 3
+						// 只有状态为3(已通过)才能查看抢单大厅
+						if (status !== 3) {
+							let message = ''
+							switch (status) {
+								case 0:
+									message = '您的入驻申请正在审核中'
+									break
+								case 1:
+									message = '请先缴纳保证金'
+									break
+								case 2:
+									message = '等待平台审核保证金'
+									break
+								case 4:
+									message = '很抱歉，您的入驻申请未通过'
+									break
+								case 5:
+									message = '请先完成商家入驻申请'
+									break
+								default:
+									message = '暂时无法抢单'
+							}
+							
+							uni.showToast({
+								title: message,
+								icon: 'none',
+								duration: 2000
+							})
+						} else {
+							// 状态为3时加载订单
+							this.loadOrders()
+						}
+					}
+				} catch (e) {
+					uni.showToast({
+						title: '获取商家状态失败',
+						icon: 'none'
+					})
+					setTimeout(() => {
+							uni.navigateBack()
+					}, 2000)
+				}
+			},
 			// 加载订单列表
 			async loadOrders() {
 				try {
 					// TODO: 调用后端接口获取订单列表
-					const res = await this.$http.get('/repair/order/grab/list', {
-						params: {
-							page: this.page,
-							pageSize: 10
-						}
+					const res = await api.repair.getOrderList({
+						page: this.page,
+						pageSize: 10
 					})
 					
 					if (this.page === 1) {
@@ -157,7 +222,7 @@
 				}
 				
 				try {
-					await this.$http.post('/repair/order/grab', {
+					await api.repair.submit({
 						orderId: item.id
 					})
 					
@@ -177,7 +242,25 @@
 						icon: 'none'
 					})
 				}
-			}
+			},
+			
+			// 获取状态信息
+			getStatusMessage() {
+				switch (this.examineStatus) {
+					case 0:
+						return '您的入驻申请正在审核中'
+					case 1:
+						return '请先缴纳保证金'
+					case 2:
+						return '等待平台审核保证金'
+					case 4:
+						return '很抱歉，您的入驻申请未通过'
+					case 5:
+						return '请先完成商家入驻申请'
+					default:
+						return '暂时无法抢单'
+				}
+			},
 		}
 	}
 </script>
@@ -319,6 +402,45 @@
 				text {
 					font-size: 28rpx;
 					color: #999;
+				}
+			}
+		}
+		
+		.status-page {
+			height: 100vh;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 0 40rpx;
+			box-sizing: border-box;
+			background-color: #fff;
+			
+			.status-icon {
+				width: 240rpx;
+				height: 240rpx;
+				margin-bottom: 40rpx;
+			}
+			
+			.status-text {
+				font-size: 32rpx;
+				color: #666;
+				text-align: center;
+				margin-bottom: 60rpx;
+			}
+			
+			.apply-btn {
+				width: 80%;
+				height: 88rpx;
+				line-height: 88rpx;
+				background: #FF6B00;
+				color: #fff;
+				font-size: 32rpx;
+				border-radius: 44rpx;
+				border: none;
+				
+				&:active {
+					opacity: 0.8;
 				}
 			}
 		}

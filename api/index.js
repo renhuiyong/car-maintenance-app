@@ -40,6 +40,10 @@ const api = {
         getPromotionCode() {
             return request.post('/web/user/getPromotionCode')
         },
+           // 获取消息通知列表
+        getNotificationList(params) {
+            return request.get('/web/repair/order/notificationList', params)
+        },
     },
 
     // 维修相关接口
@@ -64,6 +68,14 @@ const api = {
         // 获取商家回复
         getMerchantResponse(params) {
             return request.get('/web/repair/order/merchantResponse', params)
+        },
+        // 获取订单详情
+        getOrderDetail(id) {
+            return request.get(`/web/repair/order/orderDetail/${id}`)
+        },
+        // 获取维修配件信息
+        getRepairParts(type, repairOrderId) {
+            return request.get(`/web/user/shopOrder/getRepairParts/${type}/${repairOrderId}`)
         },
     },
 
@@ -120,6 +132,11 @@ const api = {
         // 取消订单
         cancel(orderId) {
             return request.post(`/order/cancel/${orderId}`)
+        },
+
+        // 获取商品订单列表
+        getShopOrderList(params) {
+            return request.get('/web/user/shopOrder/getShopOrderList', params)
         }
     },
 
@@ -141,6 +158,10 @@ const api = {
            // 商户微信登录
         wxMerchantLogin(data) {
             return request.post('/wx/miniapp/merchantLogin', data)
+        },
+        // 获取商家审核状态
+        getShopSelfExamineStatus() {
+            return request.get('/web/shop/getShopSelfExamineStatus')
         },
         // 更新商户资料
         updateMerchantProfile(data) {
@@ -165,6 +186,22 @@ const api = {
         // 商家回复订单
         merchantToResponse(data) {
             return request.post('/web/merchant/order/merchantToResponse', data)
+        },
+        // 开始维修
+        startRepair(orderId) {
+            return request.post(`/web/merchant/order/startRepair/${orderId}`)
+        },
+        // 完成维修
+        finishRepair(orderId) {
+            return request.post(`/web/merchant/order/finishRepair/${orderId}`)
+        },
+        // 获取消息通知列表
+        getNotificationList(params) {
+            return request.get('/web/merchant/order/notificationList', params)
+        },
+        // 阅读通知
+        readNotification(id) {
+            return request.post(`/web/merchant/order/readNotification/${id}`)
         }
       
     },

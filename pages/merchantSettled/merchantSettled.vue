@@ -211,7 +211,7 @@
     <transition name="fade-slide">
       <view class="verify-section" v-if="currentTab === 2">
         <!-- 审核中状态 -->
-        <view class="verify-content" v-if="auditStatus === 0">
+        <view class="verify-content" v-if="examineStatus === 0">
           <view class="success-wrapper">
             <image src="/static/images/success.png" class="verify-icon" mode="aspectFit"></image>
             <text class="verify-title">提交成功，请等待审核验证</text>
@@ -219,8 +219,8 @@
           </view>
         </view>
         
-        <!-- 审核通过状态 -->
-        <view class="verify-content" v-else>
+        <!-- 已审核未付保证金状态 -->
+        <view class="verify-content" v-if="examineStatus === 1">
           <view class="verify-header">
             <text>审核验证已完成，恭喜入驻电动车供配修服务。请上传店铺押金付款凭证</text>
           </view>
@@ -250,6 +250,16 @@
                 <image src="/static/images/xiangji.png" class="camera-icon"></image>
               </view>
             </view>
+            <button class="submit-btn" @tap="submitPaymentProof">提交凭证</button>
+          </view>
+        </view>
+
+        <!-- 已付保证金状态 -->
+        <view class="verify-content" v-if="examineStatus === 2">
+          <view class="success-wrapper">
+            <image src="/static/images/success.png" class="verify-icon" mode="aspectFit"></image>
+            <text class="verify-title">保证金已提交，请等待最终审核</text>
+            <button class="back-home-btn" @tap="backToHome">返回首页</button>
           </view>
         </view>
       </view>
@@ -286,6 +296,7 @@ export default {
       tabs: ['店铺信息', '资质信息', '审核验证'],
       currentTab: 0,
       auditStatus: 0,
+      examineStatus: 5,
       formData: {
         shopName: '',
         contact: '',
@@ -311,9 +322,26 @@ export default {
     }
   },
   
+  onShow() {
+    // 检查商家审核状态
+    this.checkExamineStatus()
+  },
+  
   methods: {
     switchTab(index) {
-      return
+      // 只有未申请和审核失败状态可以切换tab
+      if (this.examineStatus !== 5 && this.examineStatus !== 4) {
+        return
+      }
+      
+      if (index < this.currentTab) {
+        this.currentTab = index
+      } else if (index === 1 && this.currentTab === 0) {
+        if (!this.validateForm()) {
+          return
+        }
+        this.currentTab = index
+      }
     },
     
     chooseImage() {
@@ -462,7 +490,7 @@ export default {
       // 验证第二位
       if (value.length === 2 && !['3','4','5','6','7','8','9'].includes(value[1])) {
         value = '1'
-        this.showToast('请��入正确的手机号')
+        this.showToast('请输入正确的手机号')
       }
       
       this.formData.phone = value
@@ -777,6 +805,99 @@ export default {
       uni.redirectTo({
         url: '/pages/merchant/merchant'
       })
+    },
+    
+    // 添加检查状态方法
+    async checkExamineStatus() {
+      try {
+        const res = await api.merchant.getShopSelfExamineStatus()
+        if (res.code === 200) {
+          this.examineStatus = res.data.examineStatus
+          
+          // 根据状态设置页面显示
+          switch(this.examineStatus) {
+            case 0: // 未审核
+              this.currentTab = 2
+              this.auditStatus = 0
+              break
+            case 1: // 已审核未付保证金
+              this.currentTab = 2
+              this.auditStatus = 1
+              break
+            case 2: // 已付保证金
+              this.currentTab = 2
+              this.auditStatus = 2
+              break
+            case 3: // 已通过
+              uni.redirectTo({
+                url: '/pages/merchant/merchant'
+              })
+              break
+            case 4: // 审核失败
+              this.currentTab = 0
+              uni.showModal({
+                title: '提示',
+                content: '您的入驻申请审核未通过，请重新提交',
+                showCancel: false
+              })
+              break
+            case 5: // 未申请
+              this.currentTab = 0
+              break
+          }
+        }
+      } catch (error) {
+        uni.showToast({
+          title: error.message || '获取状态失败',
+          icon: 'none'
+        })
+      }
+    },
+    
+    // 提交付款凭证
+    async submitPaymentProof() {
+      if (this.formData.paymentProofs.length === 0) {
+        this.showToast('请上传付款凭证')
+        return
+      }
+
+      uni.showLoading({
+        title: '提交中...',
+        mask: true
+      })
+
+      try {
+        // 上传付款凭证图片
+        const uploadPromises = this.formData.paymentProofs.map(path => this.uploadImage(path))
+        const results = await Promise.all(uploadPromises)
+        
+        // 构建提交数据
+        const submitData = {
+          paymentProofs: results.map(img => img.fileName).join(',')
+        }
+
+        // 调用提交接口
+        const res = await api.merchant.submitPaymentProof(submitData)
+        if (res.code === 200) {
+          uni.showToast({
+            title: '提交成功',
+            icon: 'success'
+          })
+          // 重新检查状态
+          setTimeout(() => {
+            this.checkExamineStatus()
+          }, 1500)
+        } else {
+          throw new Error(res.message || '提交失败')
+        }
+      } catch (error) {
+        uni.showToast({
+          title: error.message || '提交失败',
+          icon: 'none'
+        })
+      } finally {
+        uni.hideLoading()
+      }
     }
   }
 }
@@ -1307,6 +1428,88 @@ export default {
         &:active {
           background-color: #f8f8f8;
         }
+      }
+    }
+  }
+}
+
+.verify-content {
+  .upload-payment {
+    padding: 30rpx;
+    
+    .upload-title {
+      font-size: 32rpx;
+      color: #333;
+      font-weight: bold;
+      margin-bottom: 20rpx;
+    }
+    
+    .upload-content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20rpx;
+      margin-bottom: 40rpx;
+      
+      .upload-item-wrap {
+        position: relative;
+        width: 240rpx;
+        height: 160rpx;
+        
+        .preview-image {
+          width: 100%;
+          height: 100%;
+          border-radius: 8rpx;
+          border: 2rpx solid #eee;
+        }
+        
+        .delete-btn {
+          position: absolute;
+          top: -16rpx;
+          right: -16rpx;
+          width: 32rpx;
+          height: 32rpx;
+          line-height: 32rpx;
+          text-align: center;
+          background: rgba(0,0,0,0.5);
+          color: #fff;
+          border-radius: 50%;
+          font-size: 24rpx;
+        }
+      }
+      
+      .upload-btn {
+        width: 240rpx;
+        height: 160rpx;
+        border: 4rpx dashed #ddd;
+        border-radius: 8rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        
+        .camera-icon {
+          width: 48rpx;
+          height: 48rpx;
+        }
+        
+        &:active {
+          background-color: #f8f8f8;
+        }
+      }
+    }
+    
+    .submit-btn {
+      width: 100%;
+      height: 88rpx;
+      line-height: 88rpx;
+      text-align: center;
+      background: #ff6b00;
+      color: #fff;
+      font-size: 32rpx;
+      border-radius: 44rpx;
+      margin-top: 40rpx;
+      
+      &:active {
+        opacity: 0.8;
       }
     }
   }

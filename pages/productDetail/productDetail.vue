@@ -1,31 +1,50 @@
 <template>
-	<view class="container">
-		<!-- 商品详情 -->
-		<view class="product-info">
-			<image class="product-image" :src="product.image" mode="aspectFit" @error="handleImageError"></image>
-			<view class="info-content">
-				<view class="info-header">
-					<view class="info-left">
-						<view class="title">{{ product.name }}</view>
-						<view class="price">¥{{ product.price }}/件</view>
-					</view>
-					<view class="info-right">
-						<view class="favorite-btn" @tap="toggleFavorite">
-							<image class="favorite-icon" src="/static/products/shoucang.png"></image>
+	<view class="page-container">
+		<scroll-view scroll-y class="container">
+			<!-- 商品详情 -->
+			<view class="product-info">
+				<image class="product-image" :src="product.image" mode="aspectFit" @error="handleImageError"></image>
+				<view class="info-content">
+					<view class="info-header">
+						<view class="info-left">
+							<view class="title">{{ product.name }}</view>
+							<view class="price">¥{{ product.price }}/件</view>
+							<view class="product-params">
+								<view class="param-item" v-if="product.brand">
+									<text class="param-label">品牌：</text>
+									<text class="param-value">{{ product.brand }}</text>
+								</view>
+								<view class="param-item" v-if="product.model">
+									<text class="param-label">型号：</text>
+									<text class="param-value">{{ product.model }}</text>
+								</view>
+								<view class="param-item" v-if="product.parameter">
+									<text class="param-label">参数：</text>
+									<text class="param-value">{{ product.parameter }}</text>
+								</view>
+							</view>
 						</view>
-						<text class="stock">库存88</text>
+						<view class="info-right">
+							<view class="favorite-btn" @tap="toggleFavorite">
+								<image class="favorite-icon" :src="isFavorite ? '/static/products/shoucang_active.png' : '/static/products/shoucang.png'"></image>
+							</view>
+							<text class="stock">库存{{ product.stock }}</text>
+						</view>
 					</view>
 				</view>
 			</view>
-		</view>
-		
-		<!-- 商品详情 -->
-		<view class="detail-section">
-			<view class="section-title">商品详情</view>
-			<view class="detail-content">
-				<rich-text :nodes="product.detail || '暂无商品详情'" :style="{wordBreak: 'break-all'}"></rich-text>
+			
+			<!-- 商品详情 -->
+			<view class="detail-section">
+				<view class="section-title">商品详情</view>
+				<view class="detail-content">
+					<rich-text :nodes="product.detail || '暂无商品详情'" :style="{wordBreak: 'break-all'}"></rich-text>
+				</view>
 			</view>
-		</view>
+			
+			<!-- 底部占位，防止内容被底部操作栏遮挡 -->
+			<view style="height: 120rpx;"></view>
+		</scroll-view>
 		
 		<!-- 底部操作栏 -->
 		<view class="bottom-bar">
@@ -42,7 +61,6 @@
 			</view>
 			<view class="right-btns">
 				<view class="add-cart-btn" @tap="addToCart">加入购物车</view>
-				<view class="buy-btn" @tap="buyNow">立即购买</view>
 			</view>
 		</view>
 		
@@ -69,11 +87,18 @@
 							<view class="item-bottom">
 								<text class="item-price">￥{{ item.price }}</text>
 								<view class="quantity-control">
-									<text class="minus" @tap.stop="removeFromCart(item.categoryIndex, item.productIndex)">-</text>
-									<text class="num">{{ item.quantity }}</text>
+									<text class="minus" @tap.stop="removeFromCart(item.id)">-</text>
+									<input 
+										class="num" 
+										type="digit" 
+										:value="item.quantity"
+										@input="handleQuantityInput($event, item.id)"
+										@blur="handleQuantityBlur(item.id)"
+										@tap.stop
+									/>
 									<text class="plus" 
-										:class="{ disabled: isStockLimit(item.categoryIndex, item.productIndex) }"
-										@tap.stop="handleAddToCart(item.categoryIndex, item.productIndex)">+</text>
+										:class="{ disabled: isStockLimit(item.id) }"
+										@tap.stop="handleAddToCart(item.id)">+</text>
 								</view>
 							</view>
 						</view>
@@ -93,6 +118,9 @@
 </template>
 
 <script>
+import api from '@/api/index.js'
+import request from '@/utils/request.js'
+
 export default {
 	data() {
 		return {
@@ -102,39 +130,28 @@ export default {
 				price: 0,
 				image: '',
 				detail: '',
-				categoryIndex: 0,
-				productIndex: 0,
-				stock: 0
+				stock: 0,
+				brand: '',
+				model: '',
+				parameter: ''
 			},
 			cartCount: 0,
 			isFavorite: false,
 			showCartPopup: false,
 			cartList: [],
-			totalPrice: 0
+			totalPrice: 0,
+			productId: '',
+			brandList: [],
+			favoriteLoading: false
 		}
 	},
 	onLoad(options) {
 		console.log('接收到的参数：', options);
-		
-		// 从本地存储获取商品详情
-		const detail = uni.getStorageSync('currentProductDetail');
-		
-		this.product = {
-			id: options.id,
-			name: decodeURIComponent(options.name),
-			price: Number(options.price),
-			image: decodeURIComponent(options.image),
-			detail: detail || '<div>暂无商品详情</div>',
-			categoryIndex: Number(options.categoryIndex),
-			productIndex: Number(options.productIndex),
-			stock: Number(options.stock)
-		};
-		
-		console.log('处理后的商品数据', this.product);
+		if (options.id) {
+			this.productId = options.id;
+			this.getBrandList();
+		}
 		this.loadCartCount();
-		
-		// 清除本地存储的详情数据
-		uni.removeStorageSync('currentProductDetail');
 	},
 	methods: {
 		// 加载购物车数量
@@ -151,10 +168,7 @@ export default {
 			let cartData = uni.getStorageSync('cartData')
 			let cartList = cartData ? JSON.parse(cartData) : []
 			
-			const existItem = cartList.find(item => 
-				item.categoryIndex === this.product.categoryIndex && 
-				item.productIndex === this.product.productIndex
-			);
+			const existItem = cartList.find(item => item.id === this.product.id);
 
 			if (existItem) {
 				if (existItem.quantity >= this.product.stock) {
@@ -168,8 +182,6 @@ export default {
 			} else {
 				cartList.push({
 					id: this.product.id,
-					categoryIndex: Number(this.product.categoryIndex),
-					productIndex: Number(this.product.productIndex),
 					name: this.product.name,
 					price: this.product.price,
 					image: this.product.image,
@@ -188,15 +200,6 @@ export default {
 			});
 		},
 		
-		// 立即购买
-		buyNow() {
-			// TODO: 跳转到结算页
-			uni.showToast({
-				title: '功能开发中',
-				icon: 'none'
-			})
-		},
-		
 		// 跳转到购物车
 		goToCart() {
 			uni.navigateTo({
@@ -212,11 +215,7 @@ export default {
 		
 		// 换收藏状态
 		toggleFavorite() {
-			this.isFavorite = !this.isFavorite;
-			uni.showToast({
-				title: this.isFavorite ? '已收藏' : '已取消收藏',
-				icon: 'success'
-			})
+			this.handleFavorite();
 		},
 		
 		// 添加联系商家方法
@@ -233,7 +232,7 @@ export default {
 			const cartData = uni.getStorageSync('cartData')
 			if (cartData) {
 				this.cartList = JSON.parse(cartData)
-				// 计��总价
+				// 计算总价
 				this.totalPrice = this.cartList.reduce((total, item) => total + item.price * item.quantity, 0)
 			}
 			this.showCartPopup = true
@@ -262,14 +261,11 @@ export default {
 		},
 		
 		// 修改移除商品方法
-		removeFromCart(categoryIndex, productIndex) {
+		removeFromCart(id) {
 			let cartData = uni.getStorageSync('cartData')
 			let cartList = cartData ? JSON.parse(cartData) : []
 			
-			const index = cartList.findIndex(item => 
-				item.categoryIndex === categoryIndex && 
-				item.productIndex === productIndex
-			);
+			const index = cartList.findIndex(item => item.id === id);
 
 			if (index > -1) {
 				if (cartList[index].quantity > 1) {
@@ -283,15 +279,12 @@ export default {
 			}
 		},
 
-		// ���改添加商品方法
-		handleAddToCart(categoryIndex, productIndex) {
+		// 修改添加商品方法
+		handleAddToCart(id) {
 			let cartData = uni.getStorageSync('cartData')
 			let cartList = cartData ? JSON.parse(cartData) : []
 			
-			const existItem = cartList.find(item => 
-				item.categoryIndex === categoryIndex && 
-				item.productIndex === productIndex
-			);
+			const existItem = cartList.find(item => item.id === id);
 
 			if (existItem) {
 				if (existItem.quantity >= existItem.stock) {
@@ -308,27 +301,21 @@ export default {
 			}
 		},
 
-		// 添加库存限制检查方法
-		isStockLimit(categoryIndex, productIndex) {
-			const cartItem = this.cartList.find(item => 
-				item.categoryIndex === categoryIndex && 
-				item.productIndex === productIndex
-			);
+		// 修改库存限制检查方法
+		isStockLimit(id) {
+			const cartItem = this.cartList.find(item => item.id === id);
 			return cartItem ? cartItem.quantity >= cartItem.stock : false;
 		},
 
-		// 处理数量输入
-		handleQuantityInput(event, categoryIndex, productIndex) {
+		// 修改处理数量输入方法
+		handleQuantityInput(event, id) {
 			const value = event.detail.value;
 			const numValue = value.replace(/\D/g, '');
 			
 			let cartData = uni.getStorageSync('cartData')
 			let cartList = cartData ? JSON.parse(cartData) : []
 			
-			const cartItem = cartList.find(item => 
-				item.categoryIndex === categoryIndex && 
-				item.productIndex === productIndex
-			);
+			const cartItem = cartList.find(item => item.id === id);
 			
 			if (!cartItem) return;
 			
@@ -340,10 +327,7 @@ export default {
 			const newQuantity = parseInt(numValue);
 			
 			if (newQuantity === 0) {
-				cartList = cartList.filter(item => 
-					!(item.categoryIndex === categoryIndex && 
-						item.productIndex === productIndex)
-				);
+				cartList = cartList.filter(item => item.id !== id);
 				uni.setStorageSync('cartData', JSON.stringify(cartList));
 				this.loadCartCount();
 				this.updateCartList();
@@ -366,22 +350,16 @@ export default {
 			this.updateCartList();
 		},
 
-		// 处理输入框失焦
-		handleQuantityBlur(categoryIndex, productIndex) {
+		// 修改处理输入框失焦方法
+		handleQuantityBlur(id) {
 			let cartData = uni.getStorageSync('cartData')
 			let cartList = cartData ? JSON.parse(cartData) : []
 			
-			const cartItem = cartList.find(item => 
-				item.categoryIndex === categoryIndex && 
-				item.productIndex === productIndex
-			);
+			const cartItem = cartList.find(item => item.id === id);
 			
 			if (cartItem) {
 				if (cartItem._tempValue === '' || cartItem.quantity === 0) {
-					cartList = cartList.filter(item => 
-						!(item.categoryIndex === categoryIndex && 
-							item.productIndex === productIndex)
-					);
+					cartList = cartList.filter(item => item.id !== id);
 				} else {
 					cartItem.quantity = parseInt(cartItem.quantity) || 1;
 				}
@@ -402,17 +380,23 @@ export default {
 			}
 		},
 		
-		// 处理收藏
+		// 修改收藏处理方法
 		async handleFavorite() {
+			// 如果正在处理中，直接返回
+			if (this.favoriteLoading) return;
+			
+			// 设置处理中状态
+			this.favoriteLoading = true;
+			
 			try {
-				if (this.isFavorited) {
+				if (this.isFavorite) {
 					// 取消收藏
 					const res = await api.favorite.cancel({
 						type: 1,
 						targetId: this.productId
 					})
 					if (res.code === 200) {
-						this.isFavorited = false
+						this.isFavorite = false
 						uni.showToast({
 							title: '已取消收藏',
 							icon: 'success'
@@ -425,7 +409,7 @@ export default {
 						targetId: this.productId
 					})
 					if (res.code === 200) {
-						this.isFavorited = true
+						this.isFavorite = true
 						uni.showToast({
 							title: '收藏成功',
 							icon: 'success'
@@ -438,6 +422,11 @@ export default {
 					title: '操作失败，请重试',
 					icon: 'none'
 				})
+			} finally {
+				// 500ms 后重置状态
+				setTimeout(() => {
+					this.favoriteLoading = false;
+				}, 500);
 			}
 		},
 		
@@ -449,12 +438,99 @@ export default {
 					targetId: this.productId
 				})
 				if (res.code === 200) {
-					this.isFavorited = res.data
+					this.isFavorite = res.data
 				}
 			} catch (err) {
 				console.error('检查收藏状态失败:', err)
 			}
-		}
+		},
+		
+		// 获取品牌列表
+		async getBrandList() {
+			try {
+				const res = await api.shop.selectModelsList();
+				if (res.code === 200) {
+					console.log('获取品牌列表成功:', res.data);
+					this.brandList = res.data || [];
+					await this.getProductDetail(); // 等待品牌列表获取完成后再获取商品详情
+				} else {
+					uni.showToast({
+						title: res.msg || '获取品牌列表失败',
+						icon: 'none'
+					});
+				}
+			} catch (err) {
+				console.error('获取品牌列表失败:', err);
+				uni.showToast({
+					title: '获取品牌列表失败',
+					icon: 'none'
+				});
+			}
+		},
+
+		// 获取品牌名称的方法
+		getBrandName(brandIds) {
+			if (!brandIds) return '';
+			console.log('当前品牌ID:', brandIds);
+			console.log('品牌列表:', this.brandList);
+			
+			// 将品牌ID字符串分割成数组
+			const brandIdArray = brandIds.split(',');
+			
+			// 获取每个品牌ID对应的名称
+			const brandNames = brandIdArray.map(brandId => {
+				const brand = this.brandList.find(item => item.id.toString() === brandId.toString());
+				return brand ? brand.title : '';
+			}).filter(name => name); // 过滤掉空值
+			
+			console.log('找到的品牌:', brandNames);
+			// 用逗号连接所有品牌名称
+			return brandNames.join('、');
+		},
+
+		// 修改获取商品详情方法
+		async getProductDetail() {
+			try {
+				const res = await api.shop.getAccessory({
+					id: this.productId
+				});
+				
+				if (res.code === 200 && res.data) {
+					// 处理商品详情中的图片URL
+					let details = res.data.details;
+					if (details) {
+						// 使用正则表达式替换所有 src="/profile/upload 的图片路径
+						details = details.replace(/src="\/profile\/upload/g, `src="${request.BASE_URL}/profile/upload`);
+					}
+					
+					this.product = {
+						id: res.data.id,
+						name: res.data.name,
+						price: res.data.price,
+						image: res.data.image ? request.BASE_URL + res.data.image : '/static/products/shangpin_default.png',
+						detail: details || '<div>暂无商品详情</div>',
+						stock: res.data.stock || 0,
+						brand: this.getBrandName(res.data.brand),
+						model: res.data.model,
+						parameter: res.data.parameter
+					};
+					
+					// 检查收藏状态
+					this.checkFavoriteStatus();
+				} else {
+					uni.showToast({
+						title: res.msg || '获取商品详情失败',
+						icon: 'none'
+					});
+				}
+			} catch (err) {
+				console.error('获取商品详情失败:', err);
+				uni.showToast({
+					title: '获取商品详情失败',
+					icon: 'none'
+				});
+			}
+		},
 	},
 	onShow() {
 		this.loadCartCount();
@@ -464,10 +540,16 @@ export default {
 </script>
 
 <style>
-.container {
-	padding-bottom: 120rpx;
+.page-container {
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
 	background-color: #F6F6F6;
-	min-height: 100vh;
+}
+
+.container {
+	flex: 1;
+	height: 100%;
 }
 
 .product-info {
@@ -523,6 +605,27 @@ export default {
 	font-size: 36rpx;
 	color: #ff6b6b;
 	font-weight: bold;
+	margin-bottom: 20rpx;
+}
+
+.product-params {
+	margin-top: 20rpx;
+}
+
+.param-item {
+	display: flex;
+	align-items: center;
+	margin-bottom: 10rpx;
+	font-size: 26rpx;
+}
+
+.param-label {
+	color: #666;
+	margin-right: 10rpx;
+}
+
+.param-value {
+	color: #333;
 }
 
 .stock {
@@ -609,22 +712,11 @@ export default {
 	margin-left: 20rpx;
 }
 
-.add-cart-btn,
-.buy-btn {
+.add-cart-btn {
 	padding: 20rpx 40rpx;
 	border-radius: 40rpx;
 	font-size: 28rpx;
-	margin-left: 20rpx;
-	white-space: nowrap;
-}
-
-.add-cart-btn {
-	background: #fff5f5;
-	color: #ff6b6b;
-}
-
-.buy-btn {
-	background: #ff6b6b;
+	background: #FF9B49;
 	color: #fff;
 }
 
@@ -736,63 +828,102 @@ export default {
 
 .cart-item {
 	display: flex;
-	padding: 20rpx;
-	border-bottom: 1rpx solid #eee;
+	padding: 30rpx 20rpx;
+	border-bottom: 1rpx solid #f5f5f5;
+	background: #fff;
 }
 
 .cart-item image {
-	width: 160rpx;
-	height: 160rpx;
+	width: 140rpx;
+	height: 140rpx;
 	margin-right: 20rpx;
-	flex-shrink: 0;
+	border-radius: 8rpx;
 }
 
-.item-info {
+.cart-item .item-info {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
 	justify-content: space-between;
+	min-width: 0;
 }
 
-.item-name {
+.cart-item .item-name {
 	font-size: 28rpx;
 	color: #333;
 	line-height: 1.4;
-}
-
-.item-price {
-	font-size: 32rpx;
-	color: #ff6b6b;
-	font-weight: bold;
+	margin-bottom: 10rpx;
 }
 
 .item-bottom {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-top: 10rpx;
+	margin-top: 20rpx;
+}
+
+.item-price {
+	font-size: 32rpx;
+	color: #FF9B49;
+	font-weight: bold;
 }
 
 .quantity-control {
 	display: flex;
 	align-items: center;
-	height: 48rpx;
+	justify-content: flex-end;
+	height: 56rpx;
+	background: #f7f7f7;
+	border-radius: 28rpx;
+	padding: 0 6rpx;
+	width: 180rpx;
 }
 
 .quantity-control .minus,
 .quantity-control .plus {
 	width: 44rpx;
 	height: 44rpx;
+	min-width: 44rpx;
+	min-height: 44rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 32rpx;
+	font-size: 36rpx;
+	color: #333;
+	background: #fff;
+	border-radius: 50%;
+	padding: 0;
+	line-height: 1;
+	position: relative;
+}
+
+.quantity-control .minus::after,
+.quantity-control .plus::after {
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	top: 0;
+	border-radius: 50%;
+	box-sizing: border-box;
 }
 
 .quantity-control .minus {
-	border: 1rpx solid #ddd;
-	border-radius: 50%;
-	color: #666;
+	font-size: 40rpx;
+	line-height: 40rpx;
+}
+
+.quantity-control .plus {
+	background: #FF9B49;
+	color: #fff;
+	font-size: 40rpx;
+	line-height: 40rpx;
+}
+
+.quantity-control .plus.disabled {
+	background-color: #ccc;
+	pointer-events: none;
 }
 
 .quantity-control .num {
@@ -801,17 +932,10 @@ export default {
 	font-size: 28rpx;
 	color: #333;
 	margin: 0 10rpx;
-}
-
-.quantity-control .plus {
-	background: #ff6b6b;
-	color: #fff;
-	border-radius: 50%;
-}
-
-.quantity-control .plus.disabled {
-	background-color: #ccc;
-	pointer-events: none;
+	background: transparent;
+	height: 56rpx;
+	line-height: 56rpx;
+	padding: 0;
 }
 
 .cart-empty {

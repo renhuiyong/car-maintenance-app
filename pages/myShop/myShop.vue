@@ -32,66 +32,106 @@
 
       <!-- 实际内容 -->
       <template v-else>
-        <!-- 商家详情信息 -->
-        <view class="merchant-info">
-          <image class="bg-image" src="/static/images/beijing.png" mode="aspectFill"></image>
-          
-          <view class="info-content">
-            <!-- 店铺名称和距离 -->
-            <view class="header">
-              <text class="shop-name">{{ merchantInfo.shopName }}</text>
-              <text class="distance">{{ merchantInfo.distance }}</text>
-            </view>
-            <view class="address">{{ merchantInfo.address }}</view>
-            <view class="info-row">
-              <text>营业时间：{{ merchantInfo.businessHours }}</text>
-            </view>
-            <view class="info-row">
-              <text>联系电话：{{ merchantInfo.phone }}</text>
-            </view>
+        <!-- 未申请入驻状态 -->
+        <view v-if="merchantInfo.examineStatus === 5" class="not-applied">
+          <view class="empty-state">
+            <image src="/static/images/shop.png" mode="aspectFit"></image>
+            <text>您还未申请入驻，请先完成入驻申请</text>
+          </view>
+        </view>
+
+        <!-- 未审核状态 -->
+        <view v-else-if="merchantInfo.examineStatus === 0" class="pending-review">
+          <view class="status-message">
+            <text>您的入驻申请正在审核中，请耐心等待</text>
+          </view>
+        </view>
+
+        <!-- 已审核未付保证金状态 -->
+        <view v-else-if="merchantInfo.examineStatus === 1" class="pending-deposit">
+          <view class="status-message">
+            <text>审核已通过，请缴纳保证金</text>
+          </view>
+        </view>
+
+        <!-- 已付保证金状态 -->
+        <view v-else-if="merchantInfo.examineStatus === 2" class="paid-deposit">
+          <view class="status-message">
+            <text>保证金已缴纳，等待最终审核</text>
+          </view>
+        </view>
+
+        <!-- 审核失败状态 -->
+        <view v-else-if="merchantInfo.examineStatus === 4" class="review-failed">
+          <view class="status-message">
+            <text>很抱歉，您的入驻申请未通过审核</text>
+            <text class="reason" v-if="merchantInfo.rejectReason">原因：{{ merchantInfo.rejectReason }}</text>
+          </view>
+        </view>
+
+        <!-- 已通过状态 - 显示完整店铺信息 -->
+        <template v-else-if="merchantInfo.examineStatus === 3">
+          <!-- 商家详情信息 -->
+          <view class="merchant-info">
+            <image class="bg-image" src="/static/images/beijing.png" mode="aspectFill"></image>
             
-            <!-- 添加固定定位的图标 -->
-            <view class="fixed-icons">
-              <view class="icon-item" @click="openLocation">
-                <image src="/static/images/youshang.png" mode="aspectFit"></image>
+            <view class="info-content">
+              <!-- 店铺名称和距离 -->
+              <view class="header">
+                <text class="shop-name">{{ merchantInfo.shopName }}</text>
+                <text class="distance">{{ merchantInfo.distance }}</text>
               </view>
-              <view class="icon-item" @click="makePhoneCall">
-                <image src="/static/images/dianhua.png" mode="aspectFit"></image>
+              <view class="address">{{ merchantInfo.address }}</view>
+              <view class="info-row">
+                <text>营业时间：{{ merchantInfo.businessHours }}</text>
+              </view>
+              <view class="info-row">
+                <text>联系电话：{{ merchantInfo.phone }}</text>
+              </view>
+              
+              <!-- 添加固定定位的图标 -->
+              <view class="fixed-icons">
+                <view class="icon-item" @click="openLocation">
+                  <image src="/static/images/youshang.png" mode="aspectFit"></image>
+                </view>
+                <view class="icon-item" @click="makePhoneCall">
+                  <image src="/static/images/dianhua.png" mode="aspectFit"></image>
+                </view>
               </view>
             </view>
           </view>
-        </view>
-    
-        <!-- 店铺门头 -->
-        <view class="shop-info">
-          <view class="title">店铺门头</view>
-          <view class="shop-description">
-            {{ merchantInfo.description }}
+      
+          <!-- 店铺门头 -->
+          <view class="shop-info">
+            <view class="title">店铺门头</view>
+            <view class="shop-description">
+              {{ merchantInfo.description }}
+            </view>
+            <scroll-view class="image-list" scroll-x="true" show-scrollbar="false">
+              <view class="image-wrapper">
+                <image v-for="(img, index) in merchantInfo.shopImgs" 
+                       :key="index" 
+                       :src="img" 
+                       mode="aspectFill"
+                       class="shop-image"></image>
+              </view>
+            </scroll-view>
           </view>
-          <scroll-view class="image-list" scroll-x="true" show-scrollbar="false">
-            <view class="image-wrapper">
-              <image v-for="(img, index) in merchantInfo.shopImgs" 
-                     :key="index" 
-                     :src="img" 
-                     mode="aspectFill"
-                     class="shop-image"></image>
-            </view>
-          </scroll-view>
-        </view>
-    
-        <!-- 店铺资质 -->
-        <view class="shop-qualification">
-          <view class="title">店铺资质</view>
-          <scroll-view class="qualification-list" scroll-x="true" show-scrollbar="false">
-            <view class="qualification-wrapper">
-              <image v-for="(cert, index) in merchantInfo.qualificationImgs" 
-                     :key="index" 
-                     :src="cert" 
-                     mode="aspectFill"
-                     class="qualification-image"></image>
-            </view>
-          </scroll-view>
-        </view>
+      
+          <!-- 店铺资质 -->
+          <view class="shop-qualification">
+            <view class="title">店铺资质</view>
+            <scroll-view class="qualification-list" scroll-x="true" show-scrollbar="false">
+              <view class="qualification-wrapper">
+                <image v-for="(cert, index) in merchantInfo.qualificationImgs" 
+                       :key="index" 
+                       :src="cert" 
+                       mode="aspectFill"
+                       class="qualification-image"></image>
+              </view>
+            </scroll-view>
+          </view>
+        </template>
       </template>
     </view>
   </template>
@@ -115,7 +155,9 @@
           shopImgs: [],
           qualificationImgs: [],
           latitude: 0,
-          longitude: 0
+          longitude: 0,
+          examineStatus: 5, // 默认未申请入驻
+          rejectReason: '' // 审核失败原因
         },
         shareConfig: {
           title: '',
@@ -163,7 +205,9 @@
               shopImgs,
               qualificationImgs,
               latitude: Number(shopData.latitude),
-              longitude: Number(shopData.longitude)
+              longitude: Number(shopData.longitude),
+              examineStatus: shopData.examineStatus,
+              rejectReason: shopData.rejectReason || ''
             }
             this.merchantId = shopData.id
             this.initShareConfig()
@@ -485,6 +529,54 @@
               margin-right: 0;
             }
           }
+        }
+      }
+    }
+  
+    // 状态相关样式
+    .not-applied,
+    .pending-review,
+    .pending-deposit,
+    .paid-deposit,
+    .review-failed {
+      background-color: #fff;
+      padding: 40rpx;
+      margin: 20rpx;
+      border-radius: 12rpx;
+      text-align: center;
+
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60rpx 0;
+
+        image {
+          width: 200rpx;
+          height: 200rpx;
+          margin-bottom: 30rpx;
+        }
+
+        text {
+          font-size: 28rpx;
+          color: #666;
+        }
+      }
+
+      .status-message {
+        padding: 60rpx 0;
+        
+        text {
+          font-size: 32rpx;
+          color: #333;
+          display: block;
+          line-height: 1.6;
+        }
+
+        .reason {
+          margin-top: 20rpx;
+          font-size: 28rpx;
+          color: #ff4d4f;
         }
       }
     }

@@ -38,7 +38,7 @@
     <view class="empty-state" v-if="filteredMessages.length === 0">
       <image 
         class="empty-image" 
-        :src="currentTab === 'unread' ? '/static/my/zanwuweidu.png' : '/static/my/empty-message.png'" 
+        src="/static/my/empty-message.png"
         mode="aspectFit"
       ></image>
       <text class="empty-text">暂无消息</text>
@@ -65,119 +65,96 @@
 </template>
 
 <script>
+import api from '../../api/index.js'
+
 export default {
   data() {
     return {
       currentTab: 'unread',
       currentMessage: {},
-      messageList: [
-        { 
-          title: '您的订单已收货',
-          isRead: false,
-          content: '尊敬的用户您好，您的维修订单已完成配送，感谢您的使用。如有任何问题，请及时联系客服。'
-        },
-        { 
-          title: '您的订单未付��',
-          isRead: false,
-          content: '您的维修订单尚未支付，请及时完成支付，以免订单自动取消。'
-        },
-        { 
-          title: '最新活动通知，请查看活动详情',
-          isRead: false,
-          content: '亲爱的用户，平台正在开展新一轮优惠活动，点击查看详情了解更多优惠信息。'
-        },
-        { 
-          title: '您收到一笔推广佣金',
-          isRead: false,
-          content: '恭喜您获得推广佣金奖励，可以在"我的资产"中查看详情。'
-        },
-        { 
-          title: '您的维修订单已完成',
-          isRead: true,
-          content: '您的维修订单已完成服务，如对服务不满意，请及时反馈。'
-        },
-        { 
-          title: '系统升级通知',
-          isRead: true,
-          content: '为了给您提供更好的服务体验，系统将于本周六凌晨2点进行例行升级维护，预计耗时2小时，给您带来的不便敬请谅解。'
-        },
-        { 
-          title: '您的优惠券即将到期',
-          isRead: true,
-          content: '您有张优惠券即将在本周日到期，请及时使用，避免浪费。'
-        },
-        { 
-          title: '感谢您的使用，您的反馈已收到',
-          isRead: true,
-          content: '感谢您的反馈，我们会认真处理您的建议，不断改进服务质量。'
-        }
-      ]
+      messageList: [],
+      pageNum: 1,
+      pageSize: 10,
+      loading: false,
+      type: 0
     }
   },
   computed: {
     filteredMessages() {
       return this.messageList.filter(msg => 
-        this.currentTab === 'unread' ? !msg.isRead : msg.isRead
+        this.currentTab === 'unread' ? msg.status === 0 : msg.status === 1
       )
     }
   },
   methods: {
     switchTab(tab) {
       this.currentTab = tab
-      // 这里可以根据tab类型请求不同的消息列表
-      this.getMessageList(tab)
+      this.pageNum = 1
+      this.getMessageList()
     },
-    getMessageList(type) {
-      // TODO: 调用接口获取消息列表
+    async getMessageList() {
+      try {
+        const apiMethod = this.type === 0 ? api.user.getNotificationList : api.merchant.getNotificationList
+        const res = await apiMethod({
+          pageNum: this.pageNum,
+          pageSize: this.pageSize,
+          status: this.currentTab === 'unread' ? 0 : 1
+        })
+        if (res.code === 200 && res.rows) {
+          this.messageList = res.rows.map(item => ({
+            title: item.title,
+            content: item.content,
+            isRead: item.status === 1,
+            time: item.createTime,
+            id: item.id,
+            businessId: item.businessId,
+            businessType: item.businessType,
+            status: item.status
+          }))
+        }
+      } catch (err) {
+        console.error('Get message list error:', err)
+        this.messageList = []
+      }
     },
     showMessageDetail(item) {
       this.currentMessage = item
       this.$refs.messagePopup.open()
     },
-    closePopup() {
-      // 如果是未读消息，关闭弹窗时标记为已读
-      if (this.currentMessage && !this.currentMessage.isRead) {
-        // 更新当前消息的已读状态
-        this.currentMessage.isRead = true
-        
-        // 在消息列表中找到并更新对应消息的已读状态
-        const messageIndex = this.messageList.findIndex(msg => 
-          msg.title === this.currentMessage.title && 
-          msg.content === this.currentMessage.content
-        )
-        
-        if (messageIndex !== -1) {
-          this.messageList[messageIndex].isRead = true
-          
-          // 将更新后的消息列表保存到本地存储，以便在 my 页面使用
-          uni.setStorageSync('messageList', JSON.stringify(this.messageList))
-          
-          // TODO: 调用接口更新消息状态
+    async closePopup() {
+      if (this.currentMessage && this.currentMessage.status === 0) {
+        try {
+          const apiMethod = api.merchant.readNotification
+          const res = await apiMethod(this.currentMessage.id)
+          if (res.code === 200) {
+            this.getMessageList()
+          }
+        } catch (err) {
+          console.error('Update message status error:', err)
         }
       }
       this.$refs.messagePopup.close()
     }
   },
   onLoad(options) {
-    // 获取本地存储的消息列表
-    const storedMessages = uni.getStorageSync('messageList')
-    if (storedMessages) {
-      this.messageList = JSON.parse(storedMessages)
-    }
+    this.type = Number(options.type || -1)
     
-    // 检查是否需要自动打开消息详情
+    this.getMessageList()
+    
     if (options.autoOpen) {
       const selectedMessage = uni.getStorageSync('selectedMessage')
       if (selectedMessage) {
         this.currentMessage = JSON.parse(selectedMessage)
-        // 延迟一下再打开弹窗，确保组件已经完全加载
         setTimeout(() => {
           this.$refs.messagePopup.open()
-          // 清除存储的消息数据
           uni.removeStorageSync('selectedMessage')
         }, 100)
       }
     }
+  },
+  onUnload() {
+    const eventChannel = this.getOpenerEventChannel()
+    eventChannel.emit('refreshMessages')
   }
 }
 </script>

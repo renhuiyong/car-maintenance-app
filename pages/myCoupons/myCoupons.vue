@@ -48,7 +48,7 @@
               <!-- 根据优惠券类型显示不同的使用条件 -->
               <text v-if="coupon.type === 1">满{{coupon.minAmount}}可用</text>
               <text v-else-if="coupon.type === 2">满{{coupon.minAmount}}可用</text>
-              <text v-if="fromOrder && !isCouponAvailable(coupon)" class="unavailable-text">
+              <text v-if="fromOrder && !isCouponAvailable(coupon) && new Date().getTime() <= new Date(coupon.endDate.replace(/-/g, '/')).getTime()" class="unavailable-text">
                 (差{{(coupon.minAmount - orderAmount).toFixed(2)}}元)
               </text>
             </view>
@@ -143,7 +143,8 @@ export default {
       } else if (now > endTime) {
         return '已过期'
       }
-      return !this.isCouponAvailable(coupon) ? 
+      // 只有未过期的优惠券才显示差额信息
+      return !this.isCouponAvailable(coupon) && now <= endTime ? 
         `订单未满${coupon.minAmount}元(差${(coupon.minAmount - this.orderAmount).toFixed(2)}元)` : ''
     },
     

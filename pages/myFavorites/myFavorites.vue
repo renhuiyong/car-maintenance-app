@@ -35,7 +35,7 @@
 
 		<!-- 商家列表 -->
 		<view class="shops-list" v-if="activeTab === 'shops'">
-			<view class="shop-item" v-for="(item, index) in shopsList" :key="item.id">
+			<view class="shop-item" v-for="(item, index) in shopsList" :key="item.id" @click="goToMerchantDetails(item)">
 				<view class="shop-main">
 					<view class="shop-info">
 						<view class="shop-name">
@@ -78,6 +78,12 @@ export default {
 			loading: false
 		}
 	},
+	// 启用下拉刷新
+	onPullDownRefresh() {
+		this.loadFavorites().then(() => {
+			uni.stopPullDownRefresh()
+		})
+	},
 	computed: {
 		showEmpty() {
 			return (this.activeTab === 'goods' && this.goodsList.length === 0) || 
@@ -94,6 +100,24 @@ export default {
 				this.activeTab = tab
 				// 移除 this.loadFavorites() 调用
 			}
+		},
+		
+		// 跳转到商家详情页
+		goToMerchantDetails(shop) {
+			uni.getLocation({
+				type: 'gcj02',
+				success: (res) => {
+					uni.navigateTo({
+						url: `/pages/merchantDetails/merchantDetails?shopId=${shop.id}&latitude=${res.latitude}&longitude=${res.longitude}`
+					})
+				},
+				fail: () => {
+					// 如果获取位置失败，使用默认值0
+					uni.navigateTo({
+						url: `/pages/merchantDetails/merchantDetails?shopId=${shop.id}&latitude=0&longitude=0`
+					})
+				}
+			})
 		},
 		
 		// 加载收藏数据 - 只在页面加载时调用一次

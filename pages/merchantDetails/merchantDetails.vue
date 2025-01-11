@@ -286,7 +286,7 @@ export default {
     enterShop() {
       // 用 navigateTo 跳转到商城页面，并传递商家ID
       uni.navigateTo({
-        url: `/pages/shop/shop?shopId=${this.shopId}`
+        url: `/pages/shop/shop?shopId=${this.shopId}&shopName=${this.merchantInfo.name}`
       })
     },
     goToRepair() {

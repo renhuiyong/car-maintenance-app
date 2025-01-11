@@ -762,26 +762,8 @@ export default {
 				return;
 			}
 			
-			// 将商品详情数据存储到本地
-			uni.setStorageSync('currentProductDetail', productInfo.detail);
-			
-			// 构建查询参数
-			const query = {
-				id: productInfo.id,
-				categoryIndex: categoryIndex,  // 确保递这个
-				productIndex: productIndex,    // 确保传递这个
-				name: productInfo.name,
-				price: productInfo.price,
-				stock: productInfo.stock,
-				image: productInfo.image
-			};
-			
-			const queryString = Object.keys(query)
-				.map(key => `${key}=${encodeURIComponent(query[key])}`)
-				.join('&');
-			
 			uni.navigateTo({
-				url: `/pages/productDetail/productDetail?${queryString}`
+				url: `/pages/productDetail/productDetail?id=${productInfo.id}`
 			});
 		},
 		
@@ -1492,7 +1474,7 @@ export default {
 	cursor: not-allowed;
 }
 
-/* 保留一个完���的用状态式 */
+/* 保留一个完的用状态式 */
 .add-btn.disabled,
 .plus.disabled {
 	background-color: transparent;
@@ -1890,7 +1872,7 @@ export default {
     margin-right: 20rpx;
 }
 
-/* 搜索结果为空��的样式 */
+/* 搜索结果为空的样式 */
 .search-results:empty {
     display: none;
 }

@@ -65,8 +65,13 @@
       <view class="total-amount">
         <text>¥{{finalAmount}}</text>
       </view>
-      <view class="pay-btn" @click="goPay">
-        去支付
+      <view class="pay-btn" :class="{'loading': submitting}" @click="goPay">
+        <text v-if="!submitting">去支付</text>
+        <view v-else class="loading-dots">
+          <text class="dot"></text>
+          <text class="dot"></text>
+          <text class="dot"></text>
+        </view>
       </view>
     </view>
   </view>
@@ -106,20 +111,19 @@ export default {
   
   onLoad(options) {
     const orderInfo = uni.getStorageSync('orderInfo')
-    console.log(orderInfo)
+    console.log('结算页面接收到的订单信息:', orderInfo)
     if (orderInfo) {
       const info = JSON.parse(orderInfo)
-      this.shopName = info.shopName
+      this.shopName = info.shopName || '未知店铺'
       this.shopId = info.shopId
       this.orderGoods = info.orderGoods
       this.totalAmount = info.totalAmount
-      this.freight = info.freight
+      this.freight = info.freight || 0
       this.finalAmount = info.finalAmount
       this.lastOrderAmount = info.totalAmount
       this.repairOrderId = info.repairOrderId
 
       this.checkAvailableCoupons()
-      
     }
   },
   
@@ -307,16 +311,60 @@ export default {
         const res = await api.order.create(orderData)
         
         if (res.code === 200) {
-          // 清空购物车
-          uni.removeStorageSync('cartData')
-          // 清空订单信息
-          uni.removeStorageSync('orderInfo')
-          // 清空选中的优惠券
-          uni.removeStorageSync('selectedCoupon')
-          
-          // 跳转���支付页面
-          uni.navigateTo({
-            url: `/pages/payment/payment?orderId=${res.data.orderId}&amount=${res.data.actualAmount}`
+          // 调用微信支付
+          const payParams = res.data.payParams
+          uni.requestPayment({
+            provider: 'wxpay',
+            appId: payParams.appId,
+            timeStamp: payParams.timeStamp,
+            nonceStr: payParams.nonceStr,
+            package: payParams.packageValue,  // 使用packageValue作为package参数
+            signType: payParams.signType,
+            paySign: payParams.paySign,
+            success: (payRes) => {
+              uni.showToast({
+                title: '支付成功',
+                icon: 'success'
+              })
+              
+              // 清空购物车
+              uni.removeStorageSync('cartData')
+              // 清空订单信息
+              uni.removeStorageSync('orderInfo')
+              // 清空选中的优惠券
+              uni.removeStorageSync('selectedCoupon')
+              
+              // 延迟跳转，让用户看到成功提示
+              setTimeout(() => {
+                // 根据是否存在维修订单ID决定跳转页面
+                if (this.repairOrderId) {
+                  uni.redirectTo({
+                    url: `/pages/orderDetail/orderDetail?orderId=${res.data.orderNo}`
+                  })
+                } else {
+                  uni.redirectTo({
+                    url: `/pages/repairParts/repairParts?type=2&orderId=${res.data.orderNo}`
+                  })
+                }
+              }, 1500)
+            },
+            fail: (err) => {
+              console.error('支付失败:', err)
+              uni.showToast({
+                title: '支付失败，请重试',
+                icon: 'none'
+              })
+              // 支付失败时的跳转逻辑也需要修改
+              if (this.repairOrderId) {
+                uni.redirectTo({
+                  url: `/pages/orderDetail/orderDetail?orderId=${res.data.orderNo}`
+                })
+              } else {
+                uni.redirectTo({
+                  url: `/pages/repairParts/repairParts?type=2&orderId=${res.data.orderNo}`
+                })
+              }
+            }
           })
         } else {
           uni.showToast({
@@ -348,7 +396,7 @@ export default {
   
   .shop-section {
     background: #fff;
-    padding: 20rpx 30rpx;
+    padding: 30rpx;
     margin-bottom: 20rpx;
     
     .shop-info {
@@ -357,23 +405,23 @@ export default {
       
       .location-icon {
         margin-right: 20rpx;
-        padding-top: 18rpx;
         image {
-          width: 40rpx;
-          height: 40rpx;
+          width: 32rpx;
+          height: 32rpx;
         }
       }
       
       .shop-name {
         flex: 1;
-        font-size: 28rpx;
+        font-size: 30rpx;
         color: #333;
+        font-weight: 500;
       }
       
       .arrow-right {
         image {
-          width: 40rpx;
-          height: 40rpx;
+          width: 32rpx;
+          height: 32rpx;
         }
       }
     }
@@ -564,7 +612,52 @@ export default {
       text-align: center;
       line-height: 80rpx;
       border-radius: 40rpx;
+      position: relative;
+      overflow: hidden;
+      
+      &.loading {
+        background: #ff8533;
+      }
+      
+      .loading-dots {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        
+        .dot {
+          width: 8rpx;
+          height: 8rpx;
+          background: #fff;
+          border-radius: 50%;
+          margin: 0 6rpx;
+          animation: loading 1.4s infinite ease-in-out;
+          
+          &:nth-child(1) {
+            animation-delay: 0s;
+          }
+          
+          &:nth-child(2) {
+            animation-delay: 0.2s;
+          }
+          
+          &:nth-child(3) {
+            animation-delay: 0.4s;
+          }
+        }
+      }
     }
+  }
+}
+
+@keyframes loading {
+  0%, 80%, 100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 

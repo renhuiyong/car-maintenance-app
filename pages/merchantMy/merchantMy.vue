@@ -1,98 +1,131 @@
 <template>
-	<view class="container">
-		<loading-animation :show="isLoading"></loading-animation>
-		<image class="bg-image" src="/static/images/my_bg.png" mode="aspectFill"></image>
-		<!-- 用户信息区域 -->
-		<view class="user-info">
-			<view class="user-left">
-				<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
-				<button 
-					v-if="!isLogin"
-					class="login-btn"
-					@click="getUserProfile"
-				>
-					<view class="user-detail">
-						<view class="name">点击登录</view>
-						<view class="phone">登录后查看更多信息</view>
+	<view class="page-container">
+		<scroll-view scroll-y class="scroll-container">
+			<loading-animation :show="isLoading"></loading-animation>
+			<image class="bg-image" src="/static/images/my_bg.png" mode="aspectFill"></image>
+			<!-- 原有内容 -->
+			<view class="content-wrapper">
+				<!-- 用户信息区域 -->
+				<view class="user-info">
+					<view class="user-left">
+						<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
+						<button 
+							v-if="!isLogin"
+							class="login-btn"
+							@click="getUserProfile"
+						>
+							<view class="user-detail">
+								<view class="name">点击登录</view>
+								<view class="phone">登录后查看更多信息</view>
+							</view>
+						</button>
+						<view v-else class="user-detail">
+							<view class="name">{{ userInfo.name }}</view>
+							<view class="phone" @click="goToEditProfile">{{ userInfo.phone || '绑定微信手机号' }}</view>
+							<view class="subscribe-btn" @click="requestSubscription" v-if="needSubscription">
+								<text>订阅消息通知</text>
+							</view>
+						</view>
 					</view>
-				</button>
-				<view v-else class="user-detail">
-					<view class="name">{{ userInfo.name }}</view>
-					<view class="phone" @click="goToEditProfile">{{ userInfo.phone || '绑定微信手机号' }}</view>
-				</view>
-			</view>
-			<view class="edit-btn" v-if="isLogin" @click="goToEditProfile">
-				<view class="text-wrapper">
-					<text>修改</text>
-					<text>资料</text>
-				</view>
-				<image class="arrow-icon" src="/static/images/youjiantou.png"></image>
-			</view>
-		</view>
-		
-		<!-- 功能菜单 -->
-		<view class="menu-grid">
-			<view class="menu-item" @click="goToMyOrders">
-				<image class="menu-icon" src="/static/images/wddd.png"></image>
-				<text>维修订单</text>
-			</view>
-			<image class="divider" src="/static/images/shuxian.png"></image>
-			<view class="menu-item" @click="goToMyFavorites">
-				<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
-				<text>进货订单</text>
-			</view>
-			<image class="divider" src="/static/images/shuxian.png"></image>
-			<view class="menu-item" @click="goToMyCoupons">
-				<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
-				<text>收入结算</text>
-			</view>
-			<image class="divider" src="/static/images/shuxian.png"></image>
-			<button class="menu-item contact-btn" open-type="contact">
-				<image class="menu-icon" src="/static/images/kf.png"></image>
-				<text>联系客服</text>
-			</button>
-		</view>
-		
-		<!-- 佣金卡片 -->
-		<view class="commission-card">
-			<view class="card-content">
-				<view class="header">
-					<image class="header-bg" src="/static/images/tg.png" mode="aspectFill"></image>
-					<text class="title">推广得佣金</text>
-					<button class="promote-btn" @click="goToInvite">立即推广</button>
-				</view>
-				<view class="body" @click="goToMyAssets">
-					<view class="amount-info">
-						<text class="label">佣金资产</text>
-						<text class="amount">23,0000</text>
-						<text class="check">查看领取 ></text>
+					<view class="edit-btn" v-if="isLogin" @click="goToEditProfile">
+						<view class="text-wrapper">
+							<text>修改</text>
+							<text>资料</text>
+						</view>
+						<image class="arrow-icon" src="/static/images/youjiantou.png"></image>
 					</view>
-					<image class="coins-img" src="/static/my/coins.png"></image>
+				</view>
+				
+				<!-- 商家入驻入口 -->
+				<view class="merchant-entry" @click="goToMerchantSettled" v-if="isLogin && examineStatus !== null && examineStatus !== 3">
+					<image class="entry-bg" src="/static/images/merchant_entry_bg.png" mode="aspectFill"></image>
+					<view class="entry-content">
+						<view class="entry-left">
+							<view class="entry-icon-wrapper">
+								<image class="entry-icon" src="/static/images/shop.png"></image>
+							</view>
+							<view class="entry-text">
+								<text class="entry-title">商家入驻</text>
+								<text class="entry-desc">加入我们，开启您的商家之旅</text>
+							</view>
+						</view>
+						<view class="entry-right">
+							<view class="entry-btn">
+								<text>立即入驻</text>
+								<image class="entry-arrow" src="/static/images/youjiantou.png"></image>
+							</view>
+						</view>
+					</view>
+				</view>
+				
+				<!-- 功能菜单 -->
+				<view class="menu-grid">
+					<view class="menu-item" @click="goToMyOrders">
+						<image class="menu-icon" src="/static/images/wddd.png"></image>
+						<text>维修订单</text>
+					</view>
+					<image class="divider" src="/static/images/shuxian.png"></image>
+					<view class="menu-item" @click="goToMyFavorites">
+						<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
+						<text>进货订单</text>
+					</view>
+					<image class="divider" src="/static/images/shuxian.png"></image>
+					<view class="menu-item" @click="goToMyCoupons">
+						<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
+						<text>收入结算</text>
+					</view>
+					<image class="divider" src="/static/images/shuxian.png"></image>
+					<button class="menu-item contact-btn" open-type="contact">
+						<image class="menu-icon" src="/static/images/kf.png"></image>
+						<text>联系客服</text>
+					</button>
+				</view>
+				
+				<!-- 佣金卡片 -->
+				<view class="commission-card">
+					<view class="card-content">
+						<view class="header">
+							<image class="header-bg" src="/static/images/tg.png" mode="aspectFill"></image>
+							<text class="title">推广得佣金</text>
+							<button class="promote-btn" @click="goToInvite">立即推广</button>
+						</view>
+						<view class="body" @click="goToMyAssets">
+							<view class="amount-info">
+								<text class="label">佣金资产</text>
+								<text class="amount">23,0000</text>
+								<text class="check">查看领取 ></text>
+							</view>
+							<image class="coins-img" src="/static/my/coins.png"></image>
+						</view>
+					</view>
+				</view>
+				
+				<!-- 消息列表 -->
+				<view class="message-section">
+					<view class="section-title" @click="goToMyMessage">我的消息</view>
+					<view class="message-list" v-if="messageList.length > 0">
+						<view 
+							class="message-item" 
+							v-for="(item, index) in messageList.slice(0, 5)" 
+							:key="index"
+							@click="goToMessageDetail(item)"
+						>
+							<text class="unread" v-if="item.status === 0">未读</text>
+							<text class="content">{{ item.title }}</text>
+							<image class="arrow" src="/static/images/youjiantou2.png"></image>
+						</view>
+					</view>
+					<view class="empty-message" v-else>
+						<text>暂无消息</text>
+					</view>
 				</view>
 			</view>
-		</view>
-		
-		<!-- 消息列表 -->
-		<view class="message-section">
-			<view class="section-title" @click="goToMyMessage">我的消息</view>
-			<view class="message-list">
-				<view 
-					class="message-item" 
-					v-for="(item, index) in messageList.slice(0, 5)" 
-					:key="index"
-					@click="goToMessageDetail(item)"
-				>
-					<text class="unread" v-if="!item.isRead">未读</text>
-					<text class="content">{{ item.title }}</text>
-					<image class="arrow" src="/static/images/youjiantou2.png"></image>
-				</view>
-			</view>
-		</view>
-		
-		<!-- 使用merchant-tabbar组件 -->
+			
+			<!-- merchant-tabbar放在scroll-view外部 -->
+		</scroll-view>
 		<merchant-tabbar :current="3"></merchant-tabbar>
 		
-		<!-- 添加悬浮扫描按钮 -->
+		<!-- 悬浮扫描按钮也放在外部 -->
 		<view 
 			class="float-scan-btn"
 			:style="{ left: buttonPosition.left + 'px', top: buttonPosition.top + 'px' }"
@@ -118,39 +151,14 @@ export default {
 	data() {
 		return {
 			isLogin: false,
+			examineStatus: 3,
 			userInfo: {
 				name: '',
 				phone: '',
 				avatar: ''
 			},
 			request,
-			messageList: [
-				{ 
-					title: '您的订单已收货',
-					isRead: false,
-					content: '尊敬的用户您好，您的维修订单已完成配送，感谢您的使用。如有任何问题，请及时联系客服。'
-				},
-				{ 
-					title: '您的订单未付款',
-					isRead: false,
-					content: '您的维修订单尚未支付，请及时完成支付，以免订单自动取消。'
-				},
-				{ 
-					title: '最新活动通知，请查看活动详情',
-					isRead: false,
-					content: '亲爱的用户，平台正在开展新一轮优惠活动，点击查看详情了解更多优惠信息。'
-				},
-				{ 
-					title: '您收到一笔推广佣金',
-					isRead: false,
-					content: '恭喜您获得推广佣金奖励，可以在"我的资产"中查看详情。'
-				},
-				{ 
-					title: '您的维修订单已完成',
-					isRead: true,
-					content: '您的维修订单已完成服务，如对服务不满意，请及时反馈。'
-				}
-			],
+			messageList: [],
 			// 添加按钮位置相关数据
 			buttonPosition: {
 				left: uni.getSystemInfoSync().windowWidth - 80, // 默认靠右
@@ -161,18 +169,24 @@ export default {
 				x: 0,
 				y: 0
 			},
-			isLoading: false
+			isLoading: false,
+			hasCheckedSubscription: false, // 添加标记，避免重复检查
+			needSubscription: false,
 		}
 	},
 	created() {
 		this.checkLoginStatus()
+		if (this.isLogin) {
+			this.checkShopExamineStatus()
+			this.checkSubscriptionStatus()
+			this.getMessageList()
+		}
 	},
 	onShow() {
 		this.checkLoginStatus()
-		// 获取本地存储的消息列表
-		const storedMessages = uni.getStorageSync('messageList')
-		if (storedMessages) {
-			this.messageList = JSON.parse(storedMessages)
+		if (this.isLogin) {
+			this.checkShopExamineStatus()
+			this.getMessageList()
 		}
 	},
 	methods: {
@@ -184,7 +198,8 @@ export default {
 				if (token && userInfo) {
 					this.isLogin = true
 					this.userInfo = JSON.parse(userInfo)
-
+					// 检查是否需要订阅
+					this.checkNeedSubscription()
 				} else {
 					this.isLogin = false
 					this.userInfo = {
@@ -257,6 +272,13 @@ export default {
 					
 					this.isLogin = true
 					this.userInfo = userData
+					
+					// 登录成功后检查订阅状态和商家状态
+					this.checkSubscriptionStatus()
+					this.checkShopExamineStatus()
+					
+					// 获取消息列表
+					this.getMessageList()
 					
 					uni.showToast({
 						title: '登录成功',
@@ -365,11 +387,14 @@ export default {
 				return
 			}
 			
-			// 将当前消息列表保存到本地存储
-			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
-			
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage'
+				url: '/pages/myMessage/myMessage',
+				events: {
+					// 监听消息页面返回时的刷新事件
+					refreshMessages: () => {
+						this.getMessageList()
+					}
+				}
 			})
 		},
 		goToMessageDetail(message) {
@@ -384,17 +409,24 @@ export default {
 			// 将消息数据存储到本地，以便在消息列表页面使用
 			uni.setStorageSync('selectedMessage', JSON.stringify({
 				title: message.title,
-					content: message.content,
-					time: '2024-03-21 14:30', // 这里可以是实际的时间
-					isRead: message.isRead
+				content: message.content,
+				time: message.time,
+				isRead: message.status === 1,
+				id: message.id,
+				businessId: message.businessId,
+				businessType: message.businessType,
+				status: message.status
 			}))
-			
-			// 将当前消息列表保存到本地存储
-			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
 			
 			// 跳转到消息列表页面
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage?autoOpen=true'
+				url: '/pages/myMessage/myMessage?autoOpen=true',
+				events: {
+					// 监听消息页面返回时的刷新事件
+					refreshMessages: () => {
+						this.getMessageList()
+					}
+				}
 			})
 		},
 		goToMyOrders() {
@@ -541,17 +573,109 @@ export default {
 				}
 			})
 		},
-	
-	}
+		goToMerchantSettled() {
+			uni.navigateTo({
+				url: '/pages/merchantSettled/merchantSettled'
+			})
+		},
+		async checkShopExamineStatus() {
+			try {
+				const res = await api.merchant.getShopSelfExamineStatus()
+				if (res.code === 200) {
+					console.log('商家状态:', res.data) // 添加日志查看返回数据
+					this.examineStatus = res.data.examineStatus || res.data
+				}
+			} catch (err) {
+				console.error('Get shop examine status error:', err)
+			}
+		},
+		async checkSubscriptionStatus() {
+			// 只在用户登录状态下检查
+			if (!this.isLogin || this.hasCheckedSubscription) {
+				return
+			}
+			
+			this.hasCheckedSubscription = true
+			this.checkNeedSubscription()
+		},
+		
+		checkNeedSubscription() {
+			const lastAuthTime = uni.getStorageSync('lastSubscriptionAuthTime')
+			const now = new Date().getTime()
+			const sixDaysInMs = 6 * 24 * 60 * 60 * 1000
+			
+			this.needSubscription = !lastAuthTime || (now - lastAuthTime) >= sixDaysInMs
+		},
+		
+		requestSubscription() {
+			uni.requestSubscribeMessage({
+				tmplIds: ['vBH-SeYDCAdDDRFb0sMPHlqJWaYZ4s7ycHI-sTjVpN4'],
+				success: (res) => {
+					if (res['vBH-SeYDCAdDDRFb0sMPHlqJWaYZ4s7ycHI-sTjVpN4'] === 'accept') {
+						// 用户同意授权，记录授权时间
+						const now = new Date().getTime()
+						uni.setStorageSync('lastSubscriptionAuthTime', now)
+						this.needSubscription = false
+						uni.showToast({
+							title: '订阅成功',
+							icon: 'success'
+						})
+					}
+				},
+				fail: (err) => {
+					console.error('订阅消息授权失败：', err)
+					uni.showToast({
+						title: '订阅失败',
+						icon: 'none'
+					})
+				}
+			})
+		},
+		async getMessageList() {
+			try {
+				const res = await api.merchant.getNotificationList({
+					pageNum: 1,
+					pageSize: 5
+				})
+				if (res.code === 200 && res.rows) {
+					this.messageList = res.rows.map(item => ({
+						title: item.title,
+						content: item.content,
+						isRead: item.status === 1,
+						time: item.createTime,
+						id: item.id,
+						businessId: item.businessId,
+						businessType: item.businessType,
+						status: item.status
+					}))
+				}
+			} catch (err) {
+				console.error('Get message list error:', err)
+				this.messageList = []
+			}
+		},
+	},
 }
 </script>
 
 <style lang="scss" scoped>
-.container {
-	min-height: 100vh;
+.page-container {
+	height: 100vh;
 	background: #F7F8FC;
 	position: relative;
-	padding-bottom: calc(120rpx + env(safe-area-inset-bottom));
+	display: flex;
+	flex-direction: column;
+}
+
+.scroll-container {
+	flex: 1;
+	height: calc(100vh - 120rpx - env(safe-area-inset-bottom));
+}
+
+.content-wrapper {
+	position: relative;
+	min-height: 100%;
+	z-index: 1;
 }
 
 .bg-image {
@@ -603,6 +727,19 @@ export default {
 				margin-bottom: 2rpx;
 				line-height: 1.2;
 				cursor: pointer;
+			}
+			.subscribe-btn {
+				margin-top: 10rpx;
+				background: rgba(68, 104, 232, 0.1);
+				color: #4468E8;
+				font-size: 24rpx;
+				padding: 6rpx 16rpx;
+				border-radius: 24rpx;
+				display: inline-block;
+				
+				&:active {
+					opacity: 0.8;
+				}
 			}
 		}
 	}
@@ -671,6 +808,104 @@ export default {
 		width: 2rpx;
 		height: 40rpx;
 		margin: 0 4rpx;
+	}
+}
+
+.merchant-entry {
+	position: relative;
+	z-index: 1;
+	margin: 20rpx;
+	height: 160rpx;
+	border-radius: 20rpx;
+	background: linear-gradient(135deg, #4468E8, #6C8EFF);
+	box-shadow: 0 8rpx 16rpx rgba(68, 104, 232, 0.15);
+	overflow: hidden;
+	
+	.entry-bg {
+		position: absolute;
+		right: 0;
+		bottom: 0;
+		width: 200rpx;
+		height: 160rpx;
+		opacity: 0.1;
+	}
+	
+	.entry-content {
+		position: relative;
+		z-index: 2;
+		height: 100%;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 0 40rpx;
+		
+		.entry-left {
+			display: flex;
+			align-items: center;
+			
+			.entry-icon-wrapper {
+				width: 80rpx;
+				height: 80rpx;
+				background: rgba(255, 255, 255, 0.2);
+				border-radius: 20rpx;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				margin-right: 24rpx;
+				
+				.entry-icon {
+					width: 48rpx;
+					height: 48rpx;
+				}
+			}
+			
+			.entry-text {
+				display: flex;
+				flex-direction: column;
+				
+				.entry-title {
+					font-size: 36rpx;
+					color: #fff;
+					font-weight: bold;
+					margin-bottom: 8rpx;
+					letter-spacing: 2rpx;
+				}
+				
+				.entry-desc {
+					font-size: 24rpx;
+					color: rgba(255, 255, 255, 0.9);
+				}
+			}
+		}
+		
+		.entry-right {
+			.entry-btn {
+				display: flex;
+				align-items: center;
+				background: #fff;
+				padding: 16rpx 32rpx;
+				border-radius: 40rpx;
+				box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+				
+				text {
+					font-size: 28rpx;
+					color: #4468E8;
+					font-weight: 500;
+					margin-right: 8rpx;
+				}
+				
+				.entry-arrow {
+					width: 24rpx;
+					height: 24rpx;
+					opacity: 0.8;
+				}
+			}
+		}
+	}
+	
+	&:active {
+		transform: scale(0.98);
+		transition: transform 0.2s ease;
 	}
 }
 
@@ -816,6 +1051,13 @@ export default {
 				margin-left: 10rpx;
 			}
 		}
+	}
+
+	.empty-message {
+		padding: 40rpx;
+		text-align: center;
+		color: #999;
+		font-size: 28rpx;
 	}
 }
 

@@ -133,7 +133,7 @@
 
 		<!-- 底部按钮区域 -->
 		<view class="bottom-area">
-			<button class="submit-btn" @click="submitOrder">提交报修</button>
+			<button class="submit-btn" @click="handleSubmit">提交报修</button>
 			<view class="float-call-btn" @click="makeCall">
 				<image src="/static/images/dianhua.png" mode="aspectFit"></image>
 			</view>
@@ -323,7 +323,7 @@ export default {
 				})
 			}
 		},
-		async submitOrder() {
+		async handleSubmit() {
 			// 表单验证
 			if (!this.description && !this.voicePath) {
 				uni.showToast({
@@ -357,6 +357,36 @@ export default {
 				return
 			}
 
+			// 先请求订阅消息授权
+			try {
+				await new Promise((resolve, reject) => {
+					uni.requestSubscribeMessage({
+						tmplIds: [
+							'7ldKf8INhV4lMtLj8j_tY8V7wruFg0F2mnKr_uy1ok8', // 维修订单状态通知
+							'c-zOQMdPhLj0zJjEB16rht8OhlWKp6QnK4soxtqFqXI'  // 维修完成通知
+						],
+						success: (res) => {
+							console.log('订阅消息授权成功', res)
+							resolve(res)
+						},
+						fail: (err) => {
+							console.error('订阅消息授权失败', err)
+							resolve(err) // 即使授权失败也继续提交
+						}
+					})
+				})
+				
+				// 授权后提交订单
+				await this.submitOrder()
+			} catch (err) {
+				console.error('操作失败:', err)
+				uni.showToast({
+					title: '操作失败，请重试',
+					icon: 'none'
+				})
+			}
+		},
+		async submitOrder() {
 			// 显示loading
 			uni.showLoading({
 				title: '提交中...',
@@ -393,9 +423,9 @@ export default {
 					
 					// 问题描述
 					description: this.description,
-					voicePath: voiceUrl,  // 现在是 fileName
+					voicePath: voiceUrl,
 					voiceDuration: this.duration,
-					images: imageUrls.join(','),  // 现在是 fileName 数组的拼接
+					images: imageUrls.join(','),
 					
 					// 托运信息
 					needTransport: this.needTransport ? 1 : 0,
@@ -421,7 +451,7 @@ export default {
 					// 提交成功后跳转到订单详情页
 					setTimeout(() => {
 						uni.redirectTo({
-							url: `/pages/orderDetail/orderDetail?orderId=${res.data}`
+							url: `/pages/orderDetail/orderDetail?orderId=${res.msg}`
 						})
 					}, 1500)
 				} else {
@@ -483,7 +513,7 @@ export default {
 				format: 'mp3'
 			})
 
-			// ��定时器，秒更新录音时长
+			// 定时器，秒更新录音时长
 			this.recordTimer = setInterval(() => {
 				this.currentSeconds++
 				if (this.currentSeconds >= 60) {

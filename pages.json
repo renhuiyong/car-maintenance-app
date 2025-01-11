@@ -1,15 +1,15 @@
 {
 	"pages": [{
-		"path": "pages/my/my",
-		"style": {
-			"navigationBarTitleText": "我的"
-		}
-	},{
 		"path": "pages/merchant/merchant",
 		"style": {
 			"navigationBarTitleText": "商家中心",
 			"enablePullDownRefresh": false,
 			"disableScroll": true
+		}
+	},{
+		"path": "pages/my/my",
+		"style": {
+			"navigationBarTitleText": "我的"
 		}
 	},{
 		"path": "pages/supplyChain/supplyChain",
@@ -285,6 +285,13 @@
 				"app-plus": {
 					"softinputMode": "adjustResize"
 				}
+			}
+		},
+		{
+			"path": "pages/repairParts/repairParts",
+			"style": {
+				"navigationBarTitleText": "已购配件",
+				"enablePullDownRefresh": false
 			}
 		}
 		

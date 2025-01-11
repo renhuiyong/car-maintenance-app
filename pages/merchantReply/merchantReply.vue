@@ -96,7 +96,7 @@ export default {
       uni.setStorageSync('currentShopName', this.merchantName)
       
       uni.navigateTo({
-        url: `/pages/shop/shop?repairOrderId=${this.orderId}&shopId=${this.shopId}&shopName=${encodeURIComponent(this.merchantName)}&repairOrderId=${this.repairOrderId}`
+        url: `/pages/shop/shop?shopId=${this.shopId}&shopName=${encodeURIComponent(this.merchantName)}&repairOrderId=${this.repairOrderId}`
       })
     },
     

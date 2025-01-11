@@ -181,7 +181,8 @@ export default {
 			brands: [
 				{ id: 'all', name: '全部' }
 			],
-			selectedBrand: 'all'
+			selectedBrand: 'all',
+			examineStatus: null // 添加审核状态
 		}
 	},
 	computed: {
@@ -210,9 +211,74 @@ export default {
 	},
 	created() {
 		console.log('merchantShop created')
-		// 在组件创建时加载商品列表和品牌列表
-		this.loadProducts()
-		this.getBrandList()
+		// 检查商家审核状态
+		api.merchant.getShopSelfExamineStatus().then(res => {
+			if (res.code === 200) {
+				const status = res.data.examineStatus
+				this.examineStatus = status
+				switch(status) {
+					case 0:
+						uni.showModal({
+							title: '提示',
+							content: '您的店铺正在审核中',
+							showCancel: false
+						})
+						break
+					case 1:
+						uni.showModal({
+							title: '提示',
+							content: '请先缴纳保证金',
+							showCancel: false
+						})
+						break
+					case 2:
+						uni.showModal({
+							title: '提示',
+							content: '等待平台审核',
+							showCancel: false
+						})
+						break
+					case 3:
+						// 审核通过，加载所有信息
+						this.loadProducts()
+						this.getBrandList()
+						break
+					case 4:
+						uni.showModal({
+							title: '提示',
+							content: '您的店铺审核未通过',
+							showCancel: false
+						})
+						break
+					case 5:
+						uni.showModal({
+							title: '提示',
+							content: '请先申请店铺入驻',
+							showCancel: false
+						})
+						break
+					default:
+						uni.showToast({
+							title: '未知状态',
+							icon: 'none'
+						})
+						uni.navigateBack()
+				}
+			} else {
+				uni.showToast({
+					title: res.msg || '获取店铺状态失败',
+					icon: 'none'
+				})
+				uni.navigateBack()
+			}
+		}).catch(err => {
+			console.error('获取店铺状态失败:', err)
+			uni.showToast({
+				title: '获取店铺状态失败',
+				icon: 'none'
+			})
+			uni.navigateBack()
+		})
 		// 在组件建时应用节流
 		this.switchCategory = throttle(this.switchCategory, 200);
 	},
@@ -540,7 +606,7 @@ export default {
 				pageNum: this.page,
 				pageSize: 10
 			}).then(res => {
-				console.log('获取商品列表���应:', res)
+				console.log('获取商品列表应:', res)
 				if (res.code === 200) {
 					const products = res.data || []
 					if (products.length > 0) {

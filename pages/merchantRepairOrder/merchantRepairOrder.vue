@@ -20,42 +20,50 @@
 		</view>
 		<view class="order-list">
 			<view class="order-wrapper">
-				<block v-for="(order, index) in currentOrderList" :key="order.orderId">
-					<view class="order-item">
-						<view class="order-header">
-							<text class="status">{{getStatusText(order.status, order)}}</text>
-							<text class="distance">{{formatDistance(order.distance)}}</text>
-						</view>
-						<view class="order-time">{{order.time}}</view>
-						<view class="order-location">
-							<image class="location-icon" src="/static/images/location_icon.png"></image>
-							<text>{{order.location}}</text>
-						</view>
-						<view class="order-issue">
-							<text>{{order.issue}}</text>
-							<view v-if="order.voice" class="voice-message" @tap="playVoice(order.voice)">
-								<view class="voice-waves" :class="{ 'playing': playingVoiceId === order.voice }">
-									<view class="wave"></view>
-									<view class="wave"></view>
-									<view class="wave"></view>
+				<block v-if="currentOrderList.length > 0">
+					<block v-for="(order, index) in currentOrderList" :key="order.orderId">
+						<view class="order-item">
+							<view class="order-header">
+								<text class="status">{{getStatusDetailText(order.statusDetail)}}</text>
+								<text class="distance">{{formatDistance(order.distance)}}</text>
+							</view>
+							<view class="order-time">{{order.time}}</view>
+							<view class="order-location">
+								<image class="location-icon" src="/static/images/location_icon.png"></image>
+								<text>{{order.location}}</text>
+							</view>
+							<view class="order-issue">
+								<text>{{order.issue}}</text>
+								<view v-if="order.voice" class="voice-message" @tap="playVoice(order.voice)">
+									<view class="voice-waves" :class="{ 'playing': playingVoiceId === order.voice }">
+										<view class="wave"></view>
+										<view class="wave"></view>
+										<view class="wave"></view>
+									</view>
+									<text class="voice-duration">{{order.voiceDuration}}s</text>
 								</view>
-								<text class="voice-duration">{{order.voiceDuration}}s</text>
+							</view>
+							<view class="merchant-response" v-if="order.merchantResponse">
+								<view class="response-title">商家回复</view>
+								<view class="response-content" v-html="order.merchantResponse"></view>
+							</view>
+							<view class="order-footer">
+								<view class="fee-info">
+									<text class="fee-label">托运金额</text>
+									<text v-if="order.needTransport" class="fee-amount">¥{{order.transportFee.toFixed(2)}}</text>
+									<text v-else class="fee-amount">不需要托运</text>
+								</view>
+								<button class="btn-reply" v-if="order.statusDetail === '0'" @tap="handleReply(order)">回复客户</button>
+								<button class="btn-reply" v-if="order.statusDetail === '2'" @tap="handleStartRepair(order)">开始维修</button>
+								<button class="btn-reply" v-if="order.statusDetail === '3'" @tap="handleFinishRepair(order)">维修完成</button>
 							</view>
 						</view>
-						<view class="merchant-response" v-if="order.merchantResponse">
-							<view class="response-title">商家回复</view>
-							<view class="response-content" v-html="order.merchantResponse"></view>
-						</view>
-						<view class="order-footer">
-							<view class="fee-info">
-								<text class="fee-label">托运金额</text>
-								<text v-if="order.needTransport" class="fee-amount">¥{{order.transportFee.toFixed(2)}}</text>
-								<text v-else class="fee-amount">不需要托运</text>
-							</view>
-							<button class="btn-reply" v-if="!order.merchantResponse" @tap="handleReply(order)">回复客户</button>
-						</view>
-					</view>
+					</block>
 				</block>
+				<view v-else class="empty-state">
+					<image class="empty-icon" src="/static/images/empty.png"></image>
+					<text class="empty-text">暂无{{currentTab === 'ongoing' ? '进行中' : '已完成'}}订单</text>
+				</view>
 			</view>
 		</view>
 	</view>
@@ -70,11 +78,6 @@ export default {
 			currentTab: 'ongoing',
 			isRefreshing: false,
 			orderList: [],
-			statusMap: {
-				'0': '待接单',
-				'1': '已完成',
-				'2': '已取消'
-			},
 			playingVoiceId: '',
 			currentLocation: {
 				latitude: null,
@@ -218,12 +221,23 @@ export default {
 				url: `/pages/merchantOrderReply/merchantOrderReply?params=${params}`
 			})
 		},
-		getStatusText(status, order) {
-			// 如果有商家回复且状态是待接单，显示为待购买配件
-			if (status === '0' && order.merchantResponse) {
-				return '待用户购买配件'
+		getStatusDetailText(statusDetail) {
+			if (statusDetail === '0') {
+				return '等待商家回复'
 			}
-			return this.statusMap[status] || '未知状态'
+			if (statusDetail === '1') {
+				return '商家已回复，待购买配件'
+			}
+			if (statusDetail === '2') {
+				return '已购买配件，待维修'
+			}
+			if (statusDetail === '3') {
+				return '已开始维修'
+			}
+			if (statusDetail === '4') {
+				return '已维修完成'
+			}
+			return '未知状态'
 		},
 		formatDistance(distance) {
 			if (typeof distance !== 'number') return '未知距离'
@@ -265,6 +279,76 @@ export default {
 				})
 				this.playingVoiceId = ''
 				this.audioContext = null
+			})
+		},
+		async handleStartRepair(order) {
+			// 显示确认弹窗
+			uni.showModal({
+				title: '确认开始维修',
+				content: '确定要开始维修该订单吗？',
+				confirmColor: '#FF9500',
+				success: async (res) => {
+					if (res.confirm) {
+						try {
+							const res = await api.merchant.startRepair(order.orderId)
+							
+							if (res.code === 200) {
+								uni.showToast({
+									title: '已开始维修',
+									icon: 'success'
+								})
+								// 刷新订单列表
+								this.fetchOrderList()
+							} else {
+								uni.showToast({
+									title: res.msg || '操作失败',
+									icon: 'none'
+								})
+							}
+						} catch (error) {
+							console.error('开始维修失败:', error)
+							uni.showToast({
+								title: '操作失败',
+								icon: 'none'
+							})
+						}
+					}
+				}
+			})
+		},
+		async handleFinishRepair(order) {
+			// 显示确认弹窗
+			uni.showModal({
+				title: '确认完成维修',
+				content: '确定已完成维修吗？',
+				confirmColor: '#FF9500',
+				success: async (res) => {
+					if (res.confirm) {
+						try {
+							const res = await api.merchant.finishRepair(order.orderId)
+							
+							if (res.code === 200) {
+								uni.showToast({
+									title: '维修已完成',
+									icon: 'success'
+								})
+								// 刷新订单列表
+								this.fetchOrderList()
+							} else {
+								uni.showToast({
+									title: res.msg || '操作失败',
+									icon: 'none'
+								})
+							}
+						} catch (error) {
+							console.error('完成维修失败:', error)
+							uni.showToast({
+								title: '操作失败',
+								icon: 'none'
+							})
+						}
+					}
+				}
 			})
 		}
 	}
@@ -555,5 +639,25 @@ export default {
 	font-size: 28rpx;
 	color: #333;
 	line-height: 1.4;
+}
+
+.empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 60rpx 0;
+	margin-top: 260rpx;
+}
+
+.empty-icon {
+	width: 200rpx;
+	height: 200rpx;
+	margin-bottom: 20rpx;
+}
+
+.empty-text {
+	font-size: 28rpx;
+	color: #999;
 }
 </style> 

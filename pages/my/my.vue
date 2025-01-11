@@ -75,7 +75,7 @@
 		<!-- 消息列表 -->
 		<view class="message-section">
 			<view class="section-title" @click="goToMyMessage">我的消息</view>
-			<view class="message-list">
+			<view class="message-list" v-if="messageList.length > 0">
 				<view 
 					class="message-item" 
 					v-for="(item, index) in messageList.slice(0, 5)" 
@@ -86,6 +86,9 @@
 					<text class="content">{{ item.title }}</text>
 					<image class="arrow" src="/static/images/youjiantou2.png"></image>
 				</view>
+			</view>
+			<view class="empty-message" v-else>
+				<text>暂无消息</text>
 			</view>
 		</view>
 	</view>
@@ -110,42 +113,14 @@ export default {
 			},
 			
 			request,
-			messageList: [
-				{ 
-					title: '您的订单已收货',
-					isRead: false,
-					content: '尊敬的用户您好，您的维修订单已完成配送，感谢您的使用。如有任何问题，请及时联系客服。'
-				},
-				{ 
-					title: '您的订单未付款',
-					isRead: false,
-					content: '您的维修订单尚未支付，请及时完成支付，以免订单自动取消。'
-				},
-				{ 
-					title: '最新活动通知，请查看活动详情',
-					isRead: false,
-					content: '亲爱的用户，平台正在开展新一轮优惠活动，点击查看详情了解更多优惠信息。'
-				},
-				{ 
-					title: '您收到一笔推广佣金',
-					isRead: false,
-					content: '恭喜您获得推广佣金奖励，可以在"我的资产"中查看详情。'
-				},
-				{ 
-					title: '您的维修订单已完成',
-					isRead: true,
-					content: '您的维修订单已完成服务，如对服务不满意，请及时反馈。'
-				}
-			],
+			messageList: [],
 			isLoading: false
 		}
 	},
 	onShow() {
 		this.checkLoginStatus()
-		// 获取本地存储的消息列表
-		const storedMessages = uni.getStorageSync('messageList')
-		if (storedMessages) {
-			this.messageList = JSON.parse(storedMessages)
+		if (this.isLogin) {
+			this.getMessageList()
 		}
 	},
 	methods: {
@@ -318,11 +293,14 @@ export default {
 				return
 			}
 			
-			// 将当前消息列表保存到本地存储
-			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
-			
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage'
+				url: '/pages/myMessage/myMessage?type=0',
+				events: {
+					// 监听消息页面返回时的刷新事件
+					refreshMessages: () => {
+						this.getMessageList()
+					}
+				}
 			})
 		},
 		goToMessageDetail(message) {
@@ -337,17 +315,24 @@ export default {
 			// 将消息数据存储到本地，以便在消息列表页面使用
 			uni.setStorageSync('selectedMessage', JSON.stringify({
 				title: message.title,
-					content: message.content,
-					time: '2024-03-21 14:30', // 这里可以是实际的时间
-					isRead: message.isRead
+				content: message.content,
+				time: message.time,
+				isRead: message.status === 1,
+				id: message.id,
+				businessId: message.businessId,
+				businessType: message.businessType,
+				status: message.status
 			}))
-			
-			// 将当前消息列表保存到本地存储
-			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
 			
 			// 跳转到消息列表页面
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage?autoOpen=true'
+				url: '/pages/myMessage/myMessage?autoOpen=true&type=0',
+				events: {
+					// 监听消息页面返回时的刷新事件
+					refreshMessages: () => {
+						this.getMessageList()
+					}
+				}
 			})
 		},
 		goToMyOrders() {
@@ -368,6 +353,29 @@ export default {
 					})
 				}
 			})
+		},
+		async getMessageList() {
+			try {
+				const res = await api.user.getNotificationList({
+					pageNum: 1,
+					pageSize: 5
+				})
+				if (res.code === 200 && res.rows) {
+					this.messageList = res.rows.map(item => ({
+						title: item.title,
+						content: item.content,
+						isRead: item.status === 1,
+						time: item.createTime,
+						id: item.id,
+						businessId: item.businessId,
+						businessType: item.businessType,
+						status: item.status
+					}))
+				}
+			} catch (err) {
+				console.error('Get message list error:', err)
+				this.messageList = []
+			}
 		}
 	}
 }
@@ -643,6 +651,13 @@ export default {
 				margin-left: 10rpx;
 			}
 		}
+	}
+
+	.empty-message {
+		padding: 40rpx;
+		text-align: center;
+		color: #999;
+		font-size: 28rpx;
 	}
 }
 

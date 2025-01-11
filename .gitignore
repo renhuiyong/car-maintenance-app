@@ -13,6 +13,7 @@ yarn-error.log*
 # 编辑器目录和文件
 .idea
 .vscode
+.hbuilderx
 *.suo
 *.ntvs*
 *.njsproj
