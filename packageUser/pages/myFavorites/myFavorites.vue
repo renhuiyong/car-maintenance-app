@@ -136,7 +136,7 @@ export default {
 							id: item.target_id,
 							name: item.NAME,
 							price: item.saleprice || 0,
-							image: item.image_url ? request.BASE_URL + item.image_url : '/static/products/shangpin_default.png'
+							image: item.image_url ? request.BASE_URL_OSS + item.image_url : '/static/products/shangpin_default.png'
 						}))
 					
 					// 处理店铺数据 (type === 2)

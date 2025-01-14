@@ -1,5 +1,44 @@
 // 配置基础URL
 const BASE_URL = 'http://rhyme.nat300.top'
+const BASE_URL_OSS = 'https://prod-car-maintenance-bucket.oss-cn-beijing.aliyuncs.com/'
+
+// OSS凭证缓存
+let ossTokenCache = {
+    token: null,
+    timestamp: null
+}
+
+// 检查OSS凭证是否过期
+const isOssTokenExpired = () => {
+    if (!ossTokenCache.timestamp) return true
+    const now = Date.now()
+    const diff = now - ossTokenCache.timestamp
+    // 如果距离上次获取时间超过55分钟（预留5分钟缓冲），则认为过期
+    return diff > 55 * 60 * 1000
+}
+
+// 获取OSS凭证
+const getOssToken = async () => {
+    if (!isOssTokenExpired() && ossTokenCache.token) {
+        return ossTokenCache.token
+    }
+    
+    const tokenRes = await request({
+        url: '/web/user/oss/token',
+        method: 'GET'
+    })
+    
+    if (tokenRes.code !== 200) {
+        throw new Error(tokenRes.msg || '获取上传凭证失败')
+    }
+    
+    ossTokenCache = {
+        token: tokenRes.data,
+        timestamp: Date.now()
+    }
+    
+    return tokenRes.data
+}
 
 // 请求封装
 const request = (options = {}) => {
@@ -105,42 +144,95 @@ export const post = (url, data = {}, options = {}) => {
     })
 }
 
-// 添加文件上传方法
-const upload = (url, options = {}) => {
-    return new Promise((resolve, reject) => {
-        uni.uploadFile({
-            url: BASE_URL + url,
-            filePath: options.file,
-            name: options.name || 'file',
-            formData: options.formData || {},
-            header: {
-                'WaAuthorization': uni.getStorageSync('token') || ''
-            },
-            success: (uploadFileRes) => {
-                let result = uploadFileRes.data;
-                if (typeof result === 'string') {
-                    try {
-                        result = JSON.parse(result);
-                    } catch (e) {
-                        reject(new Error('上传失败，返回数据格式错误'));
-                        return;
-                    }
-                }
-                if (result.code === 200) {
-                    // 返回文件名和完整URL
-                    resolve({
-                        fileName: result.fileName,
-                        url: result.url
-                    });
-                } else {
-                    reject(new Error(result.msg || '上传失败'));
-                }
-            },
-            fail: (err) => {
-                reject(err);
+// 封装上传方法
+const upload = async (options = {}) => {
+    try {
+        // 1. 获取OSS上传凭证
+        const ossData = await getOssToken()
+        
+        // 2. 构建文件名
+        const date = new Date()
+        const year = date.getFullYear()
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const day = String(date.getDate()).padStart(2, '0')
+        
+        // 获取文件后缀名
+        let fileExt = ''
+        const tempFilePath = options.file
+        
+        // 根据uni.uploadFile的文件类型判断后缀
+        if (tempFilePath.indexOf('mp3') > -1 || tempFilePath.indexOf('audio') > -1) {
+            fileExt = '.mp3'
+        } else {
+            // 默认按照图片处理，微信小程序选择的图片
+            if (tempFilePath.indexOf('.png') > -1) {
+                fileExt = '.png'
+            } else if (tempFilePath.indexOf('.jpg') > -1) {
+                fileExt = '.jpg'
+            } else if (tempFilePath.indexOf('.jpeg') > -1) {
+                fileExt = '.jpeg'
+            } else if (tempFilePath.indexOf('.gif') > -1) {
+                fileExt = '.gif'
+            } else if (tempFilePath.indexOf('.webp') > -1) {
+                fileExt = '.webp'
+            } else if (tempFilePath.indexOf('.bmp') > -1) {
+                fileExt = '.bmp'
+            } else if (tempFilePath.indexOf('.svg') > -1) {
+                fileExt = '.svg'
+            } else {
+                fileExt = '.jpg'  // 默认jpg
             }
-        });
-    });
+        }
+        
+        // 生成唯一文件名
+        const timestamp = Date.now()
+        const randomStr = Math.random().toString(36).slice(-6)
+        const fileName = `${ossData.dir}${year}/${month}/${day}/${timestamp}_${randomStr}${fileExt}`
+        
+        // 3. 构建上传参数
+        const formData = {
+            'key': fileName,
+            'policy': ossData.policy,
+            'x-oss-signature-version': ossData.x_oss_signature_version,
+            'x-oss-date': ossData.x_oss_date,
+            'x-oss-credential': ossData.x_oss_credential,
+            'x-oss-security-token': ossData.security_token,
+            'x-oss-signature': ossData.signature,
+            'success_action_status': '200'
+        }
+        
+        // 4. 上传文件
+        return new Promise((resolve, reject) => {
+            uni.uploadFile({
+                url: ossData.host,
+                filePath: options.file,
+                name: 'file',
+                formData: formData,
+                success: (uploadRes) => {
+                    if (uploadRes.statusCode === 200) {
+                        // 上传成功，返回文件信息
+                        resolve({
+                            code: 200,
+                            msg: '上传成功',
+                            fileName: fileName,
+                            url: `${ossData.host}/${fileName}`
+                        })
+                    } else {
+                        reject(new Error('上传失败'))
+                    }
+                },
+                fail: (err) => {
+                    reject(err)
+                }
+            })
+        })
+        
+    } catch (err) {
+        return Promise.reject({
+            code: 500,
+            msg: err.message || '上传失败'
+        })
+    }
 }
 
 export default {
@@ -148,5 +240,6 @@ export default {
     get,
     post,
     BASE_URL,
+    BASE_URL_OSS,
     upload
 } 

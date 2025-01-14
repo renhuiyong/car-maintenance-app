@@ -1,161 +1,169 @@
 <template>
 	<view class="container">
-		<!-- 搜索栏 -->
-		<view class="search-bar">
-			<view class="search-input">
-				<text class="iconfont icon-search"></text>
-				<input 
-					type="text" 
-					v-model="searchKeyword"
-					@input="searchProducts"
-					placeholder="搜索店内商品" 
-				/>
-				<text 
-					v-if="searchKeyword" 
-					class="clear-icon"
-					@tap="clearSearch"
-				>×</text>
-			</view>
+		<!-- 状态提示 -->
+		<view class="status-tip" v-if="examineStatus !== 3">
+			<text class="tip-text">{{statusText}}</text>
 		</view>
 		
-		<!-- 在搜索栏下方添加品牌筛选 -->
-		<view class="brand-filter">
-			<scroll-view scroll-x class="brand-scroll">
-				<view class="brand-list">
-					<view 
-						class="brand-item" 
-						:class="{ active: selectedBrand === brand.id }"
-						v-for="brand in brands" 
-						:key="brand.id"
-						@tap="selectBrand(brand.id)"
-					>
-						{{ brand.name }}
-					</view>
+		<!-- 只有当状态为3时才显示页面内容 -->
+		<template v-if="examineStatus === 3">
+			<!-- 搜索栏 -->
+			<view class="search-bar">
+				<view class="search-input">
+					<text class="iconfont icon-search"></text>
+					<input 
+						type="text" 
+						v-model="searchKeyword"
+						@input="searchProducts"
+						placeholder="搜索店内商品" 
+					/>
+					<text 
+						v-if="searchKeyword" 
+						class="clear-icon"
+						@tap="clearSearch"
+					>×</text>
 				</view>
-			</scroll-view>
-		</view>
-		
-		<!-- 搜索结果列表 -->
-		<view class="search-results-container" v-if="isSearching">
-			<scroll-view 
-				scroll-y 
-				class="search-results"
-				@scrolltolower="onReachBottom"
-				:refresher-enabled="true"
-				:refresher-triggered="refreshing"
-				@refresherrefresh="onSearchRefresh"
-				style="height: calc(100vh - 200rpx);"
-			>
-				<view class="product-item" 
-					  v-for="(item, index) in searchResults" 
-					  :key="item.id"
-					  @tap="goToDetail(item, item.categoryIndex, item.productIndex)">
-					<image :src="item.image" mode="aspectFit"></image>
-					<view class="product-info">
-						<view class="product-info-top">
-							<text class="product-name">{{ item.name }}</text>
-							<text v-if="item.status === 0" class="status-tag">待审核</text>
-						</view>
-						<view class="product-price-wrap">
-							<text class="price">￥{{ item.price.toFixed(2) }}/件</text>
-						</view>
-					</view>
-				</view>
-				<view class="loading-more" v-if="loading">加载中...</view>
-				<view class="no-more" v-if="!hasMore">更多了</view>
-			</scroll-view>
-		</view>
-		
-		<!-- 骨架屏 -->
-		<view class="skeleton-screen" v-if="loading && !isSearching">
-			<!-- 左侧分类导航骨架 -->
-			<view class="skeleton-category-list">
-				<view class="skeleton-category-item" v-for="i in 6" :key="i"></view>
 			</view>
 			
-			<!-- 右侧商品列表骨架 -->
-			<view class="skeleton-product-list">
-				<view class="skeleton-category-section" v-for="i in 2" :key="i">
-					<view class="skeleton-section-title"></view>
-					<view class="skeleton-product-items">
-						<view class="skeleton-product-item" v-for="j in 3" :key="j">
-							<view class="skeleton-image"></view>
-							<view class="skeleton-content">
-								<view class="skeleton-text-lg"></view>
-								<view class="skeleton-text-sm"></view>
-								<view class="skeleton-price"></view>
+			<!-- 在搜索栏下方添加品牌筛选 -->
+			<view class="brand-filter">
+				<scroll-view scroll-x class="brand-scroll">
+					<view class="brand-list">
+						<view 
+							class="brand-item" 
+							:class="{ active: selectedBrand === brand.id }"
+							v-for="brand in brands" 
+							:key="brand.id"
+							@tap="selectBrand(brand.id)"
+						>
+							{{ brand.name }}
+						</view>
+					</view>
+				</scroll-view>
+			</view>
+			
+			<!-- 搜索结果列表 -->
+			<view class="search-results-container" v-if="isSearching">
+				<scroll-view 
+					scroll-y 
+					class="search-results"
+					@scrolltolower="onReachBottom"
+					:refresher-enabled="true"
+					:refresher-triggered="refreshing"
+					@refresherrefresh="onSearchRefresh"
+					style="height: calc(100vh - 200rpx);"
+				>
+					<view class="product-item" 
+						  v-for="(item, index) in searchResults" 
+						  :key="item.id"
+						  @tap="goToDetail(item, item.categoryIndex, item.productIndex)">
+						<image :src="item.image" mode="aspectFit"></image>
+						<view class="product-info">
+							<view class="product-info-top">
+								<text class="product-name">{{ item.name }}</text>
+								<text v-if="item.status === 0" class="status-tag">待审核</text>
+							</view>
+							<view class="product-price-wrap">
+								<text class="price">￥{{ item.price.toFixed(2) }}/件</text>
+							</view>
+						</view>
+					</view>
+					<view class="loading-more" v-if="loading">加载中...</view>
+					<view class="no-more" v-if="!hasMore">更多了</view>
+				</scroll-view>
+			</view>
+			
+			<!-- 骨架屏 -->
+			<view class="skeleton-screen" v-if="loading && !isSearching">
+				<!-- 左侧分类导航骨架 -->
+				<view class="skeleton-category-list">
+					<view class="skeleton-category-item" v-for="i in 6" :key="i"></view>
+				</view>
+				
+				<!-- 右侧商品列表骨架 -->
+				<view class="skeleton-product-list">
+					<view class="skeleton-category-section" v-for="i in 2" :key="i">
+						<view class="skeleton-section-title"></view>
+						<view class="skeleton-product-items">
+							<view class="skeleton-product-item" v-for="j in 3" :key="j">
+								<view class="skeleton-image"></view>
+								<view class="skeleton-content">
+									<view class="skeleton-text-lg"></view>
+									<view class="skeleton-text-sm"></view>
+									<view class="skeleton-price"></view>
+								</view>
 							</view>
 						</view>
 					</view>
 				</view>
 			</view>
-		</view>
-		
-		<!-- 主体内容区 -->
-		<view class="main-content" v-else-if="!isSearching">
-			<!-- 左侧分类导航 -->
-			<scroll-view scroll-y class="category-list">
-				<view class="category-item" 
-					  v-for="(category, index) in categories" 
-					  :key="category.id"
-					  :class="{ active: currentCategory === index }"
-					  @tap="switchCategory(index)">
-					{{ category.name }}
-				</view>
-			</scroll-view>
 			
-			<!-- 右侧商品列表 -->
-			<scroll-view 
-				scroll-y 
-				class="product-list"
-				@scroll="onProductScroll"
-				:scroll-top="scrollTop"
-				:scroll-with-animation="false"
-				style="height: 100%;"
-			>
-				<view 
-					v-for="(category, categoryIndex) in filteredCategories" 
-					:key="category.id"
-					class="category-wrapper"
-				>
-					<view class="category-section-title">
+			<!-- 主体内容区 -->
+			<view class="main-content" v-else-if="!isSearching">
+				<!-- 左侧分类导航 -->
+				<scroll-view scroll-y class="category-list">
+					<view class="category-item" 
+						  v-for="(category, index) in categories" 
+						  :key="category.id"
+						  :class="{ active: currentCategory === index }"
+						  @tap="switchCategory(index)">
 						{{ category.name }}
 					</view>
-					<view class="product-items">
-						<view class="product-item" 
-							  v-for="(item, index) in category.items" 
-							  :key="item.id"
-							  @tap="goToDetail(item, categoryIndex, index)">
-							<image :src="item.image" mode="aspectFit"></image>
-							<view class="product-info">
-								<view class="product-info-top">
-									<text class="product-name">{{ item.name }}</text>
-									<text v-if="item.status === 0" class="status-tag">待审核</text>
-								</view>
-								<view class="product-price-wrap">
-									<text class="price">￥{{ item.price.toFixed(2) }}/件</text>
+				</scroll-view>
+				
+				<!-- 右侧商品列表 -->
+				<scroll-view 
+					scroll-y 
+					class="product-list"
+					@scroll="onProductScroll"
+					:scroll-top="scrollTop"
+					:scroll-with-animation="false"
+					style="height: 100%;"
+				>
+					<view 
+						v-for="(category, categoryIndex) in filteredCategories" 
+						:key="category.id"
+						class="category-wrapper"
+					>
+						<view class="category-section-title">
+							{{ category.name }}
+						</view>
+						<view class="product-items">
+							<view class="product-item" 
+								  v-for="(item, index) in category.items" 
+								  :key="item.id"
+								  @tap="goToDetail(item, categoryIndex, index)">
+								<image :src="item.image" mode="aspectFit"></image>
+								<view class="product-info">
+									<view class="product-info-top">
+										<text class="product-name">{{ item.name }}</text>
+										<text v-if="item.status === 0" class="status-tag">待审核</text>
+									</view>
+									<view class="product-price-wrap">
+										<text class="price">￥{{ item.price.toFixed(2) }}/件</text>
+									</view>
 								</view>
 							</view>
 						</view>
 					</view>
-				</view>
-			</scroll-view>
-		</view>
-		
-		<!-- 添加悬浮按钮 -->
-		<view class="float-btn" 
-			@touchstart="touchStart" 
-			@touchmove="touchMove"
-			@touchend="touchEnd"
-			:style="{ 
-				left: buttonLeft + 'px',
-				top: buttonTop + 'px',
-				right: 'auto',
-				bottom: 'auto'
-			}"
-			@tap.stop="addAccessory">
-			<image src="/static/images/add.png" mode="aspectFit" class="add-icon"></image>
-		</view>
+				</scroll-view>
+			</view>
+			
+			<!-- 添加悬浮按钮 -->
+			<view class="float-btn" 
+				@touchstart="touchStart" 
+				@touchmove="touchMove"
+				@touchend="touchEnd"
+				:style="{ 
+					left: buttonLeft + 'px',
+					top: buttonTop + 'px',
+					right: 'auto',
+					bottom: 'auto'
+				}"
+				@tap.stop="addAccessory">
+				<image src="/static/images/add.png" mode="aspectFit" class="add-icon"></image>
+			</view>
+		</template>
 	</view>
 </template>
 
@@ -204,7 +212,9 @@ export default {
 			startY: 0,
 			windowWidth: 0,
 			windowHeight: 0,
-			isDragging: false
+			isDragging: false,
+			examineStatus: null, // 审核状态
+			statusText: '' // 状态提示文字
 		}
 	},
 	computed: {
@@ -233,6 +243,8 @@ export default {
 	},
 	created() {
 		console.log('merchantShop created')
+		// 先检查供应商状态
+		this.checkSupplyChainStatus()
 		// 在组件创建时加载商品列表和品牌列表
 		this.loadProducts()
 		this.getBrandList()
@@ -628,7 +640,7 @@ export default {
 					id: product.id,
 					name: product.name,
 					price: product.price,
-					image: product.image ? request.BASE_URL + product.image : '/static/products/shangpin_default.png',
+					image: product.image ? request.BASE_URL_OSS + product.image : '/static/products/shangpin_default.png',
 					brand: product.brand,
 					status: product.status,
 					categoryIndex: categories.length - 1,
@@ -718,6 +730,51 @@ export default {
 			uni.navigateTo({
 				url: `/packageSupplyChain/pages/supplyChainShopAccessoryAdd/supplyChainShopAccessoryAdd?${query}`
 			})
+		},
+		// 检查供应商状态
+		async checkSupplyChainStatus() {
+			try {
+				const res = await api.supplyChain.getSupplyChainDetail()
+				if (res.code === 200) {
+					this.examineStatus = res.data.examineStatus
+					
+					// 设置状态提示文字
+					switch(this.examineStatus) {
+						case 0:
+							this.statusText = '您的入驻申请正在审核中'
+							break
+						case 1:
+							this.statusText = '您的入驻申请已审核，请缴纳保证金'
+							break
+						case 2:
+							this.statusText = '您已缴纳保证金，请等待最终审核'
+							break
+						case 3:
+							// 已通过，加载商品列表
+							this.loadProducts()
+							break
+						case 4:
+							this.statusText = '很抱歉，您的入驻申请未通过审核'
+							break
+						case 5:
+							this.statusText = '您还未申请入驻，请先完成入驻申请'
+							break
+						default:
+							this.statusText = '系统繁忙，请稍后再试'
+					}
+				} else {
+					uni.showToast({
+						title: res.msg || '获取状态失败',
+						icon: 'none'
+					})
+				}
+			} catch (err) {
+				console.error('获取供应商状态失败:', err)
+				uni.showToast({
+					title: '获取状态失败',
+					icon: 'none'
+				})
+			}
 		}
 	},
 	// 添加 onPullDownRefresh 生命周期方法（与 methods 同级
@@ -1199,5 +1256,26 @@ export default {
 	line-height: 1.2;
 	white-space: nowrap;
 	width: fit-content;
+}
+
+/* 添加状态提示样式 */
+.status-tip {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: #fff;
+	z-index: 999;
+}
+
+.tip-text {
+	font-size: 32rpx;
+	color: #666;
+	text-align: center;
+	padding: 40rpx;
 }
 </style> 

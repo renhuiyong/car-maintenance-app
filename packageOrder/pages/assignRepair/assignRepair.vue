@@ -404,7 +404,7 @@ export default {
 					// 提交成功后跳转到订单详情页
 					setTimeout(() => {
 						uni.redirectTo({
-							url: `/pages/orderDetail/orderDetail?orderId=${res.msg}`
+							url: `/packageOrder/pages/orderDetail/orderDetail?orderId=${res.msg}`
 						})
 					}, 1500)
 				} else {

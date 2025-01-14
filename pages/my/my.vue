@@ -5,7 +5,7 @@
 		<!-- 用户信息区域 -->
 		<view class="user-info">
 			<view class="user-left">
-				<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
+				<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL_OSS + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
 				<button 
 					v-if="!isLogin"
 					class="login-btn"
@@ -64,7 +64,7 @@
 				<view class="body" @click="goToMyAssets">
 					<view class="amount-info">
 						<text class="label">佣金资产</text>
-						<text class="amount">23,0000</text>
+						<text class="amount">{{ commission }}</text>
 						<text class="check">查看领取 ></text>
 					</view>
 					<image class="coins-img" src="/static/my/coins.png"></image>
@@ -111,11 +111,12 @@ export default {
 				phone: '',
 				avatar: ''
 			},
-			
+			commission: '0.00',
 			request,
 			messageList: [],
 			isLoading: false,
-			messageTimer: null
+			messageTimer: null,
+			commissionTimer: null
 		}
 	},
 	onShow() {
@@ -123,13 +124,17 @@ export default {
 		if (this.isLogin) {
 			this.getMessageList()
 			this.startMessageTimer()
+			this.getCommissionAccount()
+			this.startCommissionTimer()
 		}
 	},
 	onHide() {
 		this.clearMessageTimer()
+		this.clearCommissionTimer()
 	},
 	onUnload() {
 		this.clearMessageTimer()
+		this.clearCommissionTimer()
 	},
 	methods: {
 		checkLoginStatus() {
@@ -173,7 +178,7 @@ export default {
 				})
 
 				// 获取存储的promotionCode
-				const promotionCode = uni.getStorageSync('promotionCode') || ''
+				const promotionCode = getApp().globalData.promotionCode || ''
 				
 				// 在登录请求中带上promotionCode
 				const res = await api.user.wxLogin({
@@ -204,6 +209,9 @@ export default {
 					// 登录成功后获取消息列表并启动定时器
 					this.getMessageList()
 					this.startMessageTimer()
+					// 获取佣金信息并启动定时器
+					this.getCommissionAccount()
+					this.startCommissionTimer()
 					
 					uni.showToast({
 						title: '登录成功',
@@ -305,7 +313,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/packageUser/pages/myMessage/myMessage'
+				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true&messageStatus=' + (message.status === 1 ? 'read' : 'unread'),
 			})
 		},
 		goToMessageDetail(message) {
@@ -384,6 +392,31 @@ export default {
 			if (this.messageTimer) {
 				clearInterval(this.messageTimer)
 				this.messageTimer = null
+			}
+		},
+		async getCommissionAccount() {
+			try {
+				const res = await api.commission.getCommissionAccount()
+				if (res.code === 200) {
+					this.commission = res.data.totalAmount?.toFixed(2) || '0.00'
+				}
+			} catch (err) {
+				console.error('Get commission error:', err)
+				this.commission = '0.00'
+			}
+		},
+		startCommissionTimer() {
+			this.clearCommissionTimer()
+			this.commissionTimer = setInterval(() => {
+				if (this.isLogin) {
+					this.getCommissionAccount()
+				}
+			}, 20000) // 20秒
+		},
+		clearCommissionTimer() {
+			if (this.commissionTimer) {
+				clearInterval(this.commissionTimer)
+				this.commissionTimer = null
 			}
 		}
 	}

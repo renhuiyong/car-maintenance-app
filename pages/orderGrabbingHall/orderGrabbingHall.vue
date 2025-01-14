@@ -403,7 +403,7 @@
 			// 跳转到详情页
 			goToDetail(item) {
 				uni.navigateTo({
-					url: `/pages/orderGrabbingHallDetail/orderGrabbingHallDetail?orderId=${item.orderId}`
+					url: `/packageOrder/pages/orderGrabbingHallDetail/orderGrabbingHallDetail?orderId=${item.orderId}`
 				})
 			},
 		}

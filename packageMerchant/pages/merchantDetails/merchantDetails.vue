@@ -306,7 +306,7 @@ export default {
       const shopInfoStr = encodeURIComponent(JSON.stringify(shopInfo))
       
       uni.navigateTo({
-        url: `/pages/assignRepair/assignRepair?shopInfo=${shopInfoStr}`
+        url: `/packageOrder/pages/assignRepair/assignRepair?shopInfo=${shopInfoStr}`
       })
     },
     initShareConfig() {

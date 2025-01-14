@@ -5,7 +5,7 @@
 		<!-- 用户信息区域 -->
 		<view class="user-info">
 			<view class="user-left">
-				<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
+				<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL_OSS + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
 				<button 
 					v-if="!isLogin"
 					class="login-btn"
@@ -31,7 +31,7 @@
 		</view>
 		
 		<!-- 供应商入住按钮 -->
-		<view class="supplier-register" @click="goToSupplierRegister">
+		<view class="supplier-register" @click="goToSupplierRegister" v-if="isLogin && supplyChainStatus !== 3">
 			<view class="register-content">
 				<view class="left">
 					<text class="title">供应商入驻</text>
@@ -43,7 +43,7 @@
 		
 		<!-- 功能菜单 -->
 		<view class="menu-grid">
-			<view class="menu-item" @click="goToMyFavorites">
+			<view class="menu-item" @click="goToPurchasingOrder">
 				<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
 				<text>进货订单</text>
 			</view>
@@ -58,15 +58,20 @@
 		<view class="message-section">
 			<view class="section-title" @click="goToMyMessage">我的消息</view>
 			<view class="message-list">
-				<view 
-					class="message-item" 
-					v-for="(item, index) in messageList.slice(0, 5)" 
-					:key="index"
-					@click="goToMessageDetail(item)"
-				>
-					<text class="unread" v-if="!item.isRead">未读</text>
-					<text class="content">{{ item.title }}</text>
-					<image class="arrow" src="/static/images/youjiantou2.png"></image>
+				<template v-if="messageList.length > 0">
+					<view 
+						class="message-item" 
+						v-for="(item, index) in messageList.slice(0, 5)" 
+						:key="index"
+						@click="goToMessageDetail(item)"
+					>
+						<text class="unread" v-if="!item.isRead">未读</text>
+						<text class="content">{{ item.title }}</text>
+						<image class="arrow" src="/static/images/youjiantou2.png"></image>
+					</view>
+				</template>
+				<view v-else class="empty-message">
+					<text class="empty-text">暂无消息</text>
 				</view>
 			</view>
 		</view>
@@ -75,7 +80,7 @@
 		<merchant-tabbar :current="3"></merchant-tabbar>
 		
 		<!-- 添加悬浮扫描按钮 -->
-		<view 
+		<!-- <view 
 			class="float-scan-btn"
 			:style="{ left: buttonPosition.left + 'px', top: buttonPosition.top + 'px' }"
 			@touchstart="touchStart"
@@ -84,7 +89,7 @@
 			@tap="handleScan"
 		>
 			<image src="/static/images/scan.png" mode="aspectFit"></image>
-		</view>
+		</view> -->
 	</view>
 </template>
 
@@ -106,33 +111,8 @@ export default {
 				avatar: ''
 			},
 			request,
-			messageList: [
-				{ 
-					title: '您的订单已收货',
-					isRead: false,
-					content: '尊敬的用户您好，您的维修订单已完成配送，感谢您的使用。如有任何问题，请及时联系客服。'
-				},
-				{ 
-					title: '您的订单未付款',
-					isRead: false,
-					content: '您的维修订单尚未支付，请及时完成支付，以免订单自动取消。'
-				},
-				{ 
-					title: '最新活动通知，请查看活动详情',
-					isRead: false,
-					content: '亲爱的用户，平台正在开展新一轮优惠活动，点击查看详情了解更多优惠信息。'
-				},
-				{ 
-					title: '您收到一笔推广佣金',
-					isRead: false,
-					content: '恭您获得推广佣金奖励，可以在"我的资产"中查看详情。'
-				},
-				{ 
-					title: '您的维修订单已完成',
-					isRead: true,
-					content: '您的维修订单已完成服务，如对服务不满意，请及时反馈。'
-				}
-			],
+			messageList: [],
+			messageTimer: null,
 			// 添加按钮位置相关数据
 			buttonPosition: {
 				left: uni.getSystemInfoSync().windowWidth - 80, // 默认靠右
@@ -143,19 +123,30 @@ export default {
 				x: 0,
 				y: 0
 			},
-			isLoading: false
+			isLoading: false,
+			// 添加供应商状态
+			supplyChainStatus: 3, // 默认为3，不显示供应商入驻按钮
 		}
 	},
 	created() {
 		this.checkLoginStatus()
+		if (this.isLogin) {
+			this.getSupplyChainDetail()
+			this.getMessageList()
+			this.startMessageTimer()
+		}
 	},
 	onShow() {
-		this.checkLoginStatus()
-		// 获取本地存储的消息列表
-		const storedMessages = uni.getStorageSync('messageList')
-		if (storedMessages) {
-			this.messageList = JSON.parse(storedMessages)
+		if (this.isLogin) {
+			this.getMessageList()
+			this.startMessageTimer()
 		}
+	},
+	onHide() {
+		this.clearMessageTimer()
+	},
+	onUnload() {
+		this.clearMessageTimer()
 	},
 	methods: {
 		checkLoginStatus() {
@@ -232,6 +223,9 @@ export default {
 					this.isLogin = true
 					this.userInfo = userData
 					
+					// 登录成功后获取供应商详情
+					this.getSupplyChainDetail()
+					
 					uni.showToast({
 						title: '登录成功',
 							icon: 'success'
@@ -270,7 +264,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/merchantPromotion/merchantPromotion',
+				url: '/packageMerchant/pages/merchantPromotion/merchantPromotion',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -280,7 +274,7 @@ export default {
 				}
 			})
 		},
-		goToMyFavorites() {
+		goToPurchasingOrder() {
 			if (!this.isLogin) {
 				uni.showToast({
 					title: '请先登录',
@@ -289,7 +283,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myFavorites/myFavorites',
+				url: '/packageSupplyChain/pages/supplyChainPurchasingOrder/supplyChainPurchasingOrder',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -308,7 +302,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/pages/myAssets/myAssets'
+				url: '/packageUser/pages/myAssets/myAssets'
 			})
 		},
 		goToMyMessage() {
@@ -320,11 +314,13 @@ export default {
 				return
 			}
 			
-			// 将当前消息列表保存到本地存储
-			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
-			
 			uni.navigateTo({
-				url: '/packageUser/pages/myMessage/myMessage'
+				url: '/packageUser/pages/myMessage/myMessage',
+				events: {
+					refreshMessages: () => {
+						this.getMessageList()
+					}
+				}
 			})
 		},
 		goToMessageDetail(message) {
@@ -336,20 +332,24 @@ export default {
 				return
 			}
 			
-			// 将消息数据存储到本地，以便在消息列表页面使用
 			uni.setStorageSync('selectedMessage', JSON.stringify({
 				title: message.title,
-					content: message.content,
-					time: '2024-03-21 14:30', // 这里可以是实际的时间
-					isRead: message.isRead
+				content: message.content,
+				time: message.time,
+				isRead: message.status === 1,
+				id: message.id,
+				businessId: message.businessId,
+				businessType: message.businessType,
+				status: message.status
 			}))
 			
-			// 将当前消息列表保存到本地存储
-			uni.setStorageSync('messageList', JSON.stringify(this.messageList))
-			
-			// 跳转到消息列表页面
 			uni.navigateTo({
-				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true'
+				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true&messageStatus=' + (message.status === 1 ? 'read' : 'unread'),
+				events: {
+					refreshMessages: () => {
+						this.getMessageList()
+					}
+				}
 			})
 		},
 		// 添加供应商入驻跳转方法
@@ -438,7 +438,6 @@ export default {
 						onlyFromCamera: true, // 只允许相机扫码
 						scanType: ['qrCode', 'barCode'], // 支持二维码和条形码
 						success: (res) => {
-							console.log('扫码结果：', res)
 							// 处理扫码结果
 							if (res.result) {
 								try {
@@ -497,7 +496,54 @@ export default {
 				}
 			})
 		},
-	
+		// 添加获取供应商详情方法
+		async getSupplyChainDetail() {
+			try {
+				const res = await api.supplyChain.getSupplyChainDetail()
+				if (res.code === 200) {
+					this.supplyChainStatus = res.data.examineStatus
+				}
+			} catch (err) {
+				console.error('Get supply chain detail error:', err)
+			}
+		},
+		async getMessageList() {
+			try {
+				const res = await api.supplyChain.getNotificationList({
+					pageNum: 1,
+					pageSize: 5
+				})
+				if (res.code === 200 && res.rows) {
+					this.messageList = res.rows.map(item => ({
+						title: item.title,
+						content: item.content,
+						isRead: item.status === 1,
+						time: item.createTime,
+						id: item.id,
+						businessId: item.businessId,
+						businessType: item.businessType,
+						status: item.status
+					}))
+				}
+			} catch (err) {
+				console.error('Get message list error:', err)
+				this.messageList = []
+			}
+		},
+		startMessageTimer() {
+			this.clearMessageTimer()
+			this.messageTimer = setInterval(() => {
+				if (this.isLogin) {
+					this.getMessageList()
+				}
+			}, 10000)
+		},
+		clearMessageTimer() {
+			if (this.messageTimer) {
+				clearInterval(this.messageTimer)
+				this.messageTimer = null
+			}
+		},
 	}
 }
 </script>
@@ -711,6 +757,19 @@ export default {
 				width: 24rpx;
 				height: 24rpx;
 				margin-left: 10rpx;
+			}
+		}
+		
+		.empty-message {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			padding: 30rpx 0;
+			
+			.empty-text {
+				font-size: 28rpx;
+				color: #999;
 			}
 		}
 	}

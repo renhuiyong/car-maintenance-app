@@ -1,17 +1,24 @@
 {
-	"pages": [ {
-		"path": "pages/my/my",
-		"style": {
-			"navigationBarTitleText": "我的"
-		}
-	},{
+	"pages": [{
 		"path": "pages/supplyChain/supplyChain",
 		"style": {
 			"navigationBarTitleText": "供应商",
 			"enablePullDownRefresh": false,
 			"disableScroll": true
 		}
-	}, {
+	},  {
+		"path": "pages/my/my",
+		"style": {
+			"navigationBarTitleText": "我的",
+			"enablePullDownRefresh": false,
+			"disableScroll": true
+		}
+	},{
+		"path": "pages/promotionRegistrationType/promotionRegistrationType",
+		"style": {
+			"navigationBarTitleText": "选择注册类型"
+		}
+	},{
 		"path": "pages/merchant/merchant",
 		"style": {
 			"navigationBarTitleText": "商家中心",
@@ -47,7 +54,7 @@
 	},{
 		"path": "pages/supplyChainMy/supplyChainMy",
 		"style": {
-			"navigationBarTitleText": "供应商我的"
+			"navigationBarTitleText": "供应商"
 		}
 	},
 	{
@@ -61,7 +68,8 @@
 		"style": {
 			"navigationBarTitleText": "供应商首页"
 		}
-	}],
+	}
+	],
 	"subPackages": [{
 			"root": "packageMerchant",
 			"pages": [
@@ -212,6 +220,30 @@
 					"path": "pages/supplyChainShopAccessoryAdd/supplyChainShopAccessoryAdd",
 					"style": {
 						"navigationBarTitleText": "添加配件"
+					}
+				},
+				{
+					"path": "pages/supplyChainPurchasingOrder/supplyChainPurchasingOrder",
+					"style": {
+						"navigationBarTitleText": "进货订单"
+					}
+				},
+				{
+					"path": "pages/supplyChainPendingShipment/supplyChainPendingShipment",
+					"style": {
+						"navigationBarTitleText": "待发货"
+					}
+				},
+				{
+					"path": "pages/supplyChainLogisticsInformation/supplyChainLogisticsInformation",
+					"style": {
+						"navigationBarTitleText": "物流信息"
+					}
+				},
+				{
+					"path": "pages/supplyChainShippingDetails/supplyChainShippingDetails",
+					"style": {
+						"navigationBarTitleText": "发货详情"
 					}
 				}
 			]

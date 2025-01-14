@@ -87,7 +87,7 @@ export default {
       currentMessage: {},
       messageList: [],
       pageNum: 1,
-      pageSize: 10,
+      pageSize: 100,
       loading: false,
       hasMore: true,
       type: 0
@@ -112,7 +112,9 @@ export default {
       
       try {
         this.loading = true
-        const apiMethod = this.type === 0 ? api.user.getNotificationList : api.merchant.getNotificationList
+        const apiMethod = this.type === 0 ? api.user.getNotificationList : 
+                         this.type === 1 ? api.merchant.getNotificationList :
+                         api.supplyChain.getNotificationList
         const res = await apiMethod({
           pageNum: this.pageNum,
           pageSize: this.pageSize,
@@ -177,6 +179,11 @@ export default {
   },
   onLoad(options) {
     this.type = Number(options.type || -1)
+    
+    // 设置初始标签页
+    if (options.messageStatus) {
+      this.currentTab = options.messageStatus
+    }
     
     this.getMessageList()
     

@@ -178,7 +178,7 @@ export default {
       orderInfo: null,
       loading: true,
       refreshing: false,
-      baseUrl: request.BASE_URL,
+      baseUrl: request.BASE_URL_OSS,
       pollingTimer: null,  // 添加轮询定时器
       partsInfo: null,  // 添加配件信息字段
       isPlaying: false,  // 添加播放状态

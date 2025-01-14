@@ -36,7 +36,6 @@
     watch: {
       current: {
         handler(newVal) {
-          console.log('current changed:', newVal)
           this.currentTab = newVal
         },
         immediate: true
@@ -45,7 +44,6 @@
     methods: {
       switchTab(index) {
         if (this.currentTab === index) return
-        console.log('switchTab:', index)
         this.currentTab = index
         this.$emit('change', index)
       }

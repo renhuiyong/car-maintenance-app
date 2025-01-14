@@ -500,14 +500,14 @@ export default {
 					let details = res.data.details;
 					if (details) {
 						// 使用正则表达式替换所有 src="/profile/upload 的图片路径
-						details = details.replace(/src="\/profile\/upload/g, `src="${request.BASE_URL}/profile/upload`);
+						details = details.replace(/src="\/profile\/upload/g, `src="${request.BASE_URL_OSS}/profile/upload`);
 					}
 					
 					this.product = {
 						id: res.data.id,
 						name: res.data.name,
 						price: res.data.price,
-						image: res.data.image ? request.BASE_URL + res.data.image : '/static/products/shangpin_default.png',
+						image: res.data.image ? request.BASE_URL_OSS + res.data.image : '/static/products/shangpin_default.png',
 						detail: details || '<div>暂无商品详情</div>',
 						stock: res.data.stock || 0,
 						brand: this.getBrandName(res.data.brand),

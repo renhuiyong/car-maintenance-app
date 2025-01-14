@@ -8,7 +8,7 @@
 				<!-- 用户信息区域 -->
 				<view class="user-info">
 					<view class="user-left">
-						<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
+						<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL_OSS + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
 						<button 
 							v-if="!isLogin"
 							class="login-btn"
@@ -92,7 +92,7 @@
 						<view class="body" @click="goToMyAssets">
 							<view class="amount-info">
 								<text class="label">佣金资产</text>
-								<text class="amount">23,0000</text>
+								<text class="amount">{{ commissionAmount }}</text>
 								<text class="check">查看领取 ></text>
 							</view>
 							<image class="coins-img" src="/static/my/coins.png"></image>
@@ -173,6 +173,9 @@ export default {
 			hasCheckedSubscription: false, // 添加标记，避免重复检查
 			needSubscription: false,
 			messageTimer: null, // 添加定时器变量
+			commissionTimer: null, // 添加佣金定时器
+			// 添加佣金数据
+			commissionAmount: '0.00',
 		}
 	},
 	created() {
@@ -181,8 +184,9 @@ export default {
 			this.checkShopExamineStatus()
 			this.checkSubscriptionStatus()
 			this.getMessageList()
-			// 启动定时器
 			this.startMessageTimer()
+			this.getCommissionAccount()
+			this.startCommissionTimer() // 启动佣金定时器
 		}
 	},
 	onShow() {
@@ -190,17 +194,20 @@ export default {
 		if (this.isLogin) {
 			this.checkShopExamineStatus()
 			this.getMessageList()
-			// 确保定时器在页面显示时启动
 			this.startMessageTimer()
+			this.getCommissionAccount()
+			this.startCommissionTimer() // 启动佣金定时器
 		}
 	},
 	onHide() {
 		// 页面隐藏时清除定时器
 		this.clearMessageTimer()
+		this.clearCommissionTimer() // 清除佣金定时器
 	},
 	onUnload() {
 		// 页面卸载时清除定时器
 		this.clearMessageTimer()
+		this.clearCommissionTimer() // 清除佣金定时器
 	},
 	methods: {
 		checkLoginStatus() {
@@ -258,8 +265,7 @@ export default {
 				})
 
 				// 获取存储的promotionCode
-				const promotionCode = uni.getStorageSync('promotionCode') || ''
-				
+				const promotionCode = getApp().globalData.promotionCode || ''
 				// 在登录请求中带上promotionCode
 				const res = await api.merchant.wxMerchantLogin({
 					code: loginRes.code,
@@ -292,6 +298,11 @@ export default {
 					
 					// 获取消息列表
 					this.getMessageList()
+					this.startMessageTimer()
+					
+					// 获取佣金信息
+					this.getCommissionAccount()
+					this.startCommissionTimer()
 					
 					uni.showToast({
 						title: '登录成功',
@@ -447,7 +458,7 @@ export default {
 			
 			// 跳转到消息列表页面
 			uni.navigateTo({
-				url: '/pages/myMessage/myMessage?autoOpen=true',
+				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true&messageStatus=' + (message.status === 1 ? 'read' : 'unread'),
 				events: {
 					// 监听消息页面返回时的刷新事件
 					refreshMessages: () => {
@@ -704,6 +715,31 @@ export default {
 			if (this.messageTimer) {
 				clearInterval(this.messageTimer)
 				this.messageTimer = null
+			}
+		},
+		async getCommissionAccount() {
+			try {
+				const res = await api.commission.getCommissionAccount()
+				if (res.code === 200) {
+					this.commissionAmount = res.data.totalAmount?.toFixed(2) || '0.00'
+				}
+			} catch (err) {
+				console.error('Get commission error:', err)
+				this.commissionAmount = '0.00'
+			}
+		},
+		startCommissionTimer() {
+			this.clearCommissionTimer()
+			this.commissionTimer = setInterval(() => {
+				if (this.isLogin) {
+					this.getCommissionAccount()
+				}
+			}, 20000) // 20秒刷新一次
+		},
+		clearCommissionTimer() {
+			if (this.commissionTimer) {
+				clearInterval(this.commissionTimer)
+				this.commissionTimer = null
 			}
 		},
 	},

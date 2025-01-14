@@ -176,6 +176,7 @@
 			}
 		},
 		onLoad(query) {
+			console.log('query:', query)
 			// 获取系统信息
 			const { windowHeight } = uni.getSystemInfoSync()
 			this.windowHeight = windowHeight
@@ -183,8 +184,6 @@
 			// 检查授权状态
 			this.checkLocationAuth()
 			
-			// 处理小程序二数
-			this.handleSceneCode(query)
 		},
 		watch: {
 			repairShops: {
@@ -279,7 +278,7 @@
 				}
 
 				uni.navigateTo({
-					url: '/pages/grabOrder/grabOrder'
+					url: '/packageOrder/pages/grabOrder/grabOrder'
 				})
 			},
 			// 处理复框变化
@@ -544,33 +543,8 @@
 			// 添加查看规则方法
 			checkRules() {
 				uni.navigateTo({
-					url: '/pages/repairRules/repairRules'
+					url: '/packageOrder/pages/repairRules/repairRules'
 				})
-			},
-			/**
-			 * 处理小程序二维码中的场景值
-			 * @param {Object} query - 页面参数对象
-			 * @param {string} [query.scene] - 小程序码场景值
-			 */
-			handleSceneCode(query) {
-				if (!query.scene) return
-				
-				try {
-					// scene 需要使用 decodeURIComponent 才能获取到生成二维码时传入的 scene
-					const scene = decodeURIComponent(query.scene)
-					console.log('解码后的scene:', scene)
-					
-					// 解析 scene 中的邀请码
-					const [key, value] = scene.split('=')
-					if (key === 'promotionCode' && value) {
-						this.promotionCode = value
-						// 存储邀请码到本地存储，以便后续使用
-						uni.setStorageSync('promotionCode', value)
-						console.log('功设置邀请码:', value)
-					}
-				} catch (error) {
-					console.error('解析请码失败:', error)
-				}
 			},
 			handleTouchStart(e) {
 				this.startY = e.touches[0].clientY

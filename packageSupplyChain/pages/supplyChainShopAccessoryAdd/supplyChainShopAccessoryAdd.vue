@@ -322,7 +322,7 @@
 			goToRichText() {
 				console.log('点击富文本编辑')
 				uni.navigateTo({
-					url: `/pages/richTextEditor/richTextEditor?content=${encodeURIComponent(this.formData.details || '')}`
+					url: `/packageMerchant/pages/richTextEditor/richTextEditor?content=${encodeURIComponent(this.formData.details || '')}`
 				})
 			},
 			// 更新商品详情内容
@@ -342,7 +342,7 @@
 					if (res.code === 200) {
 						const data = res.data
 						
-						// ��置表单数据
+						// 设置表单数据
 						this.formData.name = data.name
 						this.formData.param = data.parameter || ''
 						this.formData.model = data.model || ''

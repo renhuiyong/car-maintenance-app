@@ -34,7 +34,8 @@ export default {
   },
   data() {
     return {
-      currentTab: 3
+      currentTab: 3,
+      promotionCode: ''
     }
   },
   created() {
@@ -43,8 +44,14 @@ export default {
   mounted() {
     console.log('merchant mounted')
   },
-  onLoad() {
+  onLoad(options) {
     console.log('merchant page loaded, currentTab:', this.currentTab)
+    console.log('options:', options)
+    if (options.promotionCode) {
+      this.promotionCode = options.promotionCode
+      console.log('接收到邀请码:', this.promotionCode)
+      uni.setStorageSync('promotionCode', this.promotionCode)
+    }
   },
   onShow() {
     // 每次显示页面时检查当前tab

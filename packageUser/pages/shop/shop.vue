@@ -850,7 +850,7 @@ export default {
 			}
 			
 			uni.navigateTo({
-				url: `/pages/productDetail/productDetail?id=${productInfo.id}`
+				url: `/packageUser/pages/productDetail/productDetail?id=${productInfo.id}`
 			});
 		},
 		
@@ -1169,7 +1169,7 @@ export default {
 					name: product.name,
 					price: product.price,
 					stock: product.stock || 0,
-					image: product.image ? request.BASE_URL + product.image : '/static/products/shangpin_default.png',
+					image: product.image ? request.BASE_URL_OSS + product.image : '/static/products/shangpin_default.png',
 					brand: product.brand,
 					categoryIndex: categories.length - 1,
 					productIndex: category.items.length

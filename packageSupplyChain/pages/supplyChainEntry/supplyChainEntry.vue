@@ -161,7 +161,7 @@
       return {
         tabs: ['入驻信息', '审核验证'],
         currentTab: 0,
-        auditStatus: 0, // 0:待审核 1:审核通过 2:审核失败
+        auditStatus: 5, // 5:未申请入驻 0:未审核 1:已审核 2:审核失败
         submitInformation: false,
         formData: {
           shopName: '',
@@ -198,11 +198,10 @@
           if (res.code === 200) {
             // 更新状态
             if (res.data) {
-              this.auditStatus = res.data.status
-              this.submitInformation = res.data.submitInformation
+              this.auditStatus = res.data.examineStatus
               
-              // 如果已提交信息，显示审核页面
-              if (this.submitInformation) {
+              // 如果不是未申请入驻状态，显示审核页面
+              if (this.auditStatus !== 5) {
                 this.currentTab = 1
               }
             }

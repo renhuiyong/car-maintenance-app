@@ -2,7 +2,7 @@
 	<view class="invite-container">
 		<!-- 背景图 -->
 		<view class="bg-wrapper">
-			<image class="bg-image" src="/static/images/yaoqing.png" mode="widthFix"></image>
+			<image class="bg-image" :src="BASE_URL_OSS + '/static/images/yaoqing.png'" mode="widthFix"></image>
 		</view>
 		
 		<!-- 二维码区域 -->
@@ -37,13 +37,15 @@
 
 <script>
 import api from '@/api/index.js'
+import request from '@/utils/request.js'
 
 export default {
 	data() {
 		return {
 			inviteCode: '',
 			qrCodeUrl: '',
-			qrCodeLoaded: false
+			qrCodeLoaded: false,
+			BASE_URL_OSS: request.BASE_URL_OSS
 		}
 	},
 	onLoad() {

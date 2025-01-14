@@ -238,9 +238,8 @@ const api = {
     common: {
         // 上传文件
         uploadFile(file) {
-            return request.upload('/web/user/upload', {
-                file,
-                name: 'file'
+            return request.upload({
+                file
             })
         },
          // 供应链微信登录
@@ -303,6 +302,10 @@ const api = {
         getSupplyChainDetail() {
             return request.get('/web/supplyChain/getSupplyChainInfo')
         },
+        // 获取快递公司列表
+        getExpressList() {
+            return request.get('/web/supplyChain/listAll')
+        },
         // 我的配件
         getMyAccessoryList: (data) => request.get('/web/supplyChain/getAccessoryList', data),
         // 添加配件
@@ -314,6 +317,46 @@ const api = {
         // 修改配件
         updateAccessory(data) {
             return request.post('/web/supplyChain/updateAccessory', data)
+        },
+        // 获取进货订单列表
+        getPurchaseOrderList(params) {
+            return request.get('/web/supplyChain/purchaseOrderlist', params)
+        },
+        
+        // 发货
+        deliver(data) {
+            return request.post('/web/supplyChain/deliver', data)
+        },
+        // 获取订单详情
+        getPurchaseOrderDetail(id) {
+            return request.get(`/web/supplyChain/purchaseOrderInfo/${id}`)
+        },
+        // 发货
+        sendOrder(data) {
+            return request.post('/web/supplyChain/sendOrder', data)
+        },
+        // 获取消息通知列表
+        getNotificationList(params) {
+            return request.get('/web/supplyChain/notificationList', params)
+        },
+        // 阅读通知
+        readNotification(id) {
+            return request.post(`/web/supplyChain/readNotification/${id}`)
+        },
+    },
+    // 佣金相关接口
+    commission: {
+        // 获取佣金账户信息
+        getCommissionAccount() {
+            return request.get('/web/user/commission/commissionAccount')
+        },
+        // 获取佣金记录
+        getCommissionRecord(params) {
+            return request.get('/web/user/commission/commissionRecord', params)
+        },
+        // 提现
+        withdraw(data) {
+            return request.post('/web/user/commission/withdraw', data)
         }
     }
 }

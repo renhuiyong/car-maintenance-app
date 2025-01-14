@@ -35,21 +35,15 @@
       }
     },
     created() {
-      console.log('merchant created')
     },
     mounted() {
-      console.log('merchant mounted')
     },
     onLoad() {
-      console.log('merchant page loaded, currentTab:', this.currentTab)
     },
     onShow() {
-      // 每次显示页面时检查当前tab
-      console.log('merchant onShow, currentTab:', this.currentTab)
     },
     methods: {
       handleChange(index) {
-        console.log('切换到tab:', index)
         this.currentTab = index
       }
     }

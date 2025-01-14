@@ -69,7 +69,7 @@ export default {
 	onShareAppMessage() {
 		return {
 			title: this.product.name,
-			path: `/pages/merchantProductDetail/merchantProductDetail?id=${this.product.id}`,
+			path: `/packageMerchant/pages/merchantProductDetail/merchantProductDetail?id=${this.product.id}`,
 			imageUrl: this.product.image
 		}
 	},
@@ -128,7 +128,7 @@ export default {
 					if (processedDetails) {
 						// 使用正则表达式替换图片src中的相对路径
 						processedDetails = processedDetails.replace(/src="(\/profile\/upload\/[^"]+)"/g, (match, p1) => {
-							return `src="${request.BASE_URL}${p1}"`;
+							return `src="${request.BASE_URL_OSS}${p1}"`;
 						});
 					}
 					
@@ -136,7 +136,7 @@ export default {
 						id: data.id,
 						name: data.name,
 						price: data.price,
-						image: data.image ? request.BASE_URL + data.image : '/static/products/shangpin_default.png',
+						image: data.image ? request.BASE_URL_OSS + data.image : '/static/products/shangpin_default.png',
 						details: processedDetails || '暂无商品详情',
 						stock: data.stock || 0,
 						model: data.model || '暂无型号',

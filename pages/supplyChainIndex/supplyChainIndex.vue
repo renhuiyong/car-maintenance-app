@@ -1,7 +1,14 @@
 <template>
     <view class="merchant-details">
+      <!-- 状态提示 -->
+      <view v-if="merchantInfo.examineStatus !== 3" class="status-tip">
+        <view class="tip-content">
+          <text>{{ getStatusText }}</text>
+        </view>
+      </view>
+
       <!-- 骨架屏 -->
-      <view v-if="loading" class="skeleton">
+      <view v-else-if="loading" class="skeleton">
         <view class="merchant-info skeleton-box">
           <view class="info-content">
             <view class="header">
@@ -80,12 +87,25 @@
           address: '',
           tel: '',
           qualificationImgs: [],
+          examineStatus: null
         },
         shareConfig: {
           title: '',
           path: '',
           imageUrl: ''
         }
+      }
+    },
+    computed: {
+      getStatusText() {
+        const statusMap = {
+          0: '您的入驻申请正在审核中',
+          1: '您的入驻申请已审核，请缴纳保证金',
+          2: '保证金已缴纳，请等待最终审核',
+          4: '很抱歉，您的入驻申请未通过审核',
+          5: '您还未申请入驻，请先完成入驻申请'
+        }
+        return statusMap[this.merchantInfo.examineStatus] || '未知状态'
       }
     },
     created() {
@@ -115,10 +135,11 @@
               shopData.qualifications.split(',').map(img => request.BASE_URL + img.trim()) : []
             
             this.merchantInfo = {
-              shopName: shopData.name,
-              address: shopData.address,
-              tel: shopData.tel,
+              shopName: shopData.name || '',
+              address: shopData.address || '',
+              tel: shopData.tel || '',
               qualificationImgs,
+              examineStatus: shopData.examineStatus
             }
             this.merchantId = shopData.id
             this.initShareConfig()
@@ -203,6 +224,21 @@
     padding-bottom: 0;
     display: flex;
     flex-direction: column;
+  
+    .status-tip {
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #fff;
+      
+      .tip-content {
+        text-align: center;
+        color: #666;
+        font-size: 32rpx;
+        padding: 40rpx;
+      }
+    }
   
     // 骨架屏样式
     .skeleton {

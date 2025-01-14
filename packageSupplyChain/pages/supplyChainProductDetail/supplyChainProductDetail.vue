@@ -140,9 +140,9 @@ export default {
 					// 处理商品详情中的图片路径
 					let processedDetails = data.details;
 					if (processedDetails) {
-						// 使用正则表达式替换图片src中的���对路径
+						// 使用正则表达式替换图片src中的相对路径
 						processedDetails = processedDetails.replace(/src="(\/profile\/upload\/[^"]+)"/g, (match, p1) => {
-							return `src="${request.BASE_URL}${p1}"`;
+							return `src="${request.BASE_URL_OSS}${p1}"`;
 						});
 					}
 					
@@ -150,7 +150,7 @@ export default {
 						id: data.id,
 						name: data.name,
 						price: data.price,
-						image: data.image ? request.BASE_URL + data.image : '/static/products/shangpin_default.png',
+						image: data.image ? request.BASE_URL_OSS + data.image : '/static/products/shangpin_default.png',
 						details: processedDetails || '暂无商品详情',
 						model: data.model || '暂无型号',
 						parameter: data.parameter || '暂无参数',
@@ -197,7 +197,7 @@ export default {
 				.join('&');
 			
 			uni.navigateTo({
-				url: `/pages/supplyChainShopAccessoryAdd/supplyChainShopAccessoryAdd?${queryString}`
+				url: `/packageSupplyChain/pages/supplyChainShopAccessoryAdd/supplyChainShopAccessoryAdd?${queryString}`
 			});
 		}
 	}

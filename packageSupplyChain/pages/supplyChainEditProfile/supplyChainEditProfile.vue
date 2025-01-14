@@ -13,7 +13,7 @@
 					<image 
 						class="avatar" 
 						:src="userInfo.avatar ? 
-							(userInfo.avatar.startsWith('http') ? userInfo.avatar : request.BASE_URL + userInfo.avatar) 
+							(userInfo.avatar.startsWith('http') ? userInfo.avatar : request.BASE_URL_OSS + userInfo.avatar) 
 							: '/static/my/default-avatar.png'"
 					></image>
 					<image class="arrow" src="/static/images/youjiantou2.png"></image>
@@ -88,31 +88,8 @@ export default {
 	methods: {
 		async onChooseAvatar(e) {
 			try {
-				const uploadUrl = request.BASE_URL + '/web/user/upload'
-
-				// 先上传图片
-				const uploadRes = await new Promise((resolve, reject) => {
-					uni.uploadFile({
-						url: uploadUrl.startsWith('http') ? uploadUrl : 'http://' + uploadUrl,
-						filePath: e.detail.avatarUrl,
-						name: 'file',
-						header: {
-							'WaAuthorization': uni.getStorageSync('token')
-						},
-						success: (uploadFileRes) => {
-							try {
-								const res = JSON.parse(uploadFileRes.data)
-								resolve(res)
-							} catch (err) {
-								reject(new Error('上传失败'))
-							}
-						},
-						fail: (err) => {
-							reject(err)
-						}
-					})
-				})
-
+				// 使用common.uploadFile上传图片
+				const uploadRes = await api.common.uploadFile(e.detail.avatarUrl)
 				if (uploadRes.code !== 200) {
 					throw new Error(uploadRes.msg || '上传失败')
 				}
@@ -187,11 +164,7 @@ export default {
 				// 构造要提交的数据，添加头像为空的判断
 				const updateData = {
 					name: this.userInfo.name,
-					avatar: this.userInfo.avatar ? (
-						this.userInfo.avatar.startsWith('/profile') ? 
-						this.userInfo.avatar : 
-						'/profile' + this.userInfo.avatar
-					) : '',
+					avatar: this.userInfo.avatar || '',
 					phone: this.userInfo.phone
 				}
 				
