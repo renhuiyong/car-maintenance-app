@@ -8,17 +8,17 @@ const api = {
         wxLogin(data) {
             return request.post('/wx/miniapp/login', data)
         },
-        
+
         // 手机号密码登录
         login(data) {
             return request.post('/login', data)
         },
-        
+
         // 获取用户信息
         getUserInfo() {
             return request.get('/user/info')
         },
-        
+
         // 更新用户信息
         updateUserInfo(data) {
             return request.post('/user/update', data)
@@ -26,7 +26,7 @@ const api = {
         bindPhone(data) {
             return request.post('/user/bindPhone', data)
         },
-          
+
         updateProfile(data) {
             return request.post('/web/user/updateProfile', data)
         },
@@ -35,7 +35,7 @@ const api = {
                 avatarUrl: data.avatarUrl
             })
         },
-        
+
         // 获取推广二维码
         getPromotionCode() {
             return request.post('/web/user/getPromotionCode')
@@ -52,7 +52,7 @@ const api = {
         getList(data) {
             return request.get('/repair/list', data)
         },
-        
+
         // 提交维修订单
         submit(data) {
             return request.post('/repair/submit', data)
@@ -83,16 +83,16 @@ const api = {
     shop: {
         // 获取商品列表
         getProducts: (data) => request.get('/web/accessory/getList', data),
-        
+
         // 获取品牌列表
         selectModelsList: () => request.get('/web/accessory/selectModelsList'),
-        
+
         // 获取配件分类列表
         selectTypesList: () => request.get('/web/accessory/selectTypesList'),
-        
+
         // 获取配件详情
         getAccessory: (data) => request.get('/web/accessory/getAccessory', data),
-        
+
         // 获取商品详情
         getProductDetail(id) {
             return request.get(`/shop/product/${id}`)
@@ -123,12 +123,12 @@ const api = {
         getList(data) {
             return request.get('/order/list', data)
         },
-        
+
         // 创建订单
         create(data) {
             return request.post('/web/user/shopOrder/create', data)
         },
-        
+
         // 取消订单
         cancel(orderId) {
             return request.post(`/order/cancel/${orderId}`)
@@ -151,7 +151,7 @@ const api = {
         getList(data) {
             return request.get('/message/list', data)
         },
-        
+
         // 标记消息已读
         markRead(messageId) {
             return request.post(`/message/read/${messageId}`)
@@ -233,7 +233,7 @@ const api = {
             return request.get(`/web/merchant/order/grabOrderDetail/${data.orderId}`)
         },
 
-      
+
     },
     common: {
         // 上传文件
@@ -242,7 +242,7 @@ const api = {
                 file
             })
         },
-         // 供应链微信登录
+         //解析手机号
          decryptPhoneNumber(data) {
             return request.post('/wx/miniapp/decryptPhoneNumber', data)
         },
@@ -253,17 +253,17 @@ const api = {
         add(data) {
             return request.post('/web/user/favorite/add', data)
         },
-        
+
         // 取消收藏
         cancel(data) {
             return request.post('/web/user/favorite/cancel', data)
         },
-        
+
         // 获取收藏列表
         getList(params) {
             return request.get('/web/user/favorite/list', params)
         },
-        
+
         // 检查是否已收藏
         checkStatus(data) {
             return request.get('/web/user/favorite/check', data)
@@ -322,7 +322,7 @@ const api = {
         getPurchaseOrderList(params) {
             return request.get('/web/supplyChain/purchaseOrderlist', params)
         },
-        
+
         // 发货
         deliver(data) {
             return request.post('/web/supplyChain/deliver', data)
@@ -356,9 +356,24 @@ const api = {
         },
         // 提现
         withdraw(data) {
-            return request.post('/web/user/commission/withdraw', data)
+            return request.post('/web/user/commission/withdraw?amount=' + String(data.amount))
+        }
+    },
+    // 支付相关接口
+    payment: {
+        // 获取收款的调起参数
+        // 返回格式：
+        // {
+        //   code: 200,
+        //   data: {
+        //     mchId: '商户号',
+        //     package: '预支付交易会话标识'
+        //   }
+        // }
+        getTransferPayParams(data) {
+            return request.post('/wx/miniapp/getTransferPayParams', data)
         }
     }
 }
 
-export default api 
+export default api

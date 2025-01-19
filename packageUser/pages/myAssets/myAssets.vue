@@ -1,39 +1,44 @@
 <template>
   <view class="assets-container">
-    <!-- 顶部资产卡片 -->
-    <view class="assets-card">
-      <image class="bg-image" src="/static/my/wodezichanbg.png" mode="aspectFill"></image>
-      <view class="content">
-        <view class="title">佣金资产</view>
-        <view class="amount">
-          <text class="number">{{ commissionAmount }}</text>
+    <scroll-view scroll-y class="scroll-container" :style="{ height: scrollHeight + 'px' }">
+      <!-- 顶部资产卡片 -->
+      <view class="assets-card">
+        <image class="bg-image" src="/static/my/wodezichanbg.png" mode="aspectFill"></image>
+        <view class="content">
+          <view class="title">佣金资产</view>
+          <view class="amount">
+            <text class="number">{{ commissionAmount }}</text>
+          </view>
         </view>
       </view>
-    </view>
 
-    <!-- 资产明细 -->
-    <view class="assets-detail">
-      <view class="detail-title">资产明细</view>
-      <view class="detail-list">
-        <view class="detail-item" v-for="(item, index) in transactions" :key="index" @click="showDetail(item)">
-          <view class="left">
-            <image :src="item.type === 'expense' ? '/static/my/zhichu.png' : '/static/my/shouru.png'" 
-                   class="type-icon"></image>
-            <view class="info">
-              <text class="type-text">{{ item.type === 'expense' ? '支出' : '收入' }}</text>
-              <text class="source-text">{{ getSourceText(item.source) }}</text>
-              <text class="date">{{ item.date }}</text>
+      <!-- 资产明细 -->
+      <view class="assets-detail">
+        <view class="detail-title">资产明细</view>
+        <view class="detail-list">
+          <view class="detail-item" v-for="(item, index) in transactions" :key="index" @click="showDetail(item)">
+            <view class="left">
+              <image :src="item.type === 'expense' ? '/static/my/zhichu.png' : '/static/my/shouru.png'" 
+                     class="type-icon"></image>
+              <view class="info">
+                <text class="type-text">{{ item.type === 'expense' ? '支出' : '收入' }}</text>
+                <text class="source-text">{{ getSourceText(item.source) }}</text>
+                <text class="date">{{ item.date }}</text>
+              </view>
             </view>
-          </view>
-          <view class="right">
-            <view class="amount" :class="[item.type, item.status === 0 ? 'invalid' : '']">
-              {{ item.type === 'expense' ? '-' : '+' }}{{ item.amount }}
+            <view class="right">
+              <view class="amount-info">
+                <view class="amount" :class="[item.type, item.status === 0 ? 'invalid' : '']">
+                  {{ item.type === 'expense' ? '-' : '+' }}{{ item.amount }}
+                </view>
+                <text v-if="item.source === 2" class="status-text">{{ getWithdrawStatusText(item.state) }}</text>
+              </view>
+              <image src="/static/images/youjiantou2.png" class="arrow-icon"></image>
             </view>
-            <image src="/static/images/youjiantou2.png" class="arrow-icon"></image>
           </view>
         </view>
       </view>
-    </view>
+    </scroll-view>
 
     <!-- 底部提现按钮 -->
     <view class="bottom-section">
@@ -81,6 +86,14 @@
             <text class="label">备注信息</text>
             <text class="value remark">{{ currentDetail.remark || '暂无备注' }}</text>
           </view>
+          <!-- 添加重新确认按钮 -->
+          <button 
+            v-if="showReconfirmButton(currentDetail)" 
+            class="reconfirm-btn" 
+            @click="handleReconfirm(currentDetail)"
+          >
+            重新确认
+          </button>
         </view>
       </view>
     </uni-popup>
@@ -126,6 +139,7 @@ import api from '@/api/index.js'
 export default {
   data() {
     return {
+      scrollHeight: 0,
       commissionAmount: '0.00',
       transactions: [],
       currentDetail: {},
@@ -144,6 +158,11 @@ export default {
     }
   },
   onLoad() {
+    // 计算scroll-view高度
+    const systemInfo = uni.getSystemInfoSync()
+    // 减去底部按钮区域高度（180rpx）和顶部padding（20rpx）
+    this.scrollHeight = systemInfo.windowHeight - uni.upx2px(200)
+    
     this.getCommissionAccount()
     this.getCommissionRecord()
   },
@@ -176,14 +195,18 @@ export default {
           pageSize: this.pageSize
         })
         if (res.code === 200) {
-          const records = (res.data || []).map(item => ({
-            type: item.type === 1 ? 'income' : 'expense',
-            amount: item.amount.toFixed(2),
-            date: this.formatDate(item.createTime),
-            remark: item.remark,
-            orderId: item.orderId,
-            status: item.status,
-            source: item.source
+          // 处理返回的数据
+          const records = (res.rows || []).map(item => ({
+            type: item.type === 1 ? 'income' : 'expense',  // 1收入 2支出
+            amount: Number(item.amount).toFixed(2),        // 金额保留2位小数
+            date: this.formatDate(item.createTime),        // 格式化日期
+            remark: item.remark || '',                     // 备注
+            orderId: item.orderId || '',                   // 订单编号
+            status: item.status,                           // 状态 1有效 0无效
+            source: item.source,                           // 来源 1推广订单 2提现 3系统调整
+            state: item.state || '',                         // 提现状态
+            package: item.package || null,
+            mchId: item.mchId || null
           }))
           
           if (this.page === 1) {
@@ -192,10 +215,20 @@ export default {
             this.transactions = [...this.transactions, ...records]
           }
           
+          // 判断是否还有更多数据
           this.hasMore = records.length === this.pageSize
+        } else {
+          uni.showToast({
+            title: res.msg || '获取记录失败',
+            icon: 'none'
+          })
         }
       } catch (error) {
         console.error('获取佣金记录失败', error)
+        uni.showToast({
+          title: '获取记录失败',
+          icon: 'none'
+        })
       } finally {
         this.loading = false
       }
@@ -228,12 +261,31 @@ export default {
           value = parts[0] + '.' + parts[1].slice(0, 2)
         }
       }
+      
+      // 限制金额范围，但允许输入过程中的"0"
+      const numValue = parseFloat(value)
+      if (!isNaN(numValue) && value !== '0' && value !== '0.') {
+        if (numValue > 2000) {
+          value = '2000'
+          uni.showToast({
+            title: '单次提现最多2000元',
+            icon: 'none'
+          })
+        } else if (numValue < 0.1 && value.indexOf('.') !== -1 && value.split('.')[1]) {
+          // 只有当输入了小数点且小数部分有值时才进行最小值验证
+          value = '0.1'
+          uni.showToast({
+            title: '单次提现最少0.1元',
+            icon: 'none'
+          })
+        }
+      }
+      
       this.withdrawAmount = value
     },
     async confirmWithdraw() {
       if (!this.canWithdraw || this.withdrawing) return
       
-      // 显示确认弹窗
       uni.showModal({
         title: '提现确认',
         content: `确定要提现${this.withdrawAmount}元吗？`,
@@ -241,33 +293,57 @@ export default {
           if (res.confirm) {
             try {
               this.withdrawing = true
-              const res = await api.commission.withdraw({
-                amount: Number(this.withdrawAmount)
+              // 1. 先调用后端提现接口
+              const withdrawRes = await api.commission.withdraw({
+                amount: this.withdrawAmount
               })
-              
-              if (res.code === 200) {
-                uni.showToast({
-                  title: '提现申请成功',
-                  icon: 'success'
-                })
-                this.closeWithdraw()
-                // 刷新佣金账户信息和记录
-                this.getCommissionAccount()
-                this.page = 1
-                this.getCommissionRecord()
-              } else {
-                uni.showToast({
-                  title: res.msg || '提现失败',
-                  icon: 'none'
-                })
+              if (withdrawRes.code === 200) {
+                if (wx.canIUse('requestMerchantTransfer')) {
+                  wx.requestMerchantTransfer({
+                    mchId: withdrawRes.data.mchId,
+                    appId: wx.getAccountInfoSync().miniProgram.appId,
+                    package: withdrawRes.data.package,
+                    success: (res) => {
+                      console.log('success:', res);
+                      if (res.errMsg === 'requestMerchantTransfer:ok') {
+                        uni.showToast({
+                          title: '提现申请成功',
+                          icon: 'success'
+                        })
+                      }else if (res.errMsg === 'requestMerchantTransfer:fail') {
+                        uni.showToast({
+                          title: '提现申请失败，请稍后重试',
+                          icon: 'none'
+                        })
+                      } else if (res.errMsg === 'requestMerchantTransfer:cancel') {
+                        uni.showToast({
+                          title: '提现已取消,可在提现记录中重新申请',
+                          icon: 'none'
+                        })
+                      }
+                      // 无论成功失败都关闭弹窗并重置状态
+                      this.closeWithdraw()
+                      this.withdrawing = false
+                      // 刷新佣金账户信息
+                      this.getCommissionAccount()
+                      this.getCommissionRecord()
+                    }
+                  });
+                } else {
+                  wx.showModal({
+                    content: '你的微信版本过低，请更新至最新版本。',
+                    showCancel: false,
+                  });
+                  this.withdrawing = false
+                }
               }
             } catch (error) {
               console.error('提现失败', error)
               uni.showToast({
-                title: '提现失败，请稍后重试',
+                title: error.message || '提现失败，请稍后重试',
                 icon: 'none'
               })
-            } finally {
+              this.closeWithdraw()
               this.withdrawing = false
             }
           }
@@ -276,10 +352,10 @@ export default {
     },
     showRules() {
       // 显示规则说明
-      uni.showToast({
-        title: '规则说明开发中',
-        icon: 'none'
-      })
+      // uni.showToast({
+      //   title: '规则说明开发中',
+      //   icon: 'none'
+      // })
     },
     showDetail(item) {
       this.currentDetail = item;
@@ -295,6 +371,69 @@ export default {
         3: '系统调整'
       }
       return sourceMap[source] || '其他'
+    },
+    getWithdrawStatusText(state) {
+      const statusMap = {
+        'ACCEPTED': '已受理',
+        'PROCESSING': '处理中',
+        'WAIT_USER_CONFIRM': '待确认',
+        'TRANSFERING': '转账中',
+        'SUCCESS': '已完成',
+        'FAIL': '已失败',
+        'CANCELING': '撤销中',
+        'CANCELLED': '已撤销'
+      }
+      return statusMap[state] || ''
+    },
+    // 判断是否显示重新确认按钮
+    showReconfirmButton(item) {
+      if (item.source !== 2) return false // 不是提现记录不显示
+      const reconfirmStates = ['WAIT_USER_CONFIRM', 'TRANSFERING', 'FAIL', 'PROCESSING']
+      return reconfirmStates.includes(item.state)
+    },
+    // 处理重新确认
+    async handleReconfirm(item) {
+      if (wx.canIUse('requestMerchantTransfer')) {
+        wx.requestMerchantTransfer({
+          mchId: item.mchId,
+          appId: wx.getAccountInfoSync().miniProgram.appId,
+          package: item.package,
+          success: async (res) => {
+            console.log('success:', res);
+            if (res.errMsg === 'requestMerchantTransfer:ok') {
+              uni.showToast({
+                title: '确认成功',
+                icon: 'success'
+              })
+            } else if (res.errMsg === 'requestMerchantTransfer:fail') {
+              uni.showToast({
+                title: '确认失败，请稍后重试',
+                icon: 'none'
+              })
+            } else if (res.errMsg === 'requestMerchantTransfer:cancel') {
+              uni.showToast({
+                title: '已取消确认',
+                icon: 'none'
+              })
+            }
+            // 先关闭详情弹窗
+            this.closeDetail()
+            // 重置页码并刷新数据
+            setTimeout(() => {
+              this.page = 1
+              this.transactions = []
+              this.getCommissionRecord()
+              // 同时刷新账户余额
+              this.getCommissionAccount()
+            }, 1000)
+          }
+        });
+      } else {
+        wx.showModal({
+          content: '你的微信版本过低，请更新至最新版本。',
+          showCancel: false,
+        });
+      }
     }
   }
 }
@@ -302,9 +441,14 @@ export default {
 
 <style lang="scss" scoped>
 .assets-container {
-  min-height: 100vh;
+  height: 100vh;
   background-color: #f5f6fa;
+  position: relative;
+}
+
+.scroll-container {
   padding: 20rpx;
+  box-sizing: border-box;
 }
 
 .assets-card {
@@ -349,6 +493,7 @@ export default {
   background-color: #fff;
   border-radius: 20rpx;
   padding: 20rpx;
+  margin-bottom: 180rpx;
 
   .detail-title {
     font-size: 32rpx;
@@ -402,14 +547,26 @@ export default {
         display: flex;
         align-items: center;
         
-        .amount {
-          font-size: 32rpx;
-          margin-right: 50rpx;
-          &.expense { color: #333; }
-          &.income { color: #4e7bea; }
-          &.invalid {
-            color: #999 !important;
-            text-decoration: line-through;
+        .amount-info {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          margin-right: 20rpx;
+          
+          .amount {
+            font-size: 32rpx;
+            &.expense { color: #333; }
+            &.income { color: #4e7bea; }
+            &.invalid {
+              color: #999 !important;
+              text-decoration: line-through;
+            }
+          }
+          
+          .status-text {
+            font-size: 24rpx;
+            color: #666;
+            margin-top: 4rpx;
           }
         }
 
@@ -429,6 +586,7 @@ export default {
   right: 0;
   padding: 20rpx;
   background-color: #fff;
+  z-index: 10;
 
   .withdraw-btn {
     background-color: #4e7bea;
@@ -506,6 +664,20 @@ export default {
           margin-left: 20rpx;
           word-break: break-all;
         }
+      }
+    }
+    
+    .reconfirm-btn {
+      background-color: #4e7bea;
+      color: #fff;
+      border-radius: 45rpx;
+      height: 90rpx;
+      line-height: 90rpx;
+      font-size: 32rpx;
+      margin-top: 40rpx;
+      
+      &:active {
+        opacity: 0.8;
       }
     }
   }
