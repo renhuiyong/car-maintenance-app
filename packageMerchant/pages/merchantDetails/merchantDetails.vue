@@ -214,7 +214,7 @@ export default {
           let qualificationImages = [];
           if (res.data.qualifications) {
             qualificationImages = res.data.qualifications.split(',').map(path => 
-              request.BASE_URL + path.trim()
+              request.BASE_URL_OSS + path.trim()
             );
           }
 
@@ -225,7 +225,7 @@ export default {
             address: res.data.address,
             businessHours: res.data.businessHours,
             phone: res.data.phone,
-            shopImage: res.data.images ? request.BASE_URL + res.data.images : '',
+            shopImage: res.data.images ? request.BASE_URL_OSS + res.data.images : '',
             qualifications: qualificationImages,
             latitude: Number(res.data.latitude),
             longitude: Number(res.data.longitude),

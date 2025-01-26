@@ -13,7 +13,7 @@
 					<image 
 						class="avatar" 
 						:src="userInfo.avatar ? 
-							(userInfo.avatar.startsWith('http') ? userInfo.avatar : request.BASE_URL + userInfo.avatar) 
+							(userInfo.avatar.startsWith('http') ? userInfo.avatar : request.BASE_URL_OSS + userInfo.avatar) 
 							: '/static/my/default-avatar.png'"
 					></image>
 					<image class="arrow" src="/static/images/youjiantou2.png"></image>

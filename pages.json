@@ -1,12 +1,5 @@
 {
-	"pages": [{
-		"path": "pages/merchant/merchant",
-		"style": {
-			"navigationBarTitleText": "商家中心",
-			"enablePullDownRefresh": false,
-			"disableScroll": true
-		}
-	},  {
+	"pages": [ {
 		"path": "pages/my/my",
 		"style": {
 			"navigationBarTitleText": "我的",
@@ -14,6 +7,13 @@
 			"disableScroll": true
 		}
 	},{
+		"path": "pages/merchant/merchant",
+		"style": {
+			"navigationBarTitleText": "商家中心",
+			"enablePullDownRefresh": false,
+			"disableScroll": true
+		}
+	}, {
 		"path": "pages/supplyChain/supplyChain",
 		"style": {
 			"navigationBarTitleText": "供应商",
