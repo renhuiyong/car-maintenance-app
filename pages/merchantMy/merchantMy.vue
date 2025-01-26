@@ -568,7 +568,7 @@ export default {
 						onlyFromCamera: true, // 只允许相机扫码
 						scanType: ['qrCode', 'barCode'], // 支持二维码和条形码
 						success: (res) => {
-							console.log('扫码结果：', res)
+							// console.log('扫码结果：', res)
 							// 处理扫码结果
 							if (res.result) {
 								try {

@@ -210,7 +210,6 @@ export default {
 		}
 	},
 	created() {
-		console.log('merchantShop created')
 		// 检查商家审核状态
 		api.merchant.getShopSelfExamineStatus().then(res => {
 			if (res.code === 200) {
@@ -283,13 +282,13 @@ export default {
 		this.switchCategory = throttle(this.switchCategory, 200);
 	},
 	mounted() {
-		console.log('merchantShop mounted')
+		// console.log('merchantShop mounted')
 	},
 	onShow() {
-		console.log('merchantShop onShow')
+		// console.log('merchantShop onShow')
 	},
 	onReady() {
-		console.log('merchantShop onReady')
+		// console.log('merchantShop onReady')
 		this.calculateHeight()
 	},
 	onUnload() {
@@ -599,22 +598,18 @@ export default {
 			this.loadProducts()
 		},
 		loadProducts() {
-			console.log('开始加载商品列表')
 			this.loading = true
 			api.merchant.getProducts({
 				shopId: -1,
 				pageNum: this.page,
 				pageSize: 10
 			}).then(res => {
-				console.log('获取商品列表应:', res)
 				if (res.code === 200) {
 					const products = res.data || []
 					if (products.length > 0) {
 						this.categories = this.organizeProducts(products)
-						console.log('商品列表已更新:', this.categories)
 					}
 				} else {
-					console.log('获取商品列表失败:', res.msg)
 					uni.showToast({
 						title: res.msg || '获取商品列表失败',
 						icon: 'none'
@@ -628,7 +623,7 @@ export default {
 				})
 			}).finally(() => {
 				this.loading = false
-				console.log('商品列表加载完成')
+				// console.log('商品列表加载完成')
 			})
 		},
 		// 修改数据组织方法

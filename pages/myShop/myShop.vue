@@ -167,20 +167,19 @@
       }
     },
     created() {
-      console.log('myShop created')
+      // console.log('myShop created')
       this.getMerchantDetails()
+      this.initShareConfig()
     },
     mounted() {
-      console.log('myShop mounted')
+      // console.log('myShop mounted')
     },
     onLoad(options) {
-      console.log('myShop onLoad', options)
-      this.initShareConfig()
+      // console.log('myShop onLoad', options)
     },
     methods: {
       // 获取商家详情
       async getMerchantDetails() {
-        console.log('开始获取店铺信息')
         this.loading = true
         try {
           const res = await api.merchant.getShopSelf()
