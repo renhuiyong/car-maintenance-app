@@ -317,6 +317,10 @@ const api = {
         shopOffline() {
             return this.createMerchantRequest('post', '/web/shop/closeBusiness')
         },
+        // 获取佣金记录
+        getCommissionRecord(params) {
+            return this.createMerchantRequest('get', '/web/user/commission/commissionRecord', params)
+        },
     },
     common: {
         // 上传文件

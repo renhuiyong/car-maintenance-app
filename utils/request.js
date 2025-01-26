@@ -155,7 +155,6 @@ export const post = (url, data = {}, options = {}) => {
 // 封装上传方法
 const upload = async (options = {}) => {
     try {
-        console.log('options', options)
         // 1. 获取OSS上传凭证
         const ossData = await getOssToken(options.tokenType)
 

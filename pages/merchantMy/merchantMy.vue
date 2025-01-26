@@ -416,7 +416,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/packageUser/pages/myAssets/myAssets',
+				url: '/packageMerchant/pages/merchantMyAssets/merchantMyAssets',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({

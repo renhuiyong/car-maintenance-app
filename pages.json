@@ -157,6 +157,12 @@
 					"style": {
 						"navigationBarTitleText": "选择商家"
 					}
+				},
+				{
+					"path": "pages/merchantMyAssets/merchantMyAssets",
+					"style": {
+						"navigationBarTitleText": "我的资产"
+					}
 				}
 			]
 		},
