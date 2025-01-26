@@ -1,236 +1,148 @@
 <template>
   <view class="merchant-settled">
-    <!-- 顶部标题栏 -->
-    <view class="nav-tabs">
-      <view 
-        v-for="(item, index) in tabs" 
-        :key="index"
-        :class="['tab-item', currentTab === index ? 'active' : '']"
-        @tap="switchTab(index)"
-      >
-        {{item}}
+    <scroll-view scroll-y class="page-container">
+      <!-- 顶部标题栏 -->
+      <view class="nav-tabs">
+        <view 
+          v-for="(item, index) in tabs" 
+          :key="index"
+          :class="['tab-item', currentTab === index ? 'active' : '']"
+          @tap="switchTab(index)"
+        >
+          {{item}}
+        </view>
       </view>
-    </view>
-    
-    <!-- 店铺信息表单 -->
-    <transition name="fade-slide">
-      <view class="form-section" v-if="currentTab === 0">
-        <view class="form-item">
-          <text class="label">店铺名称</text>
-          <input 
-            class="input" 
-            v-model="formData.shopName"
-            placeholder="请输入店铺名称"
-            placeholder-class="placeholder"
-            maxlength="16"
-          />
-        </view>
-        
-        <view class="form-item">
-          <text class="label">联系人</text>
-          <input 
-            class="input" 
-            v-model="formData.contact"
-            placeholder="请输入联系人姓名"
-            placeholder-class="placeholder"
-            maxlength="10"
-          />
-        </view>
-        
-        <view class="form-item">
-          <text class="label">联系电话</text>
-          <input 
-            class="input" 
-            v-model="formData.phone"
-            type="number"
-            maxlength="11"
-            placeholder="请输入联系人电话"
-            placeholder-class="placeholder"
-            @input="validatePhone"
-          />
-        </view>
-        
-        <view class="form-item">
-          <text class="label">营业时间</text>
-          <view class="time-wrapper">
-            <view class="time-row">
-              <picker 
-                mode="time" 
-                :value="formData.openTime"
-                @change="onOpenTimeChange"
-              >
-                <text class="time-value">{{formData.openTime}}</text>
-              </picker>
-              <text class="separator">~</text>
-              <picker 
-                mode="time" 
-                :value="formData.closeTime"
-                @change="onCloseTimeChange"
-              >
-                <text class="time-value">{{formData.closeTime}}</text>
-              </picker>
-            </view>
-          </view>
-        </view>
-
-        <view class="form-item upload-item">
-          <text class="label">上传门头图</text>
-          <view class="upload-list">
-            <view 
-              v-for="(img, index) in formData.shopImages" 
-              :key="index" 
-              class="upload-item-wrap"
-            >
-              <image 
-                :src="img" 
-                class="preview-image"
-                mode="aspectFill"
-                @tap="previewImage(index)"
-              />
-              <text class="delete-btn" @tap="deleteImage(index)">×</text>
-            </view>
-            <image 
-              v-if="formData.shopImages.length < 1"
-              src="/static/images/xiangji.png" 
-              class="camera-icon"
-              @tap="chooseImage"
-            />
-          </view>
-        </view>
-
-        <view class="form-item textarea-item">
-          <text class="label">店铺地址</text>
-          <view class="address-wrapper">
-            <view class="location-select" @tap="chooseLocation">
-              <text class="location-text">{{ formData.location || '点击选择位置' }}</text>
-              <view class="location-icon">
-                <image src="/static/images/weizhi.png" mode="aspectFit"></image>
-              </view>
-            </view>
-            <textarea 
-              class="textarea" 
-              v-model="formData.address"
-              placeholder="请输入详细地址信息"
+      
+      <!-- 店铺信息表单 -->
+      <transition name="fade-slide">
+        <view class="form-section" v-if="currentTab === 0">
+          <view class="form-item">
+            <text class="label">店铺名称</text>
+            <input 
+              class="input" 
+              v-model="formData.shopName"
+              placeholder="请输入店铺名称"
               placeholder-class="placeholder"
+              maxlength="16"
             />
-          </view>
-        </view>
-      </view>
-    </transition>
-
-    <!-- 资质信息表单 -->
-    <transition name="fade-slide">
-      <view class="form-section" v-if="currentTab === 1">
-        <view class="form-item upload-item">
-          <text class="label">上传营业执照</text>
-          <view class="upload-list">
-            <view 
-              v-for="(img, index) in formData.businessLicenses" 
-              :key="index"
-              class="upload-item-wrap"
-            >
-              <image 
-                :src="img" 
-                class="preview-image"
-                mode="aspectFill"
-                @tap="previewLicense(index)"
-              />
-              <text class="delete-btn" @tap="deleteLicense(index)">×</text>
-            </view>
-            <image 
-              v-if="formData.businessLicenses.length < 2"
-              src="/static/images/xiangji.png" 
-              class="camera-icon"
-              @tap="chooseLicense"
-            />
-          </view>
-          <text class="upload-tip">上传营业执照、相关行业许可等资质文件</text>
-        </view>
-
-        <view class="form-item upload-item">
-          <text class="label">上传身份证照片</text>
-          <view class="id-card-upload">
-            <!-- 身份证正面 -->
-            <view class="id-card-side">
-              <text class="side-label">身份证正面</text>
-              <view class="upload-wrap">
-                <view v-if="formData.idCardFront" class="upload-item-wrap">
-                  <image 
-                    :src="formData.idCardFront" 
-                    class="preview-image"
-                    mode="aspectFill"
-                    @tap="previewIdCard('front')"
-                  />
-                  <text class="delete-btn" @tap="deleteIdCard('front')">×</text>
-                </view>
-                <view 
-                  v-else
-                  class="camera-icon"
-                  @tap="chooseIdCard('front')"
-                >
-                  <image 
-                    src="/static/images/xiangji.png" 
-                    mode="aspectFit"
-                  ></image>
-                </view>
-              </view>
-            </view>
-            
-            <!-- 身份证反面 -->
-            <view class="id-card-side">
-              <text class="side-label">身份证反面</text>
-              <view class="upload-wrap">
-                <view v-if="formData.idCardBack" class="upload-item-wrap">
-                  <image 
-                    :src="formData.idCardBack" 
-                    class="preview-image"
-                    mode="aspectFill"
-                    @tap="previewIdCard('back')"
-                  />
-                  <text class="delete-btn" @tap="deleteIdCard('back')">×</text>
-                </view>
-                <view 
-                  v-else
-                  class="camera-icon"
-                  @tap="chooseIdCard('back')"
-                >
-                  <image 
-                    src="/static/images/xiangji.png" 
-                    mode="aspectFit"
-                  ></image>
-                </view>
-              </view>
-            </view>
-          </view>
-          <text class="upload-tip">请上传清晰的身份证正反面照片</text>
-        </view>
-      </view>
-    </transition>
-
-    <!-- 审核验证模块 -->
-    <transition name="fade-slide">
-      <view class="verify-section" v-if="currentTab === 2">
-        <!-- 审核中状态 -->
-        <view class="verify-content" v-if="examineStatus === 0">
-          <view class="success-wrapper">
-            <image src="/static/images/success.png" class="verify-icon" mode="aspectFit"></image>
-            <text class="verify-title">提交成功，请等待审核验证</text>
-            <button class="back-home-btn" @tap="backToHome">返回首页</button>
-          </view>
-        </view>
-        
-        <!-- 已审核未付保证金状态 -->
-        <view class="verify-content" v-if="examineStatus === 1">
-          <view class="verify-header">
-            <text>审核验证已完成，恭喜入驻电动车供配修服务。请上传店铺押金付款凭证</text>
           </view>
           
-          <!-- 上传付款凭证 -->
-          <view class="upload-payment">
-            <text class="upload-title">上传付款凭证</text>
-            <view class="upload-content">
+          <view class="form-item">
+            <text class="label">联系人</text>
+            <input 
+              class="input" 
+              v-model="formData.contact"
+              placeholder="请输入联系人姓名"
+              placeholder-class="placeholder"
+              maxlength="10"
+            />
+          </view>
+          
+          <view class="form-item">
+            <text class="label">联系电话</text>
+            <input 
+              class="input" 
+              v-model="formData.phone"
+              type="number"
+              maxlength="11"
+              placeholder="请输入联系人电话"
+              placeholder-class="placeholder"
+              @input="validatePhone"
+            />
+          </view>
+          
+          <view class="form-item">
+            <text class="label">营业时间</text>
+            <view class="time-wrapper">
+              <view class="time-row">
+                <picker 
+                  mode="time" 
+                  :value="formData.openTime"
+                  @change="onOpenTimeChange"
+                >
+                  <text class="time-value">{{formData.openTime}}</text>
+                </picker>
+                <text class="separator">~</text>
+                <picker 
+                  mode="time" 
+                  :value="formData.closeTime"
+                  @change="onCloseTimeChange"
+                >
+                  <text class="time-value">{{formData.closeTime}}</text>
+                </picker>
+              </view>
+            </view>
+          </view>
+
+          <view class="form-item upload-item">
+            <text class="label">上传门头图</text>
+            <view class="upload-list">
               <view 
-                v-for="(img, index) in formData.paymentProofs" 
+                v-for="(img, index) in formData.shopImages" 
+                :key="index" 
+                class="upload-item-wrap"
+              >
+                <image 
+                  :src="img" 
+                  class="preview-image"
+                  mode="aspectFill"
+                  @tap="previewImage(index)"
+                />
+                <text class="delete-btn" @tap="deleteImage(index)">×</text>
+              </view>
+              <image 
+                v-if="formData.shopImages.length < 1"
+                src="/static/images/xiangji.png" 
+                class="camera-icon"
+                @tap="chooseImage"
+              />
+            </view>
+          </view>
+
+          <view class="form-item textarea-item">
+            <text class="label">店铺地址</text>
+            <view class="address-wrapper">
+              <view class="location-select" @tap="chooseLocation">
+                <text class="location-text">{{ formData.location || '点击选择位置' }}</text>
+                <view class="location-icon">
+                  <image src="/static/images/weizhi.png" mode="aspectFit"></image>
+                </view>
+              </view>
+              <textarea 
+                class="textarea" 
+                v-model="formData.address"
+                placeholder="请输入详细地址信息"
+                placeholder-class="placeholder"
+              />
+            </view>
+          </view>
+
+          <view class="form-item services-item">
+            <text class="label">配套服务</text>
+            <view class="services-list">
+              <view 
+                v-for="(item, index) in servicesList" 
+                :key="index"
+                :class="['service-item', formData.services.includes(item.id) ? 'active' : '']"
+                @tap="toggleService(item.id)"
+              >
+                <text class="service-name">{{item.title}}</text>
+                <text class="check-icon" v-if="formData.services.includes(item.id)">✓</text>
+              </view>
+            </view>
+            <text class="error-tip" v-if="showServicesError">请至少选择一项配套服务</text>
+          </view>
+        </view>
+      </transition>
+
+      <!-- 资质信息表单 -->
+      <transition name="fade-slide">
+        <view class="form-section" v-if="currentTab === 1">
+          <view class="form-item upload-item">
+            <text class="label">上传营业执照</text>
+            <view class="upload-list">
+              <view 
+                v-for="(img, index) in formData.businessLicenses" 
                 :key="index"
                 class="upload-item-wrap"
               >
@@ -238,32 +150,138 @@
                   :src="img" 
                   class="preview-image"
                   mode="aspectFill"
-                  @tap="previewPaymentImage(index)"
+                  @tap="previewLicense(index)"
                 />
-                <text class="delete-btn" @tap="deletePaymentImage(index)">×</text>
+                <text class="delete-btn" @tap="deleteLicense(index)">×</text>
               </view>
-              <view 
-                v-if="formData.paymentProofs.length < 3"
-                class="upload-btn"
-                @tap="choosePayment"
-              >
-                <image src="/static/images/xiangji.png" class="camera-icon"></image>
+              <image 
+                v-if="formData.businessLicenses.length < 2"
+                src="/static/images/xiangji.png" 
+                class="camera-icon"
+                @tap="chooseLicense"
+              />
+            </view>
+            <text class="upload-tip">上传营业执照、相关行业许可等资质文件</text>
+          </view>
+
+          <view class="form-item upload-item">
+            <text class="label">上传身份证照片</text>
+            <view class="id-card-upload">
+              <!-- 身份证正面 -->
+              <view class="id-card-side">
+                <text class="side-label">身份证正面</text>
+                <view class="upload-wrap">
+                  <view v-if="formData.idCardFront" class="upload-item-wrap">
+                    <image 
+                      :src="formData.idCardFront" 
+                      class="preview-image"
+                      mode="aspectFill"
+                      @tap="previewIdCard('front')"
+                    />
+                    <text class="delete-btn" @tap="deleteIdCard('front')">×</text>
+                  </view>
+                  <view 
+                    v-else
+                    class="camera-icon"
+                    @tap="chooseIdCard('front')"
+                  >
+                    <image 
+                      src="/static/images/xiangji.png" 
+                      mode="aspectFit"
+                    ></image>
+                  </view>
+                </view>
+              </view>
+              
+              <!-- 身份证反面 -->
+              <view class="id-card-side">
+                <text class="side-label">身份证反面</text>
+                <view class="upload-wrap">
+                  <view v-if="formData.idCardBack" class="upload-item-wrap">
+                    <image 
+                      :src="formData.idCardBack" 
+                      class="preview-image"
+                      mode="aspectFill"
+                      @tap="previewIdCard('back')"
+                    />
+                    <text class="delete-btn" @tap="deleteIdCard('back')">×</text>
+                  </view>
+                  <view 
+                    v-else
+                    class="camera-icon"
+                    @tap="chooseIdCard('back')"
+                  >
+                    <image 
+                      src="/static/images/xiangji.png" 
+                      mode="aspectFit"
+                    ></image>
+                  </view>
+                </view>
               </view>
             </view>
-            <button class="submit-btn" @tap="submitPaymentProof">提交凭证</button>
+            <text class="upload-tip">请上传清晰的身份证正反面照片</text>
           </view>
         </view>
+      </transition>
 
-        <!-- 已付保证金状态 -->
-        <view class="verify-content" v-if="examineStatus === 2">
-          <view class="success-wrapper">
-            <image src="/static/images/success.png" class="verify-icon" mode="aspectFit"></image>
-            <text class="verify-title">保证金已提交，请等待最终审核</text>
-            <button class="back-home-btn" @tap="backToHome">返回首页</button>
+      <!-- 审核验证模块 -->
+      <transition name="fade-slide">
+        <view class="verify-section" v-if="currentTab === 2">
+          <!-- 审核中状态 -->
+          <view class="verify-content" v-if="examineStatus === 0">
+            <view class="success-wrapper">
+              <image src="/static/images/success.png" class="verify-icon" mode="aspectFit"></image>
+              <text class="verify-title">提交成功，请等待审核验证</text>
+              <button class="back-home-btn" @tap="backToHome">返回首页</button>
+            </view>
+          </view>
+          
+          <!-- 已审核未付保证金状态 -->
+          <view class="verify-content" v-if="examineStatus === 1">
+            <view class="verify-header">
+              <text>审核验证已完成，恭喜入驻电动车供配修服务。请上传店铺押金付款凭证</text>
+            </view>
+            
+            <!-- 上传付款凭证 -->
+            <view class="upload-payment">
+              <text class="upload-title">上传付款凭证</text>
+              <view class="upload-content">
+                <view 
+                  v-for="(img, index) in formData.paymentProofs" 
+                  :key="index"
+                  class="upload-item-wrap"
+                >
+                  <image 
+                    :src="img" 
+                    class="preview-image"
+                    mode="aspectFill"
+                    @tap="previewPaymentImage(index)"
+                  />
+                  <text class="delete-btn" @tap="deletePaymentImage(index)">×</text>
+                </view>
+                <view 
+                  v-if="formData.paymentProofs.length < 3"
+                  class="upload-btn"
+                  @tap="choosePayment"
+                >
+                  <image src="/static/images/xiangji.png" class="camera-icon"></image>
+                </view>
+              </view>
+              <button class="submit-btn" @tap="submitPaymentProof">提交凭证</button>
+            </view>
+          </view>
+
+          <!-- 已付保证金状态 -->
+          <view class="verify-content" v-if="examineStatus === 2">
+            <view class="success-wrapper">
+              <image src="/static/images/success.png" class="verify-icon" mode="aspectFit"></image>
+              <text class="verify-title">保证金已提交，请等待最终审核</text>
+              <button class="back-home-btn" @tap="backToHome">返回首页</button>
+            </view>
           </view>
         </view>
-      </view>
-    </transition>
+      </transition>
+    </scroll-view>
 
     <!-- 底部按钮 -->
     <view class="bottom-btn" v-if="currentTab !== 2">
@@ -297,6 +315,8 @@ export default {
       currentTab: 0,
       auditStatus: 0,
       examineStatus: 5,
+      isUploading: false,
+      hasShownRejectMessage: false,
       formData: {
         shopName: '',
         contact: '',
@@ -317,19 +337,32 @@ export default {
           longitude: '',
           address: '',
           name: ''
-        }
-      }
+        },
+        services: []
+      },
+      isChoosing: false,
+      servicesList: [],
+      showServicesError: false
     }
   },
   
-  onShow() {
-    // 检查商家审核状态
+  onLoad() {
     this.checkExamineStatus()
+    this.getServicesList()
+  },
+  
+  onShow() {
+    if (!this.isUploading) {
+      this.checkExamineStatus()
+    }
   },
   
   methods: {
     switchTab(index) {
-      // 只有未申请和审核失败状态可以切换tab
+      if (this.isUploading) {
+        return
+      }
+      
       if (this.examineStatus !== 5 && this.examineStatus !== 4) {
         return
       }
@@ -369,11 +402,9 @@ export default {
       this.formData.closeTime = e.detail.value
     },
     
-    // 表单验证方法
     validateForm() {
       const formData = this.formData
       
-      // 店铺名称验证
       if (!formData.shopName.trim()) {
         this.showToast('请输入店铺名称')
         return false
@@ -382,13 +413,11 @@ export default {
         this.showToast('店铺名称最多16个字符')
         return false
       }
-      // 过滤特殊字符
       if (/[<>?\\\\/:*?"<>|]/.test(formData.shopName)) {
         this.showToast('店铺名称不能包含特殊字符')
         return false
       }
       
-      // 联系人验证
       if (!formData.contact.trim()) {
         this.showToast('请输入联系人姓名')
         return false
@@ -397,13 +426,11 @@ export default {
         this.showToast('联系人姓名最多10个字符')
         return false
       }
-      // 只允许中文和英文
       if (!/^[\u4e00-\u9fa5a-zA-Z\s]+$/.test(formData.contact)) {
         this.showToast('联系人姓名只能包含中文和英文')
         return false
       }
       
-      // 手机号验证
       if (!formData.phone) {
         this.showToast('请输入联系电话')
         return false
@@ -413,12 +440,10 @@ export default {
         return false
       }
       
-      // 营业时间验证
       if (!this.validateBusinessHours()) {
         return false
       }
       
-      // 位置和地址验证
       if (!formData.location) {
         this.showToast('请选择店铺位置')
         return false
@@ -434,7 +459,6 @@ export default {
         return false
       }
       
-      // 门头图验证
       if (formData.shopImages.length === 0) {
         this.showToast('请上传门头图')
         return false
@@ -443,11 +467,16 @@ export default {
         this.showToast('只能上传1张门头图')
         return false
       }
+
+      if (formData.services.length === 0) {
+        this.showToast('请至少选择一项配套服务')
+        this.showServicesError = true
+        return false
+      }
       
       return true
     },
     
-    // 计算字符串长度（中文算2个字）
     getStrLength(str) {
       let len = 0
       for (let i = 0; i < str.length; i++) {
@@ -460,34 +489,28 @@ export default {
       return len
     },
     
-    // 修改下一步方
     nextStep() {
       if (!this.validateForm()) {
         return;
       }
       
-      // 减少过渡时间
       setTimeout(() => {
         this.currentTab = 1;
       }, 250);
     },
     
-    // 添加手机号实时验证方法
     validatePhone(e) {
       let value = e.detail.value.replace(/\D/g, '')
       
-      // 限制长度
       if (value.length > 11) {
         value = value.slice(0, 11)
       }
       
-      // 验证第一位
       if (value.length === 1 && value !== '1') {
         value = ''
         this.showToast('手机号必须以1开头')
       }
       
-      // 验证第二位
       if (value.length === 2 && !['3','4','5','6','7','8','9'].includes(value[1])) {
         value = '1'
         this.showToast('请输入正确的手机号')
@@ -496,7 +519,6 @@ export default {
       this.formData.phone = value
     },
     
-    // 预览图片
     previewImage(index) {
       uni.previewImage({
         urls: this.formData.shopImages,
@@ -504,27 +526,49 @@ export default {
       })
     },
     
-    // 删除图片
     deleteImage(index) {
       this.formData.shopImages.splice(index, 1)
     },
     
     chooseLicense() {
+      this.isUploading = true;
+      
       uni.chooseImage({
         count: 2 - this.formData.businessLicenses.length,
         sizeType: ['compressed'],
         sourceType: ['album', 'camera'],
         success: (res) => {
-          this.formData.businessLicenses = [...this.formData.businessLicenses, ...res.tempFilePaths]
-          if (this.formData.businessLicenses.length > 2) {
-            this.formData.businessLicenses = this.formData.businessLicenses.slice(0, 2)
-            this.showToast('最多上传2张营业执照')
+          this.$nextTick(() => {
+            this.formData.businessLicenses = [...this.formData.businessLicenses, ...res.tempFilePaths];
+            if (this.formData.businessLicenses.length > 2) {
+              this.formData.businessLicenses = this.formData.businessLicenses.slice(0, 2);
+              uni.showToast({
+                title: '最多上传2张营业执照',
+                icon: 'none'
+              });
+            }
+          });
+        },
+        fail: (err) => {
+          console.log('选择图片失败:', err);
+          if (err.errMsg !== 'chooseImage:fail cancel') {
+            uni.showToast({
+              title: '选择图片失败',
+              icon: 'none'
+            });
           }
+        },
+        complete: () => {
+          setTimeout(() => {
+            this.isUploading = false;
+          }, 500);
         }
-      })
+      });
     },
     
     chooseIdCard(side) {
+      this.isUploading = true;
+      
       uni.chooseImage({
         count: 1,
         sizeType: ['compressed'],
@@ -535,6 +579,20 @@ export default {
           } else {
             this.formData.idCardBack = res.tempFilePaths[0];
           }
+        },
+        fail: (err) => {
+          console.log('选择图片失败:', err);
+          if (err.errMsg !== 'chooseImage:fail cancel') {
+            uni.showToast({
+              title: '选择图片失败',
+              icon: 'none'
+            });
+          }
+        },
+        complete: () => {
+          setTimeout(() => {
+            this.isUploading = false;
+          }, 500);
         }
       })
     },
@@ -595,8 +653,6 @@ export default {
         title: '提交中...',
         mask: true
       });
-
-      // 修改上传图片数组
       const uploadPromises = [
         this.uploadImage(this.formData.shopImages[0]),
         ...this.formData.businessLicenses.map(path => this.uploadImage(path)),
@@ -621,46 +677,28 @@ export default {
             this.formData.shopImages.length + this.formData.businessLicenses.length
           );
 
-          // 构建提交数据，移除 locationName 字段
           const submitData = {
-            // 店铺基本信息
-            // shopName: this.formData.shopName,
-            // contact: this.formData.contact,
-            // phone: this.formData.phone,
-            // openTime: this.formData.openTime,
-            // closeTime: this.formData.closeTime,
-            // // 门头图片文件名，用逗号分隔
-            // shopImage: shopImage.fileName,
-            // // 位置信息
-            // latitude: this.formData.locationInfo.latitude,
-            // longitude: this.formData.locationInfo.longitude,
-            // address: this.formData.address,
-            // // 资质信息
-            // businessLicenses: businessLicenses.map(img => img.fileName).join(','),
-            // idCardFront: idCardFront.fileName,
-            // idCardBack: idCardBack.fileName
             shopName: this.formData.shopName,
             contacts: this.formData.contact,
             tel: this.formData.phone,
             businessHours: this.formData.openTime + '-' + this.formData.closeTime,
-            // 门头图片文件名，用逗号分隔
             logoUrl: shopImage.fileName,
-            // 位置信息
             latitude: this.formData.locationInfo.latitude,
             longitude: this.formData.locationInfo.longitude,
             detailAddress: this.formData.address,
-            // 资质信息
             qualificationsUrl: businessLicenses.map(img => img.fileName).join(','),
             cardFrontUrl: idCardFront.fileName,
-            cardReverseUrl: idCardBack.fileName
+            cardReverseUrl: idCardBack.fileName,
+            serviceIds: this.formData.services.join(','),
+            cityaddress: this.formData.locationInfo.address
           };
 
           console.log('submitData', submitData)
-          // 调用提交接口
           return api.merchant.submitSettled(submitData);
         })
         .then(res => {
             if(res.code === 200) {
+              this.examineStatus = 0
                 this.currentTab = 2;
                 uni.showToast({
                     title: '提交成功',
@@ -687,21 +725,17 @@ export default {
       }, 250);
     },
     
-    // 添加营业时间验证方法
     validateBusinessHours() {
       const { openTime, closeTime } = this.formData
       
-      // 转换为分钟进行比较
       const openMinutes = this.timeToMinutes(openTime)
       const closeMinutes = this.timeToMinutes(closeTime)
       
-      // 验证营业时间是否合理
       if (openMinutes >= closeMinutes) {
         this.showToast('营业结束时间必须晚于开始时间')
         return false
       }
       
-      // 验证营业时间是否过短
       if (closeMinutes - openMinutes < 60) {
         this.showToast('营业时间不能少于1小时')
         return false
@@ -710,13 +744,11 @@ export default {
       return true
     },
     
-    // 时间转换为分钟数
     timeToMinutes(time) {
       const [hours, minutes] = time.split(':').map(Number)
       return hours * 60 + minutes
     },
     
-    // 统一的提示方法
     showToast(title) {
       uni.showToast({
         title,
@@ -724,7 +756,6 @@ export default {
       })
     },
     
-    // 选择付款凭证
     choosePayment() {
       uni.chooseImage({
         count: 3 - this.formData.paymentProofs.length,
@@ -740,7 +771,6 @@ export default {
       })
     },
     
-    // 预览付款凭证
     previewPaymentImage(index) {
       uni.previewImage({
         urls: this.formData.paymentProofs,
@@ -748,12 +778,10 @@ export default {
       })
     },
     
-    // 删除付款凭证
     deletePaymentImage(index) {
       this.formData.paymentProofs.splice(index, 1)
     },
     
-    // 修改选择位置方法
     chooseLocation() {
       uni.chooseLocation({
         success: (res) => {
@@ -787,12 +815,11 @@ export default {
       })
     },
     
-    // 上传单张图片的方法
     uploadImage(filePath) {
       return new Promise((resolve, reject) => {
-        api.common.uploadFile(filePath)
+        api.merchant.uploadFile(filePath)
           .then(res => {
-            resolve(res); // res 已包含 fileName 和 url
+            resolve(res);
           })
           .catch(err => {
             reject(err);
@@ -800,49 +827,52 @@ export default {
       });
     },
     
-    // 添加返回商家首页方法
     backToHome() {
       uni.redirectTo({
         url: '/pages/merchant/merchant'
       })
     },
     
-    // 添加检查状态方法
     async checkExamineStatus() {
+      if (this.isUploading) {
+        return;
+      }
+      
       try {
         const res = await api.merchant.getShopSelfExamineStatus()
         if (res.code === 200) {
           this.examineStatus = res.data.examineStatus
           
-          // 根据状态设置页面显示
           switch(this.examineStatus) {
-            case 0: // 未审核
+            case 0:
               this.currentTab = 2
               this.auditStatus = 0
               break
-            case 1: // 已审核未付保证金
+            case 1:
               this.currentTab = 2
               this.auditStatus = 1
               break
-            case 2: // 已付保证金
+            case 2:
               this.currentTab = 2
               this.auditStatus = 2
               break
-            case 3: // 已通过
+            case 3:
               uni.redirectTo({
                 url: '/pages/merchant/merchant'
               })
               break
-            case 4: // 审核失败
+            case 4:
               this.currentTab = 0
-              uni.showModal({
-                title: '提示',
-                content: '您的入驻申请审核未通过，请重新提交',
-                showCancel: false
-              })
+              if (!this.hasShownRejectMessage) {
+                uni.showModal({
+                  title: '提示',
+                  content: '您的入驻申请审核未通过，请重新提交',
+                  showCancel: false
+                })
+                this.hasShownRejectMessage = true
+              }
               break
-            case 5: // 未申请
-              this.currentTab = 0
+            case 5:
               break
           }
         }
@@ -854,7 +884,6 @@ export default {
       }
     },
     
-    // 提交付款凭证
     async submitPaymentProof() {
       if (this.formData.paymentProofs.length === 0) {
         this.showToast('请上传付款凭证')
@@ -867,23 +896,19 @@ export default {
       })
 
       try {
-        // 上传付款凭证图片
         const uploadPromises = this.formData.paymentProofs.map(path => this.uploadImage(path))
         const results = await Promise.all(uploadPromises)
         
-        // 构建提交数据
         const submitData = {
           paymentProofs: results.map(img => img.fileName).join(',')
         }
 
-        // 调用提交接口
         const res = await api.merchant.submitPaymentProof(submitData)
         if (res.code === 200) {
           uni.showToast({
             title: '提交成功',
             icon: 'success'
           })
-          // 重新检查状态
           setTimeout(() => {
             this.checkExamineStatus()
           }, 1500)
@@ -898,6 +923,33 @@ export default {
       } finally {
         uni.hideLoading()
       }
+    },
+    
+    toggleService(id) {
+      if (this.formData.services.includes(id)) {
+        this.formData.services = this.formData.services.filter(i => i !== id)
+      } else {
+        this.formData.services.push(id)
+      }
+      this.showServicesError = this.formData.services.length === 0
+    },
+
+    // 获取配套服务列表
+    async getServicesList() {
+      try {
+        const res = await api.merchant.getServicesList()
+        if(res.code === 200) {
+          this.servicesList = res.data.map(item => ({
+            id: item.id,
+            title: item.title
+          }))
+        }
+      } catch(error) {
+        uni.showToast({
+          title: error.message || '获取配套服务列表失败',
+          icon: 'none'
+        })
+      }
     }
   }
 }
@@ -905,14 +957,25 @@ export default {
 
 <style lang="scss" scoped>
 .merchant-settled {
-  min-height: 100vh;
+  height: 100vh;
   background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  
+  .page-container {
+    flex: 1;
+    overflow-y: scroll;
+    padding-bottom: 200rpx;
+    box-sizing: border-box;
+  }
   
   .nav-tabs {
+    background: #fff;
+    position: sticky;
+    top: 0;
+    z-index: 99;
     display: flex;
     padding: 0 40rpx;
-    background: #fff;
-    position: relative;
     
     .tab-item {
       flex: 1;
@@ -953,6 +1016,7 @@ export default {
     opacity: 1;
     transform: translateX(0);
     will-change: transform, opacity;
+    margin-bottom: 30rpx;
     
     .form-item {
       display: flex;
@@ -1159,6 +1223,71 @@ export default {
           }
         }
       }
+
+      &.services-item {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 30rpx;
+        
+        .label {
+          margin-bottom: 20rpx;
+        }
+        
+        .services-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 20rpx;
+          width: 100%;
+          
+          .service-item {
+            position: relative;
+            padding: 16rpx 30rpx;
+            background: #f5f5f5;
+            border-radius: 32rpx;
+            transition: all 0.3s ease;
+            
+            &.active {
+              background: #4080ff;
+              
+              .service-name {
+                color: #fff;
+              }
+              
+              .check-icon {
+                display: block;
+              }
+            }
+            
+            .service-name {
+              font-size: 28rpx;
+              color: #666;
+              transition: all 0.3s ease;
+            }
+            
+            .check-icon {
+              display: none;
+              position: absolute;
+              top: -10rpx;
+              right: -10rpx;
+              width: 32rpx;
+              height: 32rpx;
+              line-height: 32rpx;
+              text-align: center;
+              background: #fff;
+              color: #4080ff;
+              border-radius: 50%;
+              font-size: 24rpx;
+              box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+            }
+          }
+        }
+        
+        .error-tip {
+          font-size: 24rpx;
+          color: #ff4d4f;
+          margin-top: 16rpx;
+        }
+      }
     }
   }
   
@@ -1167,8 +1296,10 @@ export default {
     left: 0;
     right: 0;
     bottom: 0;
-    padding: 20rpx 30rpx;
+    padding: 20rpx 30rpx calc(20rpx + env(safe-area-inset-bottom));
     background: #fff;
+    box-shadow: 0 -2rpx 8rpx rgba(0,0,0,0.05);
+    z-index: 100;
     
     .btn-wrapper {
       display: flex;
@@ -1328,7 +1459,6 @@ export default {
   }
 }
 
-// 添加新的过渡动画样式
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1348,7 +1478,6 @@ export default {
   transform: translateX(-30rpx);
 }
 
-// 返回时的动画
 .fade-slide-leave-active.prev {
   transform: translateX(30rpx);
 }
@@ -1357,7 +1486,6 @@ export default {
   transform: translateX(-30rpx);
 }
 
-// 修改身份证上传样式
 .id-card-upload {
   width: 100%;
   display: flex;

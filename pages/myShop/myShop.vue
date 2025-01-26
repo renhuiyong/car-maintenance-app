@@ -184,16 +184,15 @@
         this.loading = true
         try {
           const res = await api.merchant.getShopSelf()
-          console.log('获取店铺信息成功：', res)
           if (res.code === 200) {
             const shopData = res.data
             // 处理店铺图片
             const shopImgs = shopData.images ? 
-              shopData.images.split(',').map(img => request.BASE_URL + img.trim()) : []
+              shopData.images.split(',').map(img => request.BASE_URL_OSS + img.trim()) : []
             
             // 处理资质图片
             const qualificationImgs = shopData.qualifications ? 
-              shopData.qualifications.split(',').map(img => request.BASE_URL + img.trim()) : []
+              shopData.qualifications.split(',').map(img => request.BASE_URL_OSS + img.trim()) : []
             
             this.merchantInfo = {
               shopName: shopData.name,

@@ -1,12 +1,12 @@
 <template>
 	<view class="container">
 		<!-- 状态提示 -->
-		<view class="status-tip" v-if="examineStatus !== 3">
+		<view class="status-tip" v-if="examineStatus !== 1">
 			<text class="tip-text">{{statusText}}</text>
 		</view>
 		
 		<!-- 只有当状态为3时才显示页面内容 -->
-		<template v-if="examineStatus === 3">
+		<template v-if="examineStatus === 1">
 			<!-- 搜索栏 -->
 			<view class="search-bar">
 				<view class="search-input">
@@ -243,6 +243,8 @@ export default {
 	},
 	created() {
 		console.log('merchantShop created')
+		let token = uni.getStorageSync('token')
+		if (token) {
 		// 先检查供应商状态
 		this.checkSupplyChainStatus()
 		// 在组件创建时加载商品列表和品牌列表
@@ -261,6 +263,12 @@ export default {
 
 		// 添加刷新事件监听
 		uni.$on('refreshShopList', this.loadProducts)
+		}else{
+			uni.showToast({
+				title: '请登录后查看',
+				icon: 'none'
+			})
+		}
 	},
 	mounted() {
 		console.log('merchantShop mounted')
@@ -707,18 +715,16 @@ export default {
 		// 修改添加配件方法，传递数组数据
 		addAccessory() {
 			if (this.isDragging) return
-			
 			// 获取当前选中的分类和品牌信息
-			const currentCategory = this.categories[this.currentCategory]
-			
+			// const currentCategory = this.categories[this.currentCategory]
 			// 构建参数，过滤掉"全部"选项
 			const params = {
-				categories: encodeURIComponent(JSON.stringify(this.categories.map(cat => ({
-					id: cat.id,
-					name: cat.name
-				})))),
+				// categories: encodeURIComponent(JSON.stringify(this.categories.map(cat => ({
+				// 	id: cat.id,
+				// 	name: cat.name
+				// })))),
 				brands: encodeURIComponent(JSON.stringify(this.brands.filter(brand => brand.id !== 'all'))),
-				currentCategoryId: currentCategory?.id || '',
+				// currentCategoryId: currentCategory?.id || '',
 				currentBrandId: this.selectedBrand !== 'all' ? this.selectedBrand : ''
 			}
 			
@@ -744,16 +750,10 @@ export default {
 							this.statusText = '您的入驻申请正在审核中'
 							break
 						case 1:
-							this.statusText = '您的入驻申请已审核，请缴纳保证金'
-							break
-						case 2:
-							this.statusText = '您已缴纳保证金，请等待最终审核'
-							break
-						case 3:
 							// 已通过，加载商品列表
 							this.loadProducts()
 							break
-						case 4:
+						case 2:
 							this.statusText = '很抱歉，您的入驻申请未通过审核'
 							break
 						case 5:

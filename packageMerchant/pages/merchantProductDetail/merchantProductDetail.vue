@@ -84,7 +84,7 @@ export default {
 	methods: {
 		// 获取品牌列表
 		getBrandList() {
-			api.shop.selectModelsList().then(res => {
+			api.merchant.selectModelsList().then(res => {
 				if (res.code === 200) {
 					this.brandList = res.data || [];
 					// 如果已经有商品数据，更新品牌名称
@@ -118,7 +118,7 @@ export default {
 				title: '加载中...'
 			});
 			
-			api.shop.getAccessory({
+			api.merchant.getAccessory({
 				id: id
 			}).then(res => {
 				if (res.code === 200) {
@@ -127,7 +127,7 @@ export default {
 					let processedDetails = data.details;
 					if (processedDetails) {
 						// 使用正则表达式替换图片src中的相对路径
-						processedDetails = processedDetails.replace(/src="(\/profile\/upload\/[^"]+)"/g, (match, p1) => {
+						processedDetails = processedDetails.replace(/src="(uploads\/[^"]+)"/g, (match, p1) => {
 							return `src="${request.BASE_URL_OSS}${p1}"`;
 						});
 					}

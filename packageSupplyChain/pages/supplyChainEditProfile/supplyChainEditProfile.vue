@@ -89,7 +89,7 @@ export default {
 		async onChooseAvatar(e) {
 			try {
 				// 使用common.uploadFile上传图片
-				const uploadRes = await api.common.uploadFile(e.detail.avatarUrl)
+				const uploadRes = await api.supplyChain.uploadFile(e.detail.avatarUrl)
 				if (uploadRes.code !== 200) {
 					throw new Error(uploadRes.msg || '上传失败')
 				}
@@ -124,7 +124,7 @@ export default {
 				}
 				
 				// 调用后端接口绑定手机号
-				const res = await api.common.decryptPhoneNumber({
+				const res = await api.supplyChain.decryptPhoneNumber({
 					code: e.detail.code
 				})
 				

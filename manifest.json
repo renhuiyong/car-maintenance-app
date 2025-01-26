@@ -65,7 +65,9 @@
         "appid" : "wx6617688e14e74a23",
         "setting" : {
             "urlCheck" : false,
-            "checkSiteMap" : false
+            "checkSiteMap" : false,
+            "minified" : true,
+            "es6" : true
         },
         "usingComponents" : true,
         "uniStatistics" : {
@@ -78,10 +80,10 @@
         },
         "lazyCodeLoading" : "requiredComponents",
         "requiredPrivateInfos" : [ "getLocation", "chooseLocation" ],
-        "sdkConfigs": {
-            "maps": {
-                "qqmap": {
-                    "key": "F3BBZ-53LE7-XZVXL-PFRPE-5PP3Z-GUBTU"
+        "sdkConfigs" : {
+            "maps" : {
+                "qqmap" : {
+                    "key" : "F3BBZ-53LE7-XZVXL-PFRPE-5PP3Z-GUBTU"
                 }
             }
         }

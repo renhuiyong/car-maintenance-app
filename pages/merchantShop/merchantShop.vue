@@ -524,7 +524,7 @@ export default {
 		
 		// 获取品牌列表
 		getBrandList() {
-			api.shop.selectModelsList().then(res => {
+			api.merchant.selectModelsList().then(res => {
 				if (res.code === 200) {
 					// 添加"全部"选项
 					this.brands = [
@@ -601,7 +601,7 @@ export default {
 		loadProducts() {
 			console.log('开始加载商品列表')
 			this.loading = true
-			api.shop.getProducts({
+			api.merchant.getProducts({
 				shopId: -1,
 				pageNum: this.page,
 				pageSize: 10

@@ -125,7 +125,12 @@
                 </view>
               </template>
               
-              <button v-else class="back-home-btn" @tap="backToHome">返回首页</button>
+              <template v-else>
+                <image src="/static/images/waiting.png" class="verify-icon" mode="aspectFit"></image>
+                <text class="verify-title">已提交申请，请等待审核</text>
+                <text class="verify-desc">我们将在1-3个工作日内完成审核</text>
+                <button class="back-home-btn" @tap="backToHome">返回首页</button>
+              </template>
             </view>
           </view>
         </view>
@@ -160,7 +165,7 @@
     data() {
       return {
         tabs: ['入驻信息', '审核验证'],
-        currentTab: 0,
+        currentTab: 1,
         auditStatus: 5, // 5:未申请入驻 0:未审核 1:已审核 2:审核失败
         submitInformation: false,
         formData: {
@@ -463,7 +468,8 @@
               // 位置信息
               latitude: String(this.formData.locationInfo.latitude),
               longitude: String(this.formData.locationInfo.longitude),
-              detailAddress: this.formData.address
+              detailAddress: this.formData.address,
+              cityaddress: this.formData.locationInfo.address
             };
   
             console.log('submitData', submitData)
@@ -493,6 +499,7 @@
       },
       
       prevStep() {
+        this.auditStatus = 5;
         setTimeout(() => {
           this.currentTab = 0;
         }, 250);

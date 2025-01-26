@@ -141,7 +141,7 @@ export default {
 					let processedDetails = data.details;
 					if (processedDetails) {
 						// 使用正则表达式替换图片src中的相对路径
-						processedDetails = processedDetails.replace(/src="(\/profile\/upload\/[^"]+)"/g, (match, p1) => {
+						processedDetails = processedDetails.replace(/src="(uploads\/[^"]+)"/g, (match, p1) => {
 							return `src="${request.BASE_URL_OSS}${p1}"`;
 						});
 					}

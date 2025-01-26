@@ -38,7 +38,11 @@
     },
     mounted() {
     },
-    onLoad() {
+    onLoad(options) {
+      // if (options.main === '1') {
+      //   uni.clearStorageSync()
+      //   console.log('清除缓存')
+      // }
     },
     onShow() {
     },

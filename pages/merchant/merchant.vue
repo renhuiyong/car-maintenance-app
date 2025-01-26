@@ -39,23 +39,25 @@ export default {
     }
   },
   created() {
-    console.log('merchant created')
+    // console.log('merchant created')
   },
   mounted() {
-    console.log('merchant mounted')
+    // console.log('merchant mounted')
   },
   onLoad(options) {
-    console.log('merchant page loaded, currentTab:', this.currentTab)
-    console.log('options:', options)
-    if (options.promotionCode) {
-      this.promotionCode = options.promotionCode
-      console.log('接收到邀请码:', this.promotionCode)
-      uni.setStorageSync('promotionCode', this.promotionCode)
-    }
+    // console.log('options:', options)
+    // if (options.main === '1') {
+    //   uni.clearStorageSync()
+    //   console.log('清除缓存')
+    // }
+    // if (options.promotionCode) {
+    //   this.promotionCode = options.promotionCode
+    //   uni.setStorageSync('promotionCode', this.promotionCode)
+    // }
   },
   onShow() {
     // 每次显示页面时检查当前tab
-    console.log('merchant onShow, currentTab:', this.currentTab)
+    // console.log('merchant onShow, currentTab:', this.currentTab)
   },
   methods: {
     handleChange(index) {

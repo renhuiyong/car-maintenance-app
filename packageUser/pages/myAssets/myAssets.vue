@@ -16,7 +16,12 @@
       <view class="assets-detail">
         <view class="detail-title">资产明细</view>
         <view class="detail-list">
-          <view class="detail-item" v-for="(item, index) in transactions" :key="index" @click="showDetail(item)">
+          <!-- 添加空状态展示 -->
+          <view v-if="transactions.length === 0" class="empty-state">
+            <image src="/static/images/empty.png" mode="aspectFit" class="empty-image"></image>
+            <text class="empty-text">暂无资产明细</text>
+          </view>
+          <view class="detail-item" v-else v-for="(item, index) in transactions" :key="index" @click="showDetail(item)">
             <view class="left">
               <image :src="item.type === 'expense' ? '/static/my/zhichu.png' : '/static/my/shouru.png'" 
                      class="type-icon"></image>
@@ -224,7 +229,6 @@ export default {
           })
         }
       } catch (error) {
-        console.error('获取佣金记录失败', error)
         uni.showToast({
           title: '获取记录失败',
           icon: 'none'
@@ -574,6 +578,26 @@ export default {
           width: 32rpx;
           height: 32rpx;
         }
+      }
+    }
+    
+    // 添加空状态样式
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100rpx 0;
+      
+      .empty-image {
+        width: 200rpx;
+        height: 200rpx;
+        margin-bottom: 20rpx;
+      }
+      
+      .empty-text {
+        font-size: 28rpx;
+        color: #999;
       }
     }
   }

@@ -31,7 +31,7 @@
 		</view>
 		
 		<!-- 供应商入住按钮 -->
-		<view class="supplier-register" @click="goToSupplierRegister" v-if="isLogin && supplyChainStatus !== 3">
+		<view class="supplier-register" @click="goToSupplierRegister" v-if="isLogin && supplyChainStatus !== 1">
 			<view class="register-content">
 				<view class="left">
 					<text class="title">供应商入驻</text>
@@ -129,17 +129,20 @@ export default {
 		}
 	},
 	created() {
+		setInterval(() => {
+			this.checkLoginStatus()
+		}, 2000)
 		this.checkLoginStatus()
 		if (this.isLogin) {
 			this.getSupplyChainDetail()
 			this.getMessageList()
-			this.startMessageTimer()
+			// this.startMessageTimer()
 		}
 	},
 	onShow() {
 		if (this.isLogin) {
 			this.getMessageList()
-			this.startMessageTimer()
+			// this.startMessageTimer()
 		}
 	},
 	onHide() {
@@ -151,7 +154,7 @@ export default {
 	methods: {
 		checkLoginStatus() {
 			try {
-				const token = uni.getStorageSync('token')
+				const token = uni.getStorageSync('supplyChainToken')
 				const userInfo = uni.getStorageSync('userInfo')
 				
 				if (token && userInfo) {
@@ -165,6 +168,7 @@ export default {
 						phone: '',
 						avatar: ''
 					}
+					uni.removeStorageSync('roleFlag')
 				}
 			} catch (err) {
 				console.error('Check login status error:', err)
@@ -174,6 +178,7 @@ export default {
 					phone: '',
 					avatar: ''
 				}
+				uni.removeStorageSync('roleFlag')
 			}
 		},
 		getUserProfile() {
@@ -217,7 +222,7 @@ export default {
 					}
 					
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
-					uni.setStorageSync('token', res.data.token)
+					uni.setStorageSync('supplyChainToken', res.data.token)
 					uni.setStorageSync('roleFlag', 3)
 					
 					this.isLogin = true

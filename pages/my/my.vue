@@ -6,7 +6,7 @@
 		<view class="user-info">
 			<view class="user-left">
 				<image class="avatar" :src="userInfo.avatar ? (request.BASE_URL_OSS + userInfo.avatar) : '/static/my/default-avatar.png'"></image>
-				<button 
+				<button
 					v-if="!isLogin"
 					class="login-btn"
 					@click="getUserProfile"
@@ -29,7 +29,7 @@
 				<image class="arrow-icon" src="/static/images/youjiantou.png"></image>
 			</view>
 		</view>
-		
+
 		<!-- 功能菜单 -->
 		<view class="menu-grid">
 			<view class="menu-item" @click="goToMyOrders">
@@ -52,7 +52,7 @@
 				<text>联系客服</text>
 			</button>
 		</view>
-		
+
 		<!-- 佣金卡片 -->
 		<view class="commission-card">
 			<view class="card-content">
@@ -71,14 +71,14 @@
 				</view>
 			</view>
 		</view>
-		
+
 		<!-- 消息列表 -->
 		<view class="message-section">
 			<view class="section-title" @click="goToMyMessage">我的消息</view>
 			<view class="message-list" v-if="messageList.length > 0">
-				<view 
-					class="message-item" 
-					v-for="(item, index) in messageList.slice(0, 5)" 
+				<view
+					class="message-item"
+					v-for="(item, index) in messageList.slice(0, 5)"
 					:key="index"
 					@click="goToMessageDetail(item)"
 				>
@@ -116,8 +116,15 @@ export default {
 			messageList: [],
 			isLoading: false,
 			messageTimer: null,
-			commissionTimer: null
+			commissionTimer: null,
+			loginCheckTimer: null
 		}
+	},
+	onLoad(options) {
+		// if (options.main === '1') {
+		// 	uni.clearStorageSync()
+		// 	console.log('清除缓存')
+		// }
 	},
 	onShow() {
 		this.checkLoginStatus()
@@ -127,14 +134,17 @@ export default {
 			this.getCommissionAccount()
 			this.startCommissionTimer()
 		}
+		this.startLoginCheckTimer()
 	},
 	onHide() {
 		this.clearMessageTimer()
 		this.clearCommissionTimer()
+		this.clearLoginCheckTimer()
 	},
 	onUnload() {
 		this.clearMessageTimer()
 		this.clearCommissionTimer()
+		this.clearLoginCheckTimer()
 	},
 	methods: {
 		checkLoginStatus() {
@@ -149,6 +159,7 @@ export default {
 					phone: '',
 					avatar: ''
 				}
+				uni.removeStorageSync('roleFlag')
 			}
 		},
 		getUserProfile() {
@@ -179,14 +190,14 @@ export default {
 
 				// 获取存储的promotionCode
 				const promotionCode = getApp().globalData.promotionCode || ''
-				
+
 				// 在登录请求中带上promotionCode
 				const res = await api.user.wxLogin({
 					code: loginRes.code,
 					userInfo: userInfo,
 					promotionCode: promotionCode
 				})
-				
+
 				if (res.code === 200) {
 					uni.clearStorageSync()
 					const userData = {
@@ -195,24 +206,24 @@ export default {
 						avatar: res.data.avatar,
 						token: res.data.token
 					}
-					
+
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
 					uni.setStorageSync('token', res.data.token)
 					uni.setStorageSync('roleFlag', 1)
-					
+
 					// 登录成功后清除promotionCode
 					uni.removeStorageSync('promotionCode')
-					
+
 					this.isLogin = true
 					this.userInfo = userData
-					
+
 					// 登录成功后获取消息列表并启动定时器
 					this.getMessageList()
 					this.startMessageTimer()
 					// 获取佣金信息并启动定时器
 					this.getCommissionAccount()
 					this.startCommissionTimer()
-					
+
 					uni.showToast({
 						title: '登录成功',
 						icon: 'success'
@@ -324,7 +335,7 @@ export default {
 				})
 				return
 			}
-			
+
 			// 将消息数据存储到本地，以便在消息列表页面使用
 			uni.setStorageSync('selectedMessage', JSON.stringify({
 				title: message.title,
@@ -332,7 +343,7 @@ export default {
 				time: message.time,
 				isRead: message.isRead
 			}))
-			
+
 			// 跳转到消息列表页面
 			uni.navigateTo({
 				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true'
@@ -418,6 +429,18 @@ export default {
 				clearInterval(this.commissionTimer)
 				this.commissionTimer = null
 			}
+		},
+		startLoginCheckTimer() {
+			this.clearLoginCheckTimer()
+			this.loginCheckTimer = setInterval(() => {
+				this.checkLoginStatus()
+			}, 3000) // 每3秒检查一次
+		},
+		clearLoginCheckTimer() {
+			if (this.loginCheckTimer) {
+				clearInterval(this.loginCheckTimer)
+				this.loginCheckTimer = null
+			}
 		}
 	}
 }
@@ -447,20 +470,20 @@ export default {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	
+
 	.user-left {
 		display: flex;
 		align-items: center;
 		transform: scale(1.1);
 		transform-origin: left center;
-		
+
 		.avatar {
 			width: 80rpx;
 			height: 80rpx;
 			border-radius: 50%;
 			margin-right: 20rpx;
 		}
-		
+
 		.user-detail {
 			position: relative;
 			z-index: 2;
@@ -483,7 +506,7 @@ export default {
 			}
 		}
 	}
-	
+
 	.edit-btn {
 		position: absolute;
 		right: 0;
@@ -496,13 +519,13 @@ export default {
 		background-color: #B2C4FD;
 		border-radius: 32rpx 0px 0px 32rpx;
 		padding: 12rpx 20rpx 12rpx 30rpx;
-		
+
 		.arrow-icon {
 			width: 20rpx;
 			height: 20rpx;
 			margin-left: 12rpx;
 		}
-		
+
 		.text-wrapper {
 			color: #000;
 			display: flex;
@@ -524,19 +547,19 @@ export default {
 	padding: 30rpx 0;
 	margin: 2rpx 20rpx 0;
 	border-radius: 16rpx;
-	
+
 	.menu-item {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		
+
 		.menu-icon {
 			width: 44rpx;
 			height: 44rpx;
 			margin-bottom: 20rpx;
 			vertical-align: middle;
 		}
-		
+
 		text {
 			font-size: 26rpx;
 			color: #333;
@@ -559,7 +582,7 @@ export default {
 	overflow: hidden;
 	background: #2B2B2B;
 	padding: 30rpx;
-	
+
 	.card-content {
 		display: flex;
 		flex-direction: column;
@@ -574,7 +597,7 @@ export default {
 			border-radius: 30rpx 30rpx 0 0;
 			overflow: hidden;
 			margin-bottom: 20rpx;
-			
+
 			.header-bg {
 				position: absolute;
 				left: 0;
@@ -583,14 +606,14 @@ export default {
 				height: 100%;
 				z-index: 0;
 			}
-			
+
 			.title {
 				position: relative;
 				z-index: 1;
 				font-size: 28rpx;
 				margin-left: 20rpx;
 			}
-			
+
 			.promote-btn {
 				position: relative;
 				z-index: 1;
@@ -605,18 +628,18 @@ export default {
 				border: none;
 				box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
 				margin-right: 20rpx;
-				
+
 				&::after {
 					border: none;
 				}
 			}
 		}
-		
+
 		.body {
 			display: flex;
 			justify-content: space-between;
 			cursor: pointer;
-			
+
 			.amount-info {
 				.label {
 					font-size: 24rpx;
@@ -624,7 +647,7 @@ export default {
 					display: block;
 					margin-bottom: 8rpx;
 				}
-				
+
 				.amount {
 					font-size: 44rpx;
 					color: #fff;
@@ -632,13 +655,13 @@ export default {
 					display: block;
 					margin-bottom: 8rpx;
 				}
-				
+
 				.check {
 					font-size: 22rpx;
 					color: rgba(255,255,255,0.8);
 				}
 			}
-			
+
 			.coins-img {
 				width: 140rpx;
 				height: 140rpx;
@@ -656,21 +679,21 @@ export default {
 	margin-right: 20rpx;
 	border-radius: 16rpx;
 	overflow: hidden;
-	
+
 	.section-title {
 		font-size: 30rpx;
 		padding: 30rpx;
 		font-weight: bold;
 		border-bottom: 1rpx solid #eee;
 	}
-	
+
 	.message-list {
 		.message-item {
 			padding: 30rpx;
 			display: flex;
 			align-items: center;
 			border-bottom: 1rpx solid #eee;
-			
+
 			.unread {
 				font-size: 22rpx;
 				color: #fff;
@@ -680,13 +703,13 @@ export default {
 				margin-right: 10rpx;
 				padding-bottom: 6rpx;
 			}
-			
+
 			.content {
 				flex: 1;
 				font-size: 28rpx;
 				color: #333;
 			}
-			
+
 			.arrow {
 				width: 24rpx;
 				height: 24rpx;
@@ -710,11 +733,11 @@ export default {
 	line-height: 1;
 	border: none;
 	outline: none;
-	
+
 	&::after {
 		border: none;
 	}
-	
+
 	.user-detail {
 		text-align: left;
 	}
@@ -727,9 +750,9 @@ export default {
 	line-height: 1;
 	border: none;
 	outline: none;
-	
+
 	&::after {
 		border: none;
 	}
 }
-</style> 
+</style>

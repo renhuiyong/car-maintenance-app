@@ -1,5 +1,6 @@
 // 配置基础URL
-const BASE_URL = 'https://rhyme.mynatapp.cc'
+// const BASE_URL = 'https://rhyme.mynatapp.cc'
+const BASE_URL = 'https://kyx.qskyx.com/prod-api'
 const BASE_URL_OSS = 'https://prod-car-maintenance-bucket.oss-cn-beijing.aliyuncs.com/'
 
 // OSS凭证缓存
@@ -18,14 +19,14 @@ const isOssTokenExpired = () => {
 }
 
 // 获取OSS凭证
-const getOssToken = async () => {
+const getOssToken = async (tokenType) => {
     if (!isOssTokenExpired() && ossTokenCache.token) {
         return ossTokenCache.token
     }
-
     const tokenRes = await request({
         url: '/web/user/oss/token',
-        method: 'GET'
+        method: 'GET',
+        tokenType
     })
 
     if (tokenRes.code !== 200) {
@@ -45,13 +46,17 @@ const request = (options = {}) => {
     return new Promise((resolve, reject) => {
         // 获取token
         const token = uni.getStorageSync('token')
+        const merchantToken = uni.getStorageSync('merchantToken')
+        const supplyChainToken = uni.getStorageSync('supplyChainToken')
 
         // 合并选项
         options.url = BASE_URL + options.url
         options.header = {
             'Content-Type': 'application/json',
-            // 如果有token就带上
-            ...(token ? { 'WaAuthorization': token } : {}),
+            // 根据tokenType使用不同的token
+            ...(options.tokenType === 'merchant' ? { 'WaAuthorization': merchantToken } :
+               options.tokenType === 'supplyChain' ? { 'WaAuthorization': supplyChainToken } :
+               token ? { 'WaAuthorization': token } : {}),
             ...options.header
         }
         // 发起请求
@@ -97,7 +102,7 @@ const request = (options = {}) => {
                                 })
                             }
                             reject(res.data)
-                        }, 1500)
+                        }, 3000)
                         return
                     }
 
@@ -150,8 +155,9 @@ export const post = (url, data = {}, options = {}) => {
 // 封装上传方法
 const upload = async (options = {}) => {
     try {
+        console.log('options', options)
         // 1. 获取OSS上传凭证
-        const ossData = await getOssToken()
+        const ossData = await getOssToken(options.tokenType)
 
         // 2. 构建文件名
         const date = new Date()

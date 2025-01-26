@@ -165,7 +165,9 @@ export default {
     async closePopup() {
       if (this.currentMessage && this.currentMessage.status === 0) {
         try {
-          const apiMethod = api.merchant.readNotification
+          const apiMethod = this.type === 0 ? api.user.readNotification : 
+                         this.type === 1 ? api.merchant.readNotification :
+                         api.supplyChain.readNotification
           const res = await apiMethod(this.currentMessage.id)
           if (res.code === 200) {
             this.getMessageList()

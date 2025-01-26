@@ -1,7 +1,7 @@
 <template>
     <view class="merchant-details">
       <!-- 状态提示 -->
-      <view v-if="merchantInfo.examineStatus !== 3" class="status-tip">
+      <view v-if="merchantInfo.examineStatus !== 1" class="status-tip">
         <view class="tip-content">
           <text>{{ getStatusText }}</text>
         </view>
@@ -100,24 +100,23 @@
       getStatusText() {
         const statusMap = {
           0: '您的入驻申请正在审核中',
-          1: '您的入驻申请已审核，请缴纳保证金',
-          2: '保证金已缴纳，请等待最终审核',
-          4: '很抱歉，您的入驻申请未通过审核',
+          2: '很抱歉，您的入驻申请未通过审核',
           5: '您还未申请入驻，请先完成入驻申请'
         }
-        return statusMap[this.merchantInfo.examineStatus] || '未知状态'
+        return statusMap[this.merchantInfo.examineStatus] || '请登录后查看'
       }
     },
     created() {
-      console.log('myShop created')
-      this.getMerchantDetails()
+      let token = uni.getStorageSync('token')
+      if (token) {
+        this.getMerchantDetails()
+        this.initShareConfig()
+      }
     },
     mounted() {
       console.log('myShop mounted')
     },
     onLoad(options) {
-      console.log('myShop onLoad', options)
-      this.initShareConfig()
     },
     methods: {
       // 获取商家详情
@@ -132,7 +131,7 @@
             
             // 处理资质图片
             const qualificationImgs = shopData.qualifications ? 
-              shopData.qualifications.split(',').map(img => request.BASE_URL + img.trim()) : []
+              shopData.qualifications.split(',').map(img => request.BASE_URL_OSS + img.trim()) : []
             
             this.merchantInfo = {
               shopName: shopData.name || '',

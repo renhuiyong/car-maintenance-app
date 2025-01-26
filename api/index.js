@@ -44,6 +44,10 @@ const api = {
         getNotificationList(params) {
             return request.get('/web/repair/order/notificationList', params)
         },
+        // 阅读通知
+        readNotification(id) {
+            return request.post(`/web/repair/order/readNotification/${id}`)
+        },
     },
 
     // 维修相关接口
@@ -96,6 +100,16 @@ const api = {
         // 获取商品详情
         getProductDetail(id) {
             return request.get(`/shop/product/${id}`)
+        },
+
+        // 获取发货订单列表
+        getDeliveryOrderList(params) {
+            return request.get('/web/shop/deliveryOrderlist', params)
+        },
+
+        // 获取发货订单详情
+        getDeliveryOrderInfo(id) {
+            return request.get(`/web/shop/deliveryOrderInfo/${id}`)
         },
 
         // 添加获取维修商家列表接口
@@ -160,80 +174,149 @@ const api = {
 
     // 商家相关接口
     merchant: {
-           // 商户微信登录
+        // 创建merchant请求的工具函数
+        createMerchantRequest(method, url, data = {}, customConfig = {}) {
+            const config = { tokenType: 'merchant', ...customConfig };
+            return method === 'get' ? 
+                request.get(url, data, config) : 
+                request.post(url, data, config);
+        },
+
+        // 商户微信登录
         wxMerchantLogin(data) {
-            return request.post('/wx/miniapp/merchantLogin', data)
+            return this.createMerchantRequest('post', '/wx/miniapp/merchantLogin', data)
         },
         // 获取商家审核状态
         getShopSelfExamineStatus() {
-            return request.get('/web/shop/getShopSelfExamineStatus')
+            return this.createMerchantRequest('get', '/web/shop/getShopSelfExamineStatus')
         },
         // 更新商户资料
         updateMerchantProfile(data) {
-            return request.post('/web/merchant/updateMerchantProfile', data)
+            return this.createMerchantRequest('post', '/web/merchant/updateMerchantProfile', data)
         },
         // 提交商家入驻申请
         submitSettled(data) {
-            return request.post('/web/shop/settledShop', data)
+            return this.createMerchantRequest('post', '/web/shop/settledShop', data)
         },
-         // 获取推广二维码
-         getMerchantPromotionCode() {
-            return request.post('/web/merchant/getMerchantPromotionCode')
+        // 获取推广二维码
+        getMerchantPromotionCode() {
+            return this.createMerchantRequest('post', '/web/merchant/getMerchantPromotionCode')
         },
         // 获取商家自身信息
         getShopSelf() {
-            return request.get('/web/shop/getShopSelf')
+            return this.createMerchantRequest('get', '/web/shop/getShopSelf')
+        },
+        // 获取商家营业状态
+        getShopBusinessStatus() {
+            return this.createMerchantRequest('get', '/web/shop/getShopSelfBusinessStatus')
         },
         // 获取商家订单列表
         getOrderList(params) {
-            return request.get('/web/merchant/order/list', params)
+            return this.createMerchantRequest('get', '/web/merchant/order/list', params)
         },
         // 商家回复订单
         merchantToResponse(data) {
-            return request.post('/web/merchant/order/merchantToResponse', data)
+            return this.createMerchantRequest('post', '/web/merchant/order/merchantToResponse', data)
         },
         // 开始维修
         startRepair(orderId) {
-            return request.post(`/web/merchant/order/startRepair/${orderId}`)
+            return this.createMerchantRequest('post', `/web/merchant/order/startRepair/${orderId}`)
         },
         // 完成维修
         finishRepair(orderId) {
-            return request.post(`/web/merchant/order/finishRepair/${orderId}`)
+            return this.createMerchantRequest('post', `/web/merchant/order/finishRepair/${orderId}`)
         },
         // 获取消息通知列表
         getNotificationList(params) {
-            return request.get('/web/merchant/order/notificationList', params)
+            return this.createMerchantRequest('get', '/web/merchant/order/notificationList', params)
         },
         // 阅读通知
         readNotification(id) {
-            return request.post(`/web/merchant/order/readNotification/${id}`)
+            return this.createMerchantRequest('post', `/web/merchant/order/readNotification/${id}`)
         },
-          // 获取商品订单列表
-          getMerchantShopOrderList(params) {
-            return request.get('/web/merchant/order/getMerchantShopOrderList', params)
+        // 获取商品订单列表
+        getMerchantShopOrderList(params) {
+            return this.createMerchantRequest('get', '/web/merchant/order/getMerchantShopOrderList', params)
         },
         // 取消商品订单
         cancelOrder(data) {
-            return request.post('/web/merchant/order/merchantCancelShopOrder', data)
+            return this.createMerchantRequest('post', '/web/merchant/order/merchantCancelShopOrder', data)
         },
         // 取消维修订单
         merchantCancelRepairOrder(data) {
-            return request.post('/web/merchant/order/merchantCancelRepairOrder', data)
+            return this.createMerchantRequest('post', '/web/merchant/order/merchantCancelRepairOrder', data)
         },
         // 获取抢单大厅列表
         getGrabOrderList(params) {
-            return request.post('/web/merchant/order/getGrabOrderList', params)
+            return this.createMerchantRequest('post', '/web/merchant/order/getGrabOrderList', params)
         },
         // 商家抢单
         grabOrder(data) {
-            return request.post(`/web/merchant/order/grabOrder/${data.orderId}`)
+            return this.createMerchantRequest('post', `/web/merchant/order/grabOrder/${data.orderId}`)
         },
         // 获取抢单详情
         getGrabOrderDetail(data) {
-            return request.get(`/web/merchant/order/grabOrderDetail/${data.orderId}`)
+            return this.createMerchantRequest('get', `/web/merchant/order/grabOrderDetail/${data.orderId}`)
+        },
+        // 提交付款凭证
+        submitPaymentProof(data) {
+            return this.createMerchantRequest('post', '/web/shop/uploadBondUrl?bondUrl=' + data.paymentProofs)
+        },
+        getCommissionAccount() {
+            return this.createMerchantRequest('get', '/web/user/commission/commissionAccount')
+        },
+        // 获取发货订单列表
+        getDeliveryOrderList(params) {
+            return this.createMerchantRequest('get', '/web/shop/deliveryOrderlist', params)
+        },
+        // 获取商家账户信息
+        getShopAccount() {
+            return this.createMerchantRequest('get', '/web/user/commission/shopAccount')
+        },
+        // 获取商家账户记录
+        getShopAccountRecord(params) {
+            return this.createMerchantRequest('get', '/web/user/commission/shopAccountRecord', params)
+        },
+        // 提现
+        shopAccountWithdraw(data) {
+            return this.createMerchantRequest('post', '/web/user/commission/shopAccountWithdraw?amount=' + String(data.amount))
+        },
+        // 获取商品列表
+        getProducts(data) {
+            return this.createMerchantRequest('get', '/web/accessory/getList', data)
         },
 
-
+        // 获取品牌列表
+        selectModelsList() {
+            return this.createMerchantRequest('get', '/web/accessory/selectModelsList')
+        },
+         // 获取配件详情
+         getAccessory(data) {
+            return this.createMerchantRequest('get', '/web/accessory/getAccessory', data)
+        },
+        // 上传文件
+        uploadFile(file) {
+            return request.upload({
+                file,
+                tokenType: 'merchant'
+            })
+        },
+        //解析手机号
+        decryptPhoneNumber(data) {
+            return this.createMerchantRequest('post', '/wx/miniapp/decryptPhoneNumber', data)
+        },
+        // 获取配套服务列表
+        getServicesList() {
+            return this.createMerchantRequest('get', '/web/shop/selectServicesList')
+        },
+        // 商家上线
+        shopOnline() {
+            return this.createMerchantRequest('post', '/web/shop/openBusiness')
+        },
+        // 商家下线
+        shopOffline() {
+            return this.createMerchantRequest('post', '/web/shop/closeBusiness')
+        },
     },
     common: {
         // 上传文件
@@ -282,66 +365,88 @@ const api = {
     },
     // 供应链相关接口
     supplyChain: {
+        // 创建supplyChain请求的工具函数
+        createSupplyChainRequest(method, url, data = {}, customConfig = {}) {
+            const config = { tokenType: 'supplyChain', ...customConfig };
+            return method === 'get' ? 
+                request.get(url, data, config) : 
+                request.post(url, data, config);
+        },
+
         // 提交供应链入驻申请
         settledSupplyChain(data) {
-            return request.post('/web/supplyChain/settledSupplyChain', data)
+            return this.createSupplyChainRequest('post', '/web/supplyChain/settledSupplyChain', data)
         },
         // 供应链微信登录
         wxSupplyChainLogin(data) {
-            return request.post('/wx/miniapp/supplyChainLogin', data)
+            return this.createSupplyChainRequest('post', '/wx/miniapp/supplyChainLogin', data)
         },
         // 更新供应链资料
         updateSupplyChainProfile(data) {
-            return request.post('/web/supplyChain/updateMerchantProfile', data)
+            return this.createSupplyChainRequest('post', '/web/supplyChain/updateMerchantProfile', data)
         },
         // 获取供应商状态
         getSupplyChainStatus() {
-            return request.get('/web/supplyChain/getSupplyChainStatus')
+            return this.createSupplyChainRequest('get', '/web/supplyChain/getSupplyChainStatus')
         },
         // 获取供应商详情
         getSupplyChainDetail() {
-            return request.get('/web/supplyChain/getSupplyChainInfo')
+            return this.createSupplyChainRequest('get', '/web/supplyChain/getSupplyChainInfo')
         },
         // 获取快递公司列表
         getExpressList() {
-            return request.get('/web/supplyChain/listAll')
+            return this.createSupplyChainRequest('get', '/web/supplyChain/listAll')
         },
         // 我的配件
-        getMyAccessoryList: (data) => request.get('/web/supplyChain/getAccessoryList', data),
+        getMyAccessoryList(data) {
+            return this.createSupplyChainRequest('get', '/web/supplyChain/getAccessoryList', data)
+        },
         // 添加配件
-        addAccessory: (data) => request.post('/web/supplyChain/addAccessory', data),
+        addAccessory(data) {
+            return this.createSupplyChainRequest('post', '/web/supplyChain/addAccessory', data)
+        },
         // 获取配件详情
         getAccessoryDetail(data) {
-            return request.get('/web/supplyChain/getAccessory', data)
+            return this.createSupplyChainRequest('get', '/web/supplyChain/getAccessory', data)
         },
         // 修改配件
         updateAccessory(data) {
-            return request.post('/web/supplyChain/updateAccessory', data)
+            return this.createSupplyChainRequest('post', '/web/supplyChain/updateAccessory', data)
         },
         // 获取进货订单列表
         getPurchaseOrderList(params) {
-            return request.get('/web/supplyChain/purchaseOrderlist', params)
+            return this.createSupplyChainRequest('get', '/web/supplyChain/purchaseOrderlist', params)
         },
-
         // 发货
         deliver(data) {
-            return request.post('/web/supplyChain/deliver', data)
+            return this.createSupplyChainRequest('post', '/web/supplyChain/deliver', data)
         },
         // 获取订单详情
         getPurchaseOrderDetail(id) {
-            return request.get(`/web/supplyChain/purchaseOrderInfo/${id}`)
+            return this.createSupplyChainRequest('get', `/web/supplyChain/purchaseOrderInfo/${id}`)
         },
         // 发货
         sendOrder(data) {
-            return request.post('/web/supplyChain/sendOrder', data)
+            return this.createSupplyChainRequest('post', '/web/supplyChain/sendOrder', data)
         },
         // 获取消息通知列表
         getNotificationList(params) {
-            return request.get('/web/supplyChain/notificationList', params)
+            return this.createSupplyChainRequest('get', '/web/supplyChain/notificationList', params)
         },
         // 阅读通知
         readNotification(id) {
-            return request.post(`/web/supplyChain/readNotification/${id}`)
+            return this.createSupplyChainRequest('post', `/web/supplyChain/readNotification/${id}`)
+        },
+        // 上传文件
+        uploadFile(file) {
+            return request.upload({
+                file,
+                tokenType: 'supplyChain'
+            })
+        },
+        //解析手机号
+        decryptPhoneNumber(data) {
+            return this.createSupplyChainRequest('post', '/wx/miniapp/decryptPhoneNumber', data)
         },
     },
     // 佣金相关接口
@@ -357,7 +462,19 @@ const api = {
         // 提现
         withdraw(data) {
             return request.post('/web/user/commission/withdraw?amount=' + String(data.amount))
-        }
+        },
+        // 获取商家账户信息
+        getShopAccount() {
+            return request.get('/web/user/commission/shopAccount')
+        },
+        // 获取商家账户记录
+        getShopAccountRecord(params) {
+            return request.get('/web/user/commission/shopAccountRecord', params)
+        },
+        // 提现
+        shopAccountWithdraw(data) {
+            return request.post('/web/user/commission/shopAccountWithdraw?amount=' + String(data.amount))
+        },
     },
     // 支付相关接口
     payment: {

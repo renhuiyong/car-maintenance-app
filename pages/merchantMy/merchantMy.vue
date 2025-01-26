@@ -65,12 +65,12 @@
 						<text>维修订单</text>
 					</view>
 					<image class="divider" src="/static/images/shuxian.png"></image>
-					<view class="menu-item" @click="goToMyFavorites">
+					<view class="menu-item" @click="goToPurchasingOrder">
 						<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
 						<text>进货订单</text>
 					</view>
 					<image class="divider" src="/static/images/shuxian.png"></image>
-					<view class="menu-item" @click="goToMyCoupons">
+					<view class="menu-item" @click="goToMerchantAccount">
 						<image class="menu-icon" src="/static/images/jinhuodingdan.png"></image>
 						<text>收入结算</text>
 					</view>
@@ -125,16 +125,16 @@
 		</scroll-view>
 		<merchant-tabbar :current="3"></merchant-tabbar>
 		
-		<!-- 悬浮扫描按钮也放在外部 -->
-		<view 
-			class="float-scan-btn"
+		<!-- 添加商家上下线悬浮按钮 -->
+		<view v-if="isLogin && examineStatus === 3"
+			class="float-status-btn"
 			:style="{ left: buttonPosition.left + 'px', top: buttonPosition.top + 'px' }"
 			@touchstart="touchStart"
 			@touchmove="touchMove"
 			@touchend="touchEnd"
-			@tap="handleScan"
+			@tap="handleShopStatus"
 		>
-			<image src="/static/images/scan.png" mode="aspectFit"></image>
+			<image :src="shopStatus ? '/static/images/online.png' : '/static/images/offline.png'" mode="aspectFit"></image>
 		</view>
 	</view>
 </template>
@@ -149,6 +149,8 @@ export default {
 		loadingAnimation
 	},
 	data() {
+		const systemInfo = uni.getSystemInfoSync()
+		const cachedPosition = uni.getStorageSync('floatButtonPosition')
 		return {
 			isLogin: false,
 			examineStatus: 3,
@@ -159,10 +161,10 @@ export default {
 			},
 			request,
 			messageList: [],
-			// 添加按钮位置相关数据
-			buttonPosition: {
-				left: uni.getSystemInfoSync().windowWidth - 80, // 默认靠右
-				top: uni.getSystemInfoSync().windowHeight - 240 // 默认距底部 240px
+			// 修改按钮位置相关数据，从缓存中获取，如果没有则使用默认值
+			buttonPosition: cachedPosition || {
+				left: systemInfo.windowWidth - (140 * systemInfo.windowWidth / 750),
+				top: 80,
 			},
 			isDragging: false,
 			startPosition: {
@@ -176,17 +178,23 @@ export default {
 			commissionTimer: null, // 添加佣金定时器
 			// 添加佣金数据
 			commissionAmount: '0.00',
+			shopStatus: false, // 商家状态：true为上线，false为下线
+			lastClickTime: 0, // 添加最后点击时间记录
 		}
 	},
 	created() {
+		setInterval(() => {
+			this.checkLoginStatus()
+		}, 3000)
 		this.checkLoginStatus()
 		if (this.isLogin) {
 			this.checkShopExamineStatus()
 			this.checkSubscriptionStatus()
 			this.getMessageList()
-			this.startMessageTimer()
+			// this.startMessageTimer()
 			this.getCommissionAccount()
-			this.startCommissionTimer() // 启动佣金定时器
+			this.getShopBusinessStatus()
+			// this.startCommissionTimer() // 启动佣金定时器
 		}
 	},
 	onShow() {
@@ -194,9 +202,10 @@ export default {
 		if (this.isLogin) {
 			this.checkShopExamineStatus()
 			this.getMessageList()
-			this.startMessageTimer()
+			// this.startMessageTimer()
 			this.getCommissionAccount()
-			this.startCommissionTimer() // 启动佣金定时器
+			this.getShopBusinessStatus()
+			// this.startCommissionTimer() // 启动佣金定时器
 		}
 	},
 	onHide() {
@@ -212,10 +221,10 @@ export default {
 	methods: {
 		checkLoginStatus() {
 			try {
-				const token = uni.getStorageSync('token')
+				const merchantToken = uni.getStorageSync('merchantToken')
 				const userInfo = uni.getStorageSync('userInfo')
 				
-				if (token && userInfo) {
+				if (merchantToken && userInfo) {
 					this.isLogin = true
 					this.userInfo = JSON.parse(userInfo)
 					// 检查是否需要订阅
@@ -227,6 +236,7 @@ export default {
 						phone: '',
 						avatar: ''
 					}
+				uni.removeStorageSync('roleFlag')
 				}
 			} catch (err) {
 				console.error('Check login status error:', err)
@@ -279,11 +289,11 @@ export default {
 						name: res.data.nickname,
 						phone: res.data.phone || '',
 						avatar: res.data.avatar,
-						token: res.data.token
+						merchantToken: res.data.token
 					}
 					
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
-					uni.setStorageSync('token', res.data.token)
+					uni.setStorageSync('merchantToken', res.data.token)
 					uni.setStorageSync('roleFlag', 2)
 					
 					// 登录成功后清除promotionCode
@@ -359,7 +369,7 @@ export default {
 				}
 			})
 		},
-		goToMyFavorites() {
+		goToPurchasingOrder() {
 			if (!this.isLogin) {
 				uni.showToast({
 					title: '请先登录',
@@ -368,7 +378,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/packageUser/pages/myFavorites/myFavorites',
+				url: '/packageMerchant/pages/merchantPurchasingOrder/merchantPurchasingOrder',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -378,7 +388,7 @@ export default {
 				}
 			})
 		},
-		goToMyCoupons() {
+		goToMerchantAccount() {
 			if (!this.isLogin) {
 				uni.showToast({
 					title: '请先登录',
@@ -387,7 +397,7 @@ export default {
 				return
 			}
 			uni.navigateTo({
-				url: '/packageUser/pages/myCoupons/myCoupons',
+				url: '/packageMerchant/pages/merchantAccount/merchantAccount',
 				fail: (err) => {
 					console.error('Navigation failed:', err)
 					uni.showToast({
@@ -499,15 +509,18 @@ export default {
 			if (!this.isDragging) return
 			
 			const systemInfo = uni.getSystemInfoSync()
-			const buttonSize = 100 // 按钮的大小（包括内边距）
+			const buttonSize = 140 // 按钮的实际大小（单位：rpx），与样式中定义的大小保持一致
+			
+			// 将rpx转换为px
+			const pxButtonSize = buttonSize * systemInfo.windowWidth / 750
 			
 			// 计算新位置
 			let newLeft = e.touches[0].clientX - this.startPosition.x
 			let newTop = e.touches[0].clientY - this.startPosition.y
 			
-			// 限按钮不超出屏幕边界
-			newLeft = Math.max(0, Math.min(newLeft, systemInfo.windowWidth - buttonSize))
-			newTop = Math.max(0, Math.min(newTop, systemInfo.windowHeight - buttonSize))
+			// 限制按钮不超出屏幕边界，允许完全贴边
+			newLeft = Math.max(0, Math.min(newLeft, systemInfo.windowWidth - pxButtonSize))
+			newTop = Math.max(0, Math.min(newTop, systemInfo.windowHeight - pxButtonSize))
 			
 			// 更新位置
 			this.buttonPosition = {
@@ -519,16 +532,19 @@ export default {
 		touchEnd() {
 			this.isDragging = false
 			
-			// 靠边吸附
+			// 靠右吸附
 			const systemInfo = uni.getSystemInfoSync()
-			const buttonSize = 100
-			const threshold = 50 // 吸附阈值
+			const buttonSize = 140 // 按钮的实际大小（单位：rpx）
+			const pxButtonSize = buttonSize * systemInfo.windowWidth / 750
 			
-			if (this.buttonPosition.left < threshold) {
-				this.buttonPosition.left = 0
-			} else if (this.buttonPosition.left > systemInfo.windowWidth - buttonSize - threshold) {
-				this.buttonPosition.left = systemInfo.windowWidth - buttonSize
-			}
+			// 直接设置为右侧位置
+			this.buttonPosition.left = systemInfo.windowWidth - pxButtonSize
+			
+			// 保存位置到本地缓存
+			uni.setStorageSync('floatButtonPosition', {
+				left: this.buttonPosition.left,
+				top: this.buttonPosition.top
+			})
 		},
 		
 		handleScan() {
@@ -627,7 +643,6 @@ export default {
 			try {
 				const res = await api.merchant.getShopSelfExamineStatus()
 				if (res.code === 200) {
-					console.log('商家状态:', res.data) // 添加日志查看返回数据
 					this.examineStatus = res.data.examineStatus || res.data
 				}
 			} catch (err) {
@@ -719,7 +734,7 @@ export default {
 		},
 		async getCommissionAccount() {
 			try {
-				const res = await api.commission.getCommissionAccount()
+				const res = await api.merchant.getCommissionAccount()
 				if (res.code === 200) {
 					this.commissionAmount = res.data.totalAmount?.toFixed(2) || '0.00'
 				}
@@ -740,6 +755,64 @@ export default {
 			if (this.commissionTimer) {
 				clearInterval(this.commissionTimer)
 				this.commissionTimer = null
+			}
+		},
+		// 获取商家状态
+		async getShopStatus() {
+			try {
+				const res = await api.merchant.getShopSelf()
+				if (res.code === 200) {
+					this.shopStatus = res.data.status === 1
+				}
+			} catch (err) {
+				console.error('Get shop status error:', err)
+			}
+		},
+		// 获取商家营业状态
+		async getShopBusinessStatus() {
+			try {
+				const res = await api.merchant.getShopBusinessStatus()
+				if (res.code === 200) {
+					this.shopStatus = res.data.businessStatus === 1
+				}
+			} catch (err) {
+				console.error('Get shop business status error:', err)
+			}
+		},
+		// 处理商家上下线
+		async handleShopStatus() {
+			if (!this.isLogin) {
+				uni.showToast({
+					title: '请先登录',
+					icon: 'none'
+				})
+				return
+			}
+			
+			// 检查点击间隔
+			const now = Date.now()
+			if (now - this.lastClickTime < 1000) {
+				return
+			}
+			this.lastClickTime = now
+			
+			try {
+				const res = await (this.shopStatus ? api.merchant.shopOffline() : api.merchant.shopOnline())
+				if (res.code === 200) {
+					this.shopStatus = !this.shopStatus
+					uni.showToast({
+						title: this.shopStatus ? '已上线' : '已下线',
+						icon: 'success'
+					})
+				} else {
+					throw new Error(res.message || '操作失败')
+				}
+			} catch (err) {
+				console.error('Shop status change error:', err)
+				uni.showToast({
+					title: err.message || '操作失败',
+					icon: 'none'
+				})
 			}
 		},
 	},
@@ -1179,19 +1252,20 @@ export default {
 	}
 }
 
-.float-scan-btn {
+.float-status-btn {
 	position: fixed;
 	z-index: 999;
-	width: 100rpx;
-	height: 100rpx;
+	width: 140rpx;
+	height: 140rpx;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	transition: transform 0.2s;
+	margin-top: -10rpx;
 	
 	image {
-		width: 100rpx;
-		height: 100rpx;
+		width: 140rpx;
+		height: 140rpx;
 	}
 	
 	&:active {

@@ -107,17 +107,29 @@
 			}
 		},
 		onLoad(options) {
-			// 打印接收到的原始参数
-			console.log('接收到的原始参数:', options)
+			// 获取类别列表
+			api.shop.selectTypesList().then(res => {
+				if (res.code === 200) {
+					this.categories = res.data.map(item => ({
+						id: item.categoryId,
+						name: item.categoryName
+					}))
+				} else {
+					uni.showToast({
+						title: res.msg || '获取类别列表失败',
+						icon: 'none'
+					})
+				}
+			}).catch(err => {
+				console.error('获取类别列表失败:', err)
+				uni.showToast({
+					title: '获取类别列表失败',
+					icon: 'none'
+				})
+			})
 			
 			try {
-				// 解析传入的数组数据
-				if (options.categories) {
-					const decodedCategories = decodeURIComponent(options.categories)
-					console.log('解码后的类别数据:', decodedCategories)
-					this.categories = JSON.parse(decodedCategories)
-					console.log('解析后的类别数组:', this.categories)
-				}
+				// 解析传入的品牌数据
 				if (options.brands) {
 					const decodedBrands = decodeURIComponent(options.brands)
 					console.log('解码后的品牌数据:', decodedBrands)
@@ -222,7 +234,7 @@
 			// 获取图片完整URL
 			getImageUrl(path) {
 				if (!path) return ''
-				return path.startsWith('http') ? path : request.BASE_URL + path
+				return path.startsWith('http') ? path : request.BASE_URL_OSS + path
 			},
 			handleSubmit() {
 				// 表单验证

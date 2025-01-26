@@ -87,12 +87,12 @@ export default {
 			uni.createSelectorQuery().select('#editor').context((res) => {
 				this.editorCtx = res.context
 				if (this.content) {
-					// 处理内容中的图片路径，添加BASE_URL
+					// 处理内容中的图片路径，添加BASE_URL_OSS
 					const processedContent = this.content.replace(
 						/src="([^"]+)"/g, 
 						(match, fileName) => {
 							if (fileName.startsWith('http')) return match
-							return `src="${request.BASE_URL}${fileName}"`
+							return `src="${request.BASE_URL_OSS}${fileName}"`
 						}
 					)
 					this.editorCtx.setContents({
@@ -161,7 +161,7 @@ export default {
 						if (response && response.fileName) {
 							// 插入图片到编辑器，显示时使用完整URL
 							this.editorCtx.insertImage({
-								src: request.BASE_URL + response.fileName,
+								src: request.BASE_URL_OSS + response.fileName,
 								width: '100%',
 								success: () => {
 									console.log('插入图片成功')
@@ -202,7 +202,7 @@ export default {
 		handleConfirm() {
 			// 在保存内容时，将完整URL转换回相对路径
 			const processedContent = this.content.replace(
-				new RegExp(`src="${request.BASE_URL}([^"]+)"`, 'g'),
+				new RegExp(`src="${request.BASE_URL_OSS}([^"]+)"`, 'g'),
 				'src="$1"'
 			)
 			
