@@ -8,7 +8,11 @@
         
         <!-- 语音描述 -->
         <view class="voice-desc" v-if="voicePath" @click="playVoice">
-          <image src="/static/images/yuyin.png" mode="aspectFit"></image>
+          <view class="voice-waves" :class="{ 'playing': isPlaying }">
+            <view class="wave"></view>
+            <view class="wave"></view>
+            <view class="wave"></view>
+          </view>
           <text>{{voiceDuration}}″</text>
         </view>
         
@@ -131,7 +135,8 @@ export default {
       showFeePopup: false,
       tempFee: '',
       isValidFee: false,
-      grabStatus: 0
+      grabStatus: 0,
+      isPlaying: false
     }
   },
 
@@ -194,6 +199,27 @@ export default {
         // 初始化音频播放器
         if (this.voicePath) {
           this.audioContext = uni.createInnerAudioContext()
+          // 添加音频事件监听
+          this.audioContext.onPlay(() => {
+            this.isPlaying = true
+          })
+          this.audioContext.onPause(() => {
+            this.isPlaying = false
+          })
+          this.audioContext.onStop(() => {
+            this.isPlaying = false
+          })
+          this.audioContext.onEnded(() => {
+            this.isPlaying = false
+          })
+          this.audioContext.onError((res) => {
+            console.error('音频播放错误:', res)
+            uni.showToast({
+              title: '音频播放失败',
+              icon: 'none'
+            })
+            this.isPlaying = false
+          })
         }
       } catch (error) {
         console.error('解析参数失败:', error)
@@ -242,7 +268,7 @@ export default {
     // 获取图片完整URL
     getImageUrl(path) {
       if (!path) return '/static/products/shangpin_default.png'
-      return path.startsWith('http') ? path : request.BASE_URL + path
+      return path.startsWith('http') ? path : request.BASE_URL_OSS + path
     },
 
     // 预览图片
@@ -257,16 +283,16 @@ export default {
 
     // 播放语音
     playVoice() {
-      if (!this.voicePath) return
+      if (!this.voicePath || !this.audioContext) return
       
-      if (this.audioContext.src === request.BASE_URL + this.voicePath) {
+      if (this.audioContext.src === request.BASE_URL_OSS + this.voicePath) {
         if (this.audioContext.paused) {
           this.audioContext.play()
         } else {
           this.audioContext.pause()
         }
       } else {
-        this.audioContext.src = request.BASE_URL + this.voicePath
+        this.audioContext.src = request.BASE_URL_OSS + this.voicePath
         this.audioContext.play()
       }
     },
@@ -411,6 +437,9 @@ export default {
     if (this.focusTimer) {
       clearTimeout(this.focusTimer);
     }
+    if (this.audioContext) {
+      this.audioContext.destroy()
+    }
   }
 }
 </script>
@@ -467,10 +496,36 @@ export default {
           opacity: 0.8;
         }
         
-        image {
-          width: 32rpx;
-          height: 32rpx;
+        .voice-waves {
+          display: flex;
+          align-items: center;
           margin-right: 16rpx;
+          
+          .wave {
+            width: 4rpx;
+            height: 16rpx;
+            background: #4468E8;
+            margin: 0 4rpx;
+            border-radius: 2rpx;
+            animation: waveAnimation 1s infinite;
+            animation-play-state: paused;
+            
+            &:nth-child(2) {
+              height: 24rpx;
+              animation-delay: 0.2s;
+            }
+            
+            &:nth-child(3) {
+              height: 32rpx;
+              animation-delay: 0.4s;
+            }
+          }
+          
+          &.playing {
+            .wave {
+              animation-play-state: running;
+            }
+          }
         }
         
         text {
@@ -789,6 +844,18 @@ export default {
         }
       }
     }
+  }
+}
+
+@keyframes waveAnimation {
+  0% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.4);
+  }
+  100% {
+    transform: scaleY(1);
   }
 }
 </style> 

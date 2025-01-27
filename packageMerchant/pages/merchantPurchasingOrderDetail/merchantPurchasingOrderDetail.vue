@@ -11,6 +11,26 @@
 				</view>
 			</view>
 		</view>
+		<!-- 配送信息 -->
+		<view class="delivery-info" v-if="orderInfo.status && orderInfo.status !== 0">
+			<view class="section-title">配送信息</view>
+			<view class="info-item">
+				<text class="label">配送员：</text>
+				<text class="value">{{orderInfo.nickName}}</text>
+			</view>
+			<view class="info-item">
+				<text class="label">联系电话：</text>
+				<text class="value">{{orderInfo.phonenumber}}</text>
+			</view>
+			<view class="info-item">
+				<text class="label">配送时间：</text>
+				<text class="value">{{orderInfo.deliveryTime}}</text>
+			</view>
+			<view class="info-item" v-if="orderInfo.finishTime">
+				<text class="label">完成时间：</text>
+				<text class="value">{{orderInfo.finishTime || '-'}}</text>
+			</view>
+		</view>
 	</view>
 </template>
 
@@ -37,7 +57,7 @@ export default {
 		// 获取订单详情
 		async getOrderDetail() {
 			try {
-				const res = await api.shop.getDeliveryOrderInfo(this.orderId)
+				const res = await api.merchant.getDeliveryOrderInfo(this.orderId)
 				
 				if (res.code === 200) {
 					// 处理订单数据
@@ -46,7 +66,12 @@ export default {
 							name: item.accessoryName,
 							quantity: item.num,
 							image: request.BASE_URL_OSS + item.accessoryImage
-						}))
+						})),
+						status: res.data.status,
+						nickName: res.data.nickName,
+						phonenumber: res.data.phonenumber,
+						deliveryTime: res.data.deliveryTime,
+						finishTime: res.data.finishTime
 					}
 				} else {
 					uni.showToast({
@@ -115,6 +140,29 @@ export default {
 		.product-quantity {
 			font-size: 26rpx;
 			color: #666;
+		}
+	}
+}
+
+.delivery-info {
+	background: #FFFFFF;
+	border-radius: 16rpx;
+	padding: 24rpx;
+	margin-bottom: 20rpx;
+	
+	.info-item {
+		display: flex;
+		padding: 16rpx 0;
+		font-size: 28rpx;
+		
+		.label {
+			color: #666;
+			width: 160rpx;
+		}
+		
+		.value {
+			color: #333;
+			flex: 1;
 		}
 	}
 }

@@ -70,6 +70,8 @@ const request = (options = {}) => {
                         res.data.msg.includes('未登录'))) {
                         // 清除所有用户相关的缓存数据
                         uni.removeStorageSync('token')
+                        uni.removeStorageSync('merchantToken')
+                        uni.removeStorageSync('supplyChainToken')
                         uni.removeStorageSync('userInfo')
                         uni.removeStorageSync('profile')
 

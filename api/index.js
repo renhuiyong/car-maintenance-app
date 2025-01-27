@@ -321,6 +321,19 @@ const api = {
         getCommissionRecord(params) {
             return this.createMerchantRequest('get', '/web/user/commission/commissionRecord', params)
         },
+         // 获取发货订单详情
+         getDeliveryOrderInfo(id) {
+            return this.createMerchantRequest('get', `/web/shop/deliveryOrderInfo/${id}`)
+        },
+         // 获取商品列表
+         getProducts(data) {
+            return this.createMerchantRequest('get', '/web/accessory/getList', data)
+        },
+
+         // 获取品牌列表
+         selectModelsList() {
+            return this.createMerchantRequest('get', '/web/accessory/selectModelsList')
+        },
     },
     common: {
         // 上传文件
@@ -452,6 +465,14 @@ const api = {
         decryptPhoneNumber(data) {
             return this.createSupplyChainRequest('post', '/wx/miniapp/decryptPhoneNumber', data)
         },
+         // 获取品牌列表
+         selectModelsList(){
+            return this.createSupplyChainRequest('get','/web/accessory/selectModelsList')
+         },
+         // 获取配件分类列表
+         selectTypesList(){
+            return this.createSupplyChainRequest('get','/web/accessory/selectTypesList')
+         },
     },
     // 佣金相关接口
     commission: {

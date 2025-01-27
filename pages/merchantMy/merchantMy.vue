@@ -436,7 +436,7 @@ export default {
 			}
 			
 			uni.navigateTo({
-				url: '/packageUser/pages/myMessage/myMessage',
+				url: '/packageMerchant/pages/merchantMyMessage/merchantMyMessage',
 				events: {
 					// 监听消息页面返回时的刷新事件
 					refreshMessages: () => {
@@ -468,7 +468,7 @@ export default {
 			
 			// 跳转到消息列表页面
 			uni.navigateTo({
-				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true&messageStatus=' + (message.status === 1 ? 'read' : 'unread'),
+				url: '/packageMerchant/pages/merchantMyMessage/merchantMyMessage?autoOpen=true&messageStatus=' + (message.status === 1 ? 'read' : 'unread'),
 				events: {
 					// 监听消息页面返回时的刷新事件
 					refreshMessages: () => {

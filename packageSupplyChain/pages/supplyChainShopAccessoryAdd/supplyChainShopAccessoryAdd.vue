@@ -108,7 +108,7 @@
 		},
 		onLoad(options) {
 			// 获取类别列表
-			api.shop.selectTypesList().then(res => {
+			api.supplyChain.selectTypesList().then(res => {
 				if (res.code === 200) {
 					this.categories = res.data.map(item => ({
 						id: item.categoryId,
@@ -203,7 +203,7 @@
 						})
 						
 						// 使用common.uploadFile上传图片
-						api.common.uploadFile(res.tempFilePaths[0]).then(response => {
+						api.supplyChain.uploadFile(res.tempFilePaths[0]).then(response => {
 							console.log('上传图片返回:', response)
 							if (response && response.fileName) {
 								// 保存文件路径
@@ -293,8 +293,6 @@
 					submitData.id = this.editId
 				}
 
-				console.log('准备提交的数据:', submitData)
-				
 				// 根据是否是编辑模式调用不同的接口
 				const apiCall = this.isEdit ? 
 					api.supplyChain.updateAccessory(submitData) : 
@@ -332,14 +330,12 @@
 			},
 			// 跳转到富文本编辑页面
 			goToRichText() {
-				console.log('点击富文本编辑')
 				uni.navigateTo({
-					url: `/packageMerchant/pages/richTextEditor/richTextEditor?content=${encodeURIComponent(this.formData.details || '')}`
+					url: `/packageSupplyChain/pages/supplyChainRichTextEditor/supplyChainRichTextEditor?content=${encodeURIComponent(this.formData.details || '')}`
 				})
 			},
 			// 更新商品详情内容
 			updateDescription(content) {
-				console.log('接收到富文本内容:', content)
 				this.formData.details = content
 			},
 			// 获取商品详情

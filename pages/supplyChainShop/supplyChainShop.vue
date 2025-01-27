@@ -243,7 +243,7 @@ export default {
 	},
 	created() {
 		console.log('merchantShop created')
-		let token = uni.getStorageSync('token')
+		let token = uni.getStorageSync('supplyChainToken')
 		if (token) {
 		// 先检查供应商状态
 		this.checkSupplyChainStatus()
@@ -520,7 +520,7 @@ export default {
 		
 		// 获取品牌列表
 		getBrandList() {
-			api.shop.selectModelsList().then(res => {
+			api.supplyChain.selectModelsList().then(res => {
 				if (res.code === 200) {
 					// 添加"全部"选项
 					this.brands = [

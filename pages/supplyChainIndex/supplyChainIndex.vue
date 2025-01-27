@@ -107,7 +107,7 @@
       }
     },
     created() {
-      let token = uni.getStorageSync('token')
+      let token = uni.getStorageSync('supplyChainToken')
       if (token) {
         this.getMerchantDetails()
         this.initShareConfig()

@@ -218,7 +218,7 @@ export default {
 						name: res.data.nickname,
 						phone: res.data.phone || '',
 						avatar: res.data.avatar,
-						token: res.data.token
+						supplyChainToken: res.data.token
 					}
 					
 					uni.setStorageSync('userInfo', JSON.stringify(userData))
@@ -320,7 +320,7 @@ export default {
 			}
 			
 			uni.navigateTo({
-				url: '/packageUser/pages/myMessage/myMessage',
+				url: '/packageSupplyChain/pages/supplyChainMyMessage/supplyChainMyMessage',
 				events: {
 					refreshMessages: () => {
 						this.getMessageList()
@@ -349,7 +349,7 @@ export default {
 			}))
 			
 			uni.navigateTo({
-				url: '/packageUser/pages/myMessage/myMessage?autoOpen=true&messageStatus=' + (message.status === 1 ? 'read' : 'unread'),
+				url: '/packageSupplyChain/pages/supplyChainMyMessage/supplyChainMyMessage?autoOpen=true&messageStatus=' + (message.status === 1 ? 'read' : 'unread'),
 				events: {
 					refreshMessages: () => {
 						this.getMessageList()

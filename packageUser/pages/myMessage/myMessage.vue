@@ -112,10 +112,7 @@ export default {
       
       try {
         this.loading = true
-        const apiMethod = this.type === 0 ? api.user.getNotificationList : 
-                         this.type === 1 ? api.merchant.getNotificationList :
-                         api.supplyChain.getNotificationList
-        const res = await apiMethod({
+        const res = await api.user.getNotificationList({
           pageNum: this.pageNum,
           pageSize: this.pageSize,
           status: this.currentTab === 'unread' ? 0 : 1
@@ -165,10 +162,7 @@ export default {
     async closePopup() {
       if (this.currentMessage && this.currentMessage.status === 0) {
         try {
-          const apiMethod = this.type === 0 ? api.user.readNotification : 
-                         this.type === 1 ? api.merchant.readNotification :
-                         api.supplyChain.readNotification
-          const res = await apiMethod(this.currentMessage.id)
+          const res = await api.user.readNotification(this.currentMessage.id)
           if (res.code === 200) {
             this.getMessageList()
           }
@@ -180,8 +174,6 @@ export default {
     }
   },
   onLoad(options) {
-    this.type = Number(options.type || -1)
-    
     // 设置初始标签页
     if (options.messageStatus) {
       this.currentTab = options.messageStatus

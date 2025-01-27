@@ -154,8 +154,7 @@ export default {
 					uni.showLoading({
 						title: '上传中...'
 					})
-					// 使用common.uploadFile上传图片
-					api.common.uploadFile(res.tempFilePaths[0]).then(response => {
+					api.supplyChain.uploadFile(res.tempFilePaths[0]).then(response => {
 						if (response && response.fileName) {
 							// 插入图片到编辑器，显示时使用完整URL
 							this.editorCtx.insertImage({

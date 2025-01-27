@@ -499,8 +499,9 @@ export default {
 					// 处理商品详情中的图片URL
 					let details = res.data.details;
 					if (details) {
-						// 使用正则表达式替换所有 src="/profile/upload 的图片路径
-						details = details.replace(/src="\/profile\/upload/g, `src="${request.BASE_URL_OSS}/profile/upload`);
+						details = details.replace(/src="(uploads\/[^"]+)"/g, (match, p1) => {
+							return `src="${request.BASE_URL_OSS}${p1}"`;
+						});
 					}
 					
 					this.product = {

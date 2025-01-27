@@ -57,7 +57,7 @@
 							<view class="order-issue">
 								<text>{{order.issue}}</text>
 								<view v-if="order.voice" class="voice-message" @tap.stop="playVoice(order.voice)">
-									<view class="voice-waves" :class="{ 'playing': playingVoiceId === order.voice }">
+									<view class="voice-waves" :class="{ 'has-animation': playingVoiceId === order.voice }" :style="{ '--play-state': isPlaying ? 'running' : 'paused' }">
 										<view class="wave"></view>
 										<view class="wave"></view>
 										<view class="wave"></view>
@@ -147,7 +147,7 @@ import request from '@/utils/request'
 export default {
 	data() {
 		return {
-			baseUrl: request.BASE_URL,
+			baseUrl: request.BASE_URL_OSS,
 			orderTypes: ['维修订单', '商品订单'],
 			currentOrderType: 0, // 0: 维修订单, 1: 商品订单
 			repairTabs: ['进行中', '已完成', '已取消'],
@@ -161,6 +161,8 @@ export default {
 			pageSize: 10,
 			total: 0,
 			playingVoiceId: '',
+			isPlaying: false,  // 新增：音频是否正在播放
+			audioContext: null,
 			currentLocation: {
 				latitude: null,
 				longitude: null
@@ -185,6 +187,10 @@ export default {
 	onUnload() {
 		// 移除事件监听
 		uni.$off('refreshRepairOrderList', this.refreshData)
+		// 销毁音频实例
+		if (this.audioContext) {
+			this.audioContext.destroy()
+		}
 	},
 	
 	methods: {
@@ -336,6 +342,24 @@ export default {
 		// 获取当前位置
 		async getCurrentLocation() {
 			try {
+				const authRes = await new Promise((resolve, reject) => {
+					uni.getSetting({
+						success: resolve,
+						fail: reject
+					})
+				})
+				
+				// 如果未授权，先获取授权
+				if (!authRes.authSetting['scope.userLocation']) {
+					await new Promise((resolve, reject) => {
+						uni.authorize({
+							scope: 'scope.userLocation',
+							success: resolve,
+							fail: reject
+						})
+					})
+				}
+				
 				const res = await new Promise((resolve, reject) => {
 					uni.getLocation({
 						type: 'gcj02',
@@ -350,9 +374,22 @@ export default {
 				}
 			} catch (error) {
 				console.error('获取位置失败:', error)
-				uni.showToast({
-					title: '获取位置失败',
-					icon: 'none'
+				// 打开设置页面让用户开启定位权限
+				uni.showModal({
+					title: '温馨提示',
+					content: '需要获取您的地理位置才能为您提供更好的服务，是否前往设置打开定位权限？',
+					success: (res) => {
+						if (res.confirm) {
+							uni.openSetting({
+								success: (settingRes) => {
+									if (settingRes.authSetting['scope.userLocation']) {
+										// 用户在设置页面打开了定位权限，重新获取位置
+										this.getCurrentLocation()
+									}
+								}
+							})
+						}
+					}
 				})
 			}
 		},
@@ -386,18 +423,55 @@ export default {
 		
 		// 播放语音
 		playVoice(voiceUrl) {
-			if (this.playingVoiceId === voiceUrl) {
-				this.playingVoiceId = ''
-				uni.stopVoice()
-			} else {
-				this.playingVoiceId = voiceUrl
-				uni.playVoice({
-					filePath: voiceUrl,
-					complete: () => {
-						this.playingVoiceId = ''
-					}
-				})
+			if (this.playingVoiceId === voiceUrl && this.audioContext) {
+				// 如果是同一个音频，切换暂停/播放状态
+				if (this.audioContext.paused) {
+					this.audioContext.play()
+					this.isPlaying = true
+				} else {
+					this.audioContext.pause()
+					this.isPlaying = false
+				}
+				return
 			}
+			
+			// 如果之前有播放的音频，先停止
+			if (this.audioContext) {
+				this.audioContext.stop()
+				this.audioContext.destroy()
+				this.audioContext = null
+				this.isPlaying = false
+			}
+			
+			// 创建新的音频实例
+			this.audioContext = uni.createInnerAudioContext()
+			this.audioContext.src = this.baseUrl + voiceUrl
+			this.playingVoiceId = voiceUrl
+			this.isPlaying = true
+			
+			// 监听播放结束
+			this.audioContext.onEnded(() => {
+				this.playingVoiceId = ''
+				this.isPlaying = false
+				this.audioContext.destroy()
+				this.audioContext = null
+			})
+			
+			// 监听播放错误
+			this.audioContext.onError((res) => {
+				console.error('播放音频失败:', res)
+				uni.showToast({
+					title: '音频播放失败',
+					icon: 'none'
+				})
+				this.playingVoiceId = ''
+				this.isPlaying = false
+				this.audioContext.destroy()
+				this.audioContext = null
+			})
+			
+			// 开始播放
+			this.audioContext.play()
 		},
 		
 		// 回复客户
@@ -728,10 +802,11 @@ export default {
 		}
 		
 		.order-content {
-			padding: 24rpx 32rpx;
+			padding: 24rpx 0;
 			
 			.content-wrapper {
 				margin-bottom: 16rpx;
+				padding: 0 32rpx;
 			}
 			
 			.order-time {
@@ -763,6 +838,7 @@ export default {
 				padding: 24rpx;
 				border-radius: 12rpx;
 				margin-bottom: 16rpx;
+				margin: 0 32rpx 16rpx;
 				
 				text {
 					font-size: 28rpx;
@@ -796,9 +872,10 @@ export default {
 							}
 						}
 						
-						&.playing {
+						&.has-animation {
 							.wave {
 								animation: waveAnimation 1s infinite;
+								animation-play-state: var(--play-state, paused);
 								
 								&:nth-child(2) {
 									animation-delay: 0.2s;
@@ -817,83 +894,45 @@ export default {
 					}
 				}
 			}
+		}
+		
+		.order-footer {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-top: 32rpx;
+			padding: 0;
 			
-			.order-footer {
-				padding: 24rpx 0;
-				border-top: 1rpx solid #eee;
-				position: relative;
+			.fee-info {
 				display: flex;
-				justify-content: flex-end;
 				align-items: center;
+				margin-left: 32rpx;
 				
-				.fee-info {
-					margin-left: 32rpx;
-					margin-right: auto;
-					
-					.fee-label {
-						font-size: 28rpx;
-						color: #666;
-						margin-right: 16rpx;
-					}
-					
-					.fee-amount {
-						font-size: 32rpx;
-						color: #FF9500;
-						font-weight: 500;
-					}
+				.fee-label {
+					font-size: 28rpx;
+					color: #666;
+					margin-right: 8rpx;
 				}
 				
-				.btn-reply {
-					margin-right: 32rpx;
-					background: #4468E8;
-					color: #fff;
-					font-size: 24rpx;
-					padding: 12rpx 24rpx;
-					border-radius: 6rpx;
-					min-width: 120rpx;
-					height: 52rpx;
-					line-height: 28rpx;
-					
-					&::after {
-						border: none;
-					}
-					
-					&:active {
-						opacity: 0.8;
-					}
+				.fee-amount {
+					font-size: 40rpx;
+					color: #FF9500;
+					font-weight: 500;
 				}
-
-				.btn-group {
-					margin-right: 32rpx;
-					display: flex;
-					gap: 16rpx;
-
-					.btn {
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						font-size: 24rpx;
-						padding: 12rpx 24rpx;
-						border-radius: 6rpx;
-						min-width: 120rpx;
-						height: 52rpx;
-						line-height: 28rpx;
-
-						&.btn-cancel {
-							background: #fff;
-							color: #666;
-							border: 1rpx solid #ddd;
-						}
-
-						&.btn-reply {
-							background: #4468E8;
-							color: #fff;
-						}
-
-						&:active {
-							opacity: 0.8;
-						}
-					}
+			}
+			
+			.btn-reply {
+				margin-right: 32rpx;
+				background: #4468E8;
+				color: #fff;
+				font-size: 28rpx;
+				padding: 12rpx 24rpx;
+				border-radius: 8rpx;
+				border: none;
+				line-height: 1.5;
+				
+				&::after {
+					border: none;
 				}
 			}
 		}
